@@ -1,0 +1,5 @@
+dependencies:
+#- repo: istio/istio
+#  branch: master
+- repo: istio/installer
+  sha: b45de18499220e85e067cc8a71155e2af79cf170

@@ -71,7 +71,7 @@ else
 export GOBIN ?= ./out/bin
 endif
 
-MAKE = $(RUN) make -e -f Makefile.core.mk
+MAKE = $(RUN) make --no-print-directory -e -f Makefile.core.mk
 
 %:
 	@$(MAKE) $@
