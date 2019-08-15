@@ -2,15 +2,26 @@ package util
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
+	"path"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"istio.io/pkg/log"
 )
+
+func CopyDir(src, dst string) error {
+	if err := exec.Command("mkdir", "-p", path.Join(dst, "..")).Run(); err != nil {
+		return err
+	}
+	return exec.Command("cp", "-r", src, dst).Run()
+}
 
 func DownloadFile(filepath string, url string) error {
 
@@ -34,13 +45,16 @@ func DownloadFile(filepath string, url string) error {
 }
 
 func Download(url string, dest string) error {
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
+	// dirty hack
+	command := fmt.Sprintf("curl -sL %s | tar xvfz - -C %s", url, dest)
+	cmd := exec.Command("sh", "-c", command)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if stderr.String() != "" {
+		log.Warnf("Error downloading %v: %v", url, stderr.String())
 	}
-	defer func() { _ = resp.Body.Close() }()
-
-	return ExtractTarGz(resp.Body, dest)
+	return err
 }
 
 // ExtractTarGz extracts a .tar.gz file into current dir.
