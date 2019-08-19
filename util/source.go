@@ -12,15 +12,20 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/howardjohn/istio-release/pkg"
 	"github.com/pkg/errors"
+
 	"istio.io/pkg/log"
 )
 
 func CopyDir(src, dst string) error {
 	if err := exec.Command("mkdir", "-p", path.Join(dst, "..")).Run(); err != nil {
-		return err
+		return fmt.Errorf("failed to create output directory: %v", err)
 	}
-	return exec.Command("cp", "-r", src, dst).Run()
+	if err := exec.Command("cp", "-r", src, dst).Run(); err != nil {
+		return fmt.Errorf("failed to copy: %v", err)
+	}
+	return nil
 }
 
 func DownloadFile(filepath string, url string) error {
@@ -44,6 +49,16 @@ func DownloadFile(filepath string, url string) error {
 	return err
 }
 
+func Clone(repo pkg.Dependency, dest string) error {
+	url := fmt.Sprintf("https://github.com/%s/%s", repo.Org, repo.Repo)
+	err := exec.Command("git", "clone", url, dest).Run()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("git", "checkout", repo.Ref())
+	cmd.Dir = dest
+	return cmd.Run()
+}
 func Download(url string, dest string) error {
 	// dirty hack
 	command := fmt.Sprintf("curl -sL %s | tar xvfz - -C %s", url, dest)
