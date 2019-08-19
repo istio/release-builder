@@ -75,6 +75,13 @@ func Package(manifest pkg.Manifest) error {
 	if err := util.CopyDir(path.Join(manifest.WorkingDirectory, "work", "helm", "packages"), path.Join(out, "charts")); err != nil {
 		return fmt.Errorf("failed to package helm chart: %v", err)
 	}
+	for _, arch := range []string{"linux", "osx", "win"} {
+		archive := fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
+		archivePath := path.Join(manifest.WorkingDirectory, "work", "archive", arch, archive)
+		if err := util.CopyFile(archivePath, path.Join(out, archive)); err != nil {
+			return fmt.Errorf("failed to package %v release archive: %v", arch, err)
+		}
+	}
 	if err := writeManifest(manifest); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
@@ -99,6 +106,113 @@ func Build(manifest pkg.Manifest) error {
 	//}
 	if err := buildCharts(manifest); err != nil {
 		return err
+	}
+	if err := buildArchive(manifest); err != nil {
+		return err
+	}
+	return nil
+}
+
+func runMake(manifest pkg.Manifest, c ...string) error {
+	cmd := exec.Command("make", c...)
+	cmd.Env = os.Environ()
+	// TODO: this uses modules instead of vendor for some reason
+	cmd.Env = append(cmd.Env, "GOPATH="+path.Join(manifest.WorkingDirectory, "work"))
+	cmd.Env = append(cmd.Env, "TAG=tag")
+	cmd.Env = append(cmd.Env, "GOBUILDFLAGS=-mod=vendor")
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", "istio")
+	return cmd.Run()
+}
+
+func buildArchive(manifest pkg.Manifest) error {
+	if err := runMake(manifest, "istioctl-all", "istioctl.completion"); err != nil {
+		return fmt.Errorf("failed to make istioctl: %v", err)
+	}
+	for _, arch := range []string{"linux", "osx", "win"} {
+		out := path.Join(manifest.WorkingDirectory, "work", "archive", arch, fmt.Sprintf("istio-%s", manifest.Version))
+		if err := os.MkdirAll(out, 0750); err != nil {
+			return err
+		}
+		istioOut := path.Join(manifest.WorkingDirectory, "work", "out", "linux_amd64", "release")
+		istioSrc := path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", "istio")
+
+		srcToOut := func(p string) error {
+			if err := util.CopyFile(path.Join(istioSrc, p), path.Join(out, p)); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		if err := srcToOut("LICENSE"); err != nil {
+			return err
+		}
+		if err := srcToOut("README.md"); err != nil {
+			return err
+		}
+
+		// Setup tools. The tools/ folder contains a bunch of extra junk, so just select exactly what we want
+		if err := srcToOut("tools/convert_RbacConfig_to_ClusterRbacConfig.sh"); err != nil {
+			return err
+		}
+		if err := srcToOut("tools/packaging/common/istio-iptables.sh"); err != nil {
+			return err
+		}
+		if err := srcToOut("tools/dump_kubernetes.sh"); err != nil {
+			return err
+		}
+
+		// Set up install and samples. We filter down to only some file patterns
+		// TODO - clean this up. We probably include files we don't want and exclude files we do want.
+		includePatterns := []string{"*.yaml", "*.md", "cleanup.sh", "*.txt", "*.pem", "*.conf", "*.tpl", "*.json"}
+		if err := copyDirFiltered(path.Join(istioSrc, "samples"), path.Join(out, "samples"), includePatterns); err != nil {
+			return err
+		}
+		if err := copyDirFiltered(path.Join(istioSrc, "install"), path.Join(out, "install"), includePatterns); err != nil {
+			return err
+		}
+
+		istioctlArch := fmt.Sprintf("istioctl-%s", arch)
+		// TODO make windows use zip
+		if arch == "win" {
+			istioctlArch += ".exe"
+		}
+		if err := util.CopyFile(path.Join(istioOut, istioctlArch), path.Join(out, "bin", istioctlArch)); err != nil {
+			return err
+		}
+
+		archive := path.Join(out, "..", fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch))
+		cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
+		cmd.Dir = path.Join(out, "..")
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func copyDirFiltered(src, dst string, include []string) error {
+	if err := util.CopyDir(src, dst); err != nil {
+		return err
+	}
+	if err := filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		fname := filepath.Base(path)
+		for _, pattern := range include {
+			if matched, _ := filepath.Match(pattern, fname); matched {
+				// It matches one of the patterns, so stop early
+				return nil
+			}
+		}
+		if err := os.Remove(path); err != nil {
+			return fmt.Errorf("failed to remove filted file %v: %v", path, err)
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to filter: %v", err)
 	}
 	return nil
 }
@@ -179,6 +293,7 @@ func buildDocker(manifest pkg.Manifest) error {
 	// TODO: this uses modules instead of vendor for some reason
 	cmd.Env = append(cmd.Env, "GOPATH="+path.Join(manifest.WorkingDirectory, "work"))
 	cmd.Env = append(cmd.Env, "TAG=tag")
+	cmd.Env = append(cmd.Env, "GOBUILDFLAGS=-mod=vendor")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", "istio")

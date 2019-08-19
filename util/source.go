@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/howardjohn/istio-release/pkg"
 	"github.com/pkg/errors"
@@ -18,16 +19,46 @@ import (
 	"istio.io/pkg/log"
 )
 
+func VerboseCommand(name string, arg ...string) *exec.Cmd {
+	log.Infof("Running command %v %v", name, strings.Join(arg, " "))
+	cmd := exec.Command(name, arg...)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	return cmd
+}
+
 func CopyDir(src, dst string) error {
-	if err := exec.Command("mkdir", "-p", path.Join(dst, "..")).Run(); err != nil {
+	if err := VerboseCommand("mkdir", "-p", path.Join(dst, "..")).Run(); err != nil {
 		return fmt.Errorf("failed to create output directory: %v", err)
 	}
-	if err := exec.Command("cp", "-r", src, dst).Run(); err != nil {
+	if err := VerboseCommand("cp", "-r", src, dst).Run(); err != nil {
 		return fmt.Errorf("failed to copy: %v", err)
 	}
 	return nil
 }
 
+func CopyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("failed to open file %v to copy: %v", src, err)
+	}
+	defer in.Close()
+
+	if err := os.MkdirAll(path.Join(dst, ".."), 0750); err != nil {
+		return fmt.Errorf("failed to make destination directory %v: %v", dst, err)
+	}
+	out, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("failed to create file %v to copy to: %v", dst, err)
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, in); err != nil {
+		return fmt.Errorf("failed to copy %v to %v: %v", src, dst, err)
+	}
+
+	return nil
+}
 func DownloadFile(filepath string, url string) error {
 
 	// Get the data
@@ -59,6 +90,7 @@ func Clone(repo pkg.Dependency, dest string) error {
 	cmd.Dir = dest
 	return cmd.Run()
 }
+
 func Download(url string, dest string) error {
 	// dirty hack
 	command := fmt.Sprintf("curl -sL %s | tar xvfz - -C %s", url, dest)
