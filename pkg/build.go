@@ -69,12 +69,14 @@ func buildCharts(manifest model.Manifest) error {
 		if err := sanitizeChart(path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", chart), manifest); err != nil {
 			return fmt.Errorf("failed to sanitze chart %v: %v", chart, err)
 		}
-		cmd := exec.Command("helm", "--home", helm, "package", chart, "--destination", path.Join(helm, "packages"))
+		cmd := util.VerboseCommand("helm", "--home", helm, "package", chart, "--destination", path.Join(helm, "packages"))
 		cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io")
-		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("failed to package %v by `%v`: %v", chart, cmd.Args, err)
 		}
+	}
+	if err := util.VerboseCommand("helm", "--home", helm, "repo", "index", path.Join(helm, "packages")).Run(); err != nil {
+		return fmt.Errorf("failed to create helm index.yaml")
 	}
 	return nil
 }
