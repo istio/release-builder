@@ -62,7 +62,7 @@ func readManifest(manifestFile string) (model.Manifest, error) {
 
 	return model.Manifest{
 		//WorkingDirectory: "/tmp/istio-release365668469",
-		Version: "1.3.0",
+		Version: "master-20190820-09-16",
 		Dependencies: []model.Dependency{
 			{
 				Org:    "istio",

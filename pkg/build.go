@@ -169,7 +169,7 @@ func runMake(manifest model.Manifest, repo string, env []string, c ...string) er
 	cmd := exec.Command("make", c...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "GOPATH="+path.Join(manifest.WorkingDirectory, "work"))
-	cmd.Env = append(cmd.Env, "TAG=tag")
+	cmd.Env = append(cmd.Env, "TAG="+manifest.Version)
 	// TODO make this less hacky
 	if repo == "istio" {
 		cmd.Env = append(cmd.Env, "GOBUILDFLAGS=-mod=vendor")
