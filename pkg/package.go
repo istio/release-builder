@@ -39,8 +39,12 @@ func Package(manifest model.Manifest) error {
 			archive = fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
 		}
 		archivePath := path.Join(manifest.WorkingDirectory, "work", "archive", arch, archive)
-		if err := util.CopyFile(archivePath, path.Join(out, archive)); err != nil {
+		dest := path.Join(out, archive)
+		if err := util.CopyFile(archivePath, dest); err != nil {
 			return fmt.Errorf("failed to package %v release archive: %v", arch, err)
+		}
+		if err := util.CreateSha(dest); err != nil {
+			return fmt.Errorf("failed to package %v: %v", dest, err)
 		}
 	}
 
