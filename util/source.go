@@ -4,8 +4,10 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -33,6 +35,18 @@ func CopyDir(src, dst string) error {
 	}
 	if err := VerboseCommand("cp", "-r", src, dst).Run(); err != nil {
 		return fmt.Errorf("failed to copy: %v", err)
+	}
+	return nil
+}
+
+func CreateSha(src string) error {
+	b, err := ioutil.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("failed to read file %v: %v", src, err)
+	}
+	sha := sha256.Sum256(b)
+	if err := ioutil.WriteFile(src + ".sha256", sha[:], 0644); err != nil {
+		return fmt.Errorf("failed to write sha256 to %v: %v", src, err)
 	}
 	return nil
 }

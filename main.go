@@ -67,14 +67,26 @@ func main() {
 func Package(manifest pkg.Manifest) error {
 	out := path.Join(manifest.WorkingDirectory, "out")
 
-	//istioOut := path.Join(manifest.WorkingDirectory, "work", "out", "linux_amd64", "release")
-	//if err := util.CopyDir(path.Join(istioOut, "docker"), path.Join(out, "docker")); err != nil {
-	//	return fmt.Errorf("failed to package docker images: %v", err)
-	//}
+	// Docker
+	istioOut := path.Join(manifest.WorkingDirectory, "work", "out", "linux_amd64", "release")
+	if err := util.CopyDir(path.Join(istioOut, "docker"), path.Join(out, "docker")); err != nil {
+		return fmt.Errorf("failed to package docker images: %v", err)
+	}
 
+	// Helm
 	if err := util.CopyDir(path.Join(manifest.WorkingDirectory, "work", "helm", "packages"), path.Join(out, "charts")); err != nil {
 		return fmt.Errorf("failed to package helm chart: %v", err)
 	}
+
+	// Sidecar Debian
+	if err := util.CopyFile(path.Join(istioOut, "istio-sidecar.deb"), path.Join(out, "deb", "istio-sidecar.deb")); err != nil {
+		return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
+	}
+	if err := util.CreateSha(path.Join(out, "deb", "istio-sidecar.deb")); err != nil {
+		return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
+	}
+
+	// Istioctl
 	for _, arch := range []string{"linux", "osx", "win"} {
 		archive := fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
 		archivePath := path.Join(manifest.WorkingDirectory, "work", "archive", arch, archive)
@@ -82,9 +94,12 @@ func Package(manifest pkg.Manifest) error {
 			return fmt.Errorf("failed to package %v release archive: %v", arch, err)
 		}
 	}
+
+	// Manifest
 	if err := writeManifest(manifest); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
+
 	return nil
 }
 
@@ -101,9 +116,12 @@ func writeManifest(manifest pkg.Manifest) error {
 }
 
 func Build(manifest pkg.Manifest) error {
-	//if err := buildDocker(manifest); err != nil {
-	//	return err
-	//}
+	if err := buildDocker(manifest); err != nil {
+		return err
+	}
+	if err := buildDeb(manifest); err != nil {
+		return err
+	}
 	if err := buildCharts(manifest); err != nil {
 		return err
 	}
@@ -113,10 +131,13 @@ func Build(manifest pkg.Manifest) error {
 	return nil
 }
 
+func buildDeb(manifest pkg.Manifest) error {
+	return runMake(manifest, "sidecar.deb")
+}
+
 func runMake(manifest pkg.Manifest, c ...string) error {
 	cmd := exec.Command("make", c...)
 	cmd.Env = os.Environ()
-	// TODO: this uses modules instead of vendor for some reason
 	cmd.Env = append(cmd.Env, "GOPATH="+path.Join(manifest.WorkingDirectory, "work"))
 	cmd.Env = append(cmd.Env, "TAG=tag")
 	cmd.Env = append(cmd.Env, "GOBUILDFLAGS=-mod=vendor")
@@ -287,17 +308,7 @@ func sanitizeChart(s string, manifest pkg.Manifest) error {
 }
 
 func buildDocker(manifest pkg.Manifest) error {
-	// TODO: make distroless
-	cmd := exec.Command("make", "docker.save")
-	cmd.Env = os.Environ()
-	// TODO: this uses modules instead of vendor for some reason
-	cmd.Env = append(cmd.Env, "GOPATH="+path.Join(manifest.WorkingDirectory, "work"))
-	cmd.Env = append(cmd.Env, "TAG=tag")
-	cmd.Env = append(cmd.Env, "GOBUILDFLAGS=-mod=vendor")
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", "istio")
-	return cmd.Run()
+	return runMake(manifest, "docker.save")
 }
 
 func Sources(manifest pkg.Manifest) error {
