@@ -55,7 +55,7 @@ func buildCharts(manifest model.Manifest) error {
 	}
 	for _, chart := range charts {
 		if err := sanitizeChart(path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", chart), manifest); err != nil {
-			return err
+			return fmt.Errorf("failed to sanitze chart %v: %v", chart, err)
 		}
 		cmd := exec.Command("helm", "--home", helm, "package", chart, "--destination", path.Join(helm, "packages"))
 		cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io")
@@ -68,7 +68,7 @@ func buildCharts(manifest model.Manifest) error {
 }
 
 func buildDocker(manifest model.Manifest) error {
-	if err := runMake(manifest, []string{`DOCKER_BUILD_VARIANTS="default distroless"`}, "docker.save"); err != nil {
+	if err := runMake(manifest, []string{"DOCKER_BUILD_VARIANTS=default distroless"}, "docker.save"); err != nil {
 		return fmt.Errorf("failed to create docker archives: %v", err)
 	}
 	return nil
@@ -169,8 +169,9 @@ func sanitizeChart(s string, manifest model.Manifest) error {
 		return err
 	}
 	chart := make(map[string]interface{})
-	if err := yaml.Unmarshal(currentVersion, chart); err != nil {
-		return err
+	if err := yaml.Unmarshal(currentVersion, &chart); err != nil {
+		log.Errorf("unmarshal failed for Chart.yaml: %v", string(currentVersion))
+		return fmt.Errorf("failed to unmarshal chart: %v", err)
 	}
 	// Getting the current version is a bit of a hack, we should have a more explicit way to handle this
 	cv := chart["appVersion"].(string)
