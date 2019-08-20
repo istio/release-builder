@@ -89,6 +89,9 @@ func Package(manifest pkg.Manifest) error {
 	// Istioctl
 	for _, arch := range []string{"linux", "osx", "win"} {
 		archive := fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
+		if arch == "win" {
+			archive = fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
+		}
 		archivePath := path.Join(manifest.WorkingDirectory, "work", "archive", arch, archive)
 		if err := util.CopyFile(archivePath, path.Join(out, archive)); err != nil {
 			return fmt.Errorf("failed to package %v release archive: %v", arch, err)
@@ -132,10 +135,10 @@ func Build(manifest pkg.Manifest) error {
 }
 
 func buildDeb(manifest pkg.Manifest) error {
-	return runMake(manifest, "sidecar.deb")
+	return runMake(manifest, nil, "sidecar.deb")
 }
 
-func runMake(manifest pkg.Manifest, c ...string) error {
+func runMake(manifest pkg.Manifest, env []string, c ...string) error {
 	cmd := exec.Command("make", c...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "GOPATH="+path.Join(manifest.WorkingDirectory, "work"))
@@ -148,7 +151,7 @@ func runMake(manifest pkg.Manifest, c ...string) error {
 }
 
 func buildArchive(manifest pkg.Manifest) error {
-	if err := runMake(manifest, "istioctl-all", "istioctl.completion"); err != nil {
+	if err := runMake(manifest, nil, "istioctl-all", "istioctl.completion"); err != nil {
 		return fmt.Errorf("failed to make istioctl: %v", err)
 	}
 	for _, arch := range []string{"linux", "osx", "win"} {
@@ -203,11 +206,20 @@ func buildArchive(manifest pkg.Manifest) error {
 			return err
 		}
 
-		archive := path.Join(out, "..", fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch))
-		cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
-		cmd.Dir = path.Join(out, "..")
-		if err := cmd.Run(); err != nil {
-			return err
+		if arch == "win" {
+			archive := fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
+			cmd := util.VerboseCommand("zip", "-rq", archive, fmt.Sprintf("istio-%s", manifest.Version))
+			cmd.Dir = path.Join(out, "..")
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		} else {
+			archive := path.Join(out, "..", fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch))
+			cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
+			cmd.Dir = path.Join(out, "..")
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -308,7 +320,10 @@ func sanitizeChart(s string, manifest pkg.Manifest) error {
 }
 
 func buildDocker(manifest pkg.Manifest) error {
-	return runMake(manifest, "docker.save")
+	if err := runMake(manifest, []string{`DOCKER_BUILD_VARIANTS="default distroless"`}, "docker.save"); err != nil {
+		return fmt.Errorf("failed to create docker archives: %v", err)
+	}
+	return nil
 }
 
 func Sources(manifest pkg.Manifest) error {
