@@ -45,7 +45,7 @@ func Build(manifest model.Manifest) error {
 }
 
 func buildDeb(manifest model.Manifest) error {
-	return runMake(manifest, nil, "sidecar.deb")
+	return runMake(manifest, "istio", nil, "sidecar.deb")
 }
 
 func buildCharts(manifest model.Manifest) error {
@@ -80,14 +80,17 @@ func buildCharts(manifest model.Manifest) error {
 }
 
 func buildDocker(manifest model.Manifest) error {
-	if err := runMake(manifest, []string{"DOCKER_BUILD_VARIANTS=default distroless"}, "docker.save"); err != nil {
+	if err := runMake(manifest, "istio", []string{"DOCKER_BUILD_VARIANTS=default distroless"}, "docker.save"); err != nil {
 		return fmt.Errorf("failed to create docker archives: %v", err)
+	}
+	if err := runMake(manifest, "cni", nil, "docker.save"); err != nil {
+		return fmt.Errorf("failed to create cni docker archives: %v", err)
 	}
 	return nil
 }
 
 func buildArchive(manifest model.Manifest) error {
-	if err := runMake(manifest, nil, "istioctl-all", "istioctl.completion"); err != nil {
+	if err := runMake(manifest, "istio", nil, "istioctl-all", "istioctl.completion"); err != nil {
 		return fmt.Errorf("failed to make istioctl: %v", err)
 	}
 	for _, arch := range []string{"linux", "osx", "win"} {
@@ -160,17 +163,20 @@ func buildArchive(manifest model.Manifest) error {
 	return nil
 }
 
-func runMake(manifest model.Manifest, env []string, c ...string) error {
+func runMake(manifest model.Manifest, repo string, env []string, c ...string) error {
 	cmd := exec.Command("make", c...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "GOPATH="+path.Join(manifest.WorkingDirectory, "work"))
 	cmd.Env = append(cmd.Env, "TAG=tag")
-	cmd.Env = append(cmd.Env, "GOBUILDFLAGS=-mod=vendor")
+	// TODO make this less hacky
+	if repo == "istio" {
+		cmd.Env = append(cmd.Env, "GOBUILDFLAGS=-mod=vendor")
+	}
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", "istio")
-	log.Infof("Running make %v with env %v", strings.Join(c, " "), strings.Join(env, " "))
+	cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", repo)
+	log.Infof("Running make %v with env=%v wd=%v", strings.Join(c, " "), strings.Join(env, " "), cmd.Dir)
 	return cmd.Run()
 }
 

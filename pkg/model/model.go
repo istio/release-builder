@@ -8,6 +8,7 @@ const (
 	Debian
 	Istioctl
 )
+
 var (
 	AllBuildOutputs = []BuildOutput{Docker, Helm, Debian, Istioctl}
 )

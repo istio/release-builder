@@ -75,8 +75,8 @@ func readManifest(manifestFile string) (model.Manifest, error) {
 				Sha:  "master",
 			},
 		},
-		BuildOutputs: []model.BuildOutput{model.Helm},
-		//BuildOutputs: model.AllBuildOutputs,
+		//BuildOutputs: []model.BuildOutput{model.Docker},
+		BuildOutputs: model.AllBuildOutputs,
 	}, nil
 	//by, err := ioutil.ReadFile(manifestFile)
 	//if err != nil {
