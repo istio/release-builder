@@ -52,6 +52,13 @@ func Package(manifest model.Manifest) error {
 		}
 	}
 
+	// Bundle sources
+	cmd := util.VerboseCommand("tar", "-czf", "out/sources.tar.gz", "sources")
+	cmd.Dir = path.Join(manifest.WorkingDirectory)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to bundle sources: %v", err)
+	}
+
 	// Manifest
 	if err := writeManifest(manifest); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
