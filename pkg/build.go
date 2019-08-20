@@ -17,17 +17,29 @@ import (
 )
 
 func Build(manifest model.Manifest) error {
-	if err := buildDocker(manifest); err != nil {
-		return err
+
+	if manifest.ShouldBuild(model.Docker) {
+		if err := buildDocker(manifest); err != nil {
+			return err
+		}
 	}
-	if err := buildDeb(manifest); err != nil {
-		return err
+
+	if manifest.ShouldBuild(model.Helm) {
+		if err := buildCharts(manifest); err != nil {
+			return err
+		}
 	}
-	if err := buildCharts(manifest); err != nil {
-		return err
+
+	if manifest.ShouldBuild(model.Debian) {
+		if err := buildDeb(manifest); err != nil {
+			return err
+		}
 	}
-	if err := buildArchive(manifest); err != nil {
-		return err
+
+	if manifest.ShouldBuild(model.Istioctl) {
+		if err := buildArchive(manifest); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -69,12 +69,14 @@ func readManifest(manifestFile string) (model.Manifest, error) {
 				Repo:   "istio",
 				Branch: "master",
 			},
-			//{
-			//	Org:  "istio",
-			//	Repo: "installer",
-			//	Sha:  "b45de18499220e85e067cc8a71155e2af79cf170",
-			//},
+			{
+				Org:  "istio",
+				Repo: "cni",
+				Sha:  "master",
+			},
 		},
+		BuildOutputs: []model.BuildOutput{model.Helm},
+		//BuildOutputs: model.AllBuildOutputs,
 	}, nil
 	//by, err := ioutil.ReadFile(manifestFile)
 	//if err != nil {
