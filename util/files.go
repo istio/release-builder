@@ -70,7 +70,8 @@ func CreateSha(src string) error {
 		return fmt.Errorf("failed to read file %v: %v", src, err)
 	}
 	sha := sha256.Sum256(b)
-	if err := ioutil.WriteFile(src+".sha256", sha[:], 0644); err != nil {
+	shaFile := fmt.Sprintf("%x %s\n", sha, path.Base(src))
+	if err := ioutil.WriteFile(src+".sha256", []byte(shaFile), 0644); err != nil {
 		return fmt.Errorf("failed to write sha256 to %v: %v", src, err)
 	}
 	return nil

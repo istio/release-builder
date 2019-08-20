@@ -12,9 +12,9 @@ import (
 
 func Package(manifest model.Manifest) error {
 	out := path.Join(manifest.WorkingDirectory, "out")
+	istioOut := path.Join(manifest.WorkingDirectory, "work", "out", "linux_amd64", "release")
 
 	// Docker
-	istioOut := path.Join(manifest.WorkingDirectory, "work", "out", "linux_amd64", "release")
 	if err := util.CopyDir(path.Join(istioOut, "docker"), path.Join(out, "docker")); err != nil {
 		return fmt.Errorf("failed to package docker images: %v", err)
 	}
