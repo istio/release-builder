@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/howardjohn/istio-release/pkg"
+	"github.com/howardjohn/istio-release/pkg/model"
 	"github.com/pkg/errors"
 
 	"istio.io/pkg/log"
@@ -39,13 +39,38 @@ func CopyDir(src, dst string) error {
 	return nil
 }
 
+func CopyDirFiltered(src, dst string, include []string) error {
+	if err := CopyDir(src, dst); err != nil {
+		return err
+	}
+	if err := filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		fname := filepath.Base(path)
+		for _, pattern := range include {
+			if matched, _ := filepath.Match(pattern, fname); matched {
+				// It matches one of the patterns, so stop early
+				return nil
+			}
+		}
+		if err := os.Remove(path); err != nil {
+			return fmt.Errorf("failed to remove filted file %v: %v", path, err)
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to filter: %v", err)
+	}
+	return nil
+}
+
 func CreateSha(src string) error {
 	b, err := ioutil.ReadFile(src)
 	if err != nil {
 		return fmt.Errorf("failed to read file %v: %v", src, err)
 	}
 	sha := sha256.Sum256(b)
-	if err := ioutil.WriteFile(src + ".sha256", sha[:], 0644); err != nil {
+	if err := ioutil.WriteFile(src+".sha256", sha[:], 0644); err != nil {
 		return fmt.Errorf("failed to write sha256 to %v: %v", src, err)
 	}
 	return nil
@@ -94,7 +119,7 @@ func DownloadFile(filepath string, url string) error {
 	return err
 }
 
-func Clone(repo pkg.Dependency, dest string) error {
+func Clone(repo model.Dependency, dest string) error {
 	url := fmt.Sprintf("https://github.com/%s/%s", repo.Org, repo.Repo)
 	err := exec.Command("git", "clone", url, dest).Run()
 	if err != nil {

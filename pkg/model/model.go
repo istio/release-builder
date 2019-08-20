@@ -1,4 +1,4 @@
-package pkg
+package model
 
 type Manifest struct {
 	Dependencies     []Dependency `json:"dependencies"`
