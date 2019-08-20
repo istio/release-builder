@@ -60,10 +60,10 @@ func buildCharts(manifest model.Manifest) error {
 		return fmt.Errorf("failed to setup helm: %v", err)
 	}
 
-	// TODO: cni
 	charts := []string{
 		"istio/install/kubernetes/helm/istio",
 		"istio/install/kubernetes/helm/istio-init",
+		"cni/deployments/kubernetes/install/helm/istio-cni",
 	}
 	for _, chart := range charts {
 		if err := sanitizeChart(path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", chart), manifest); err != nil {
