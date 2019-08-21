@@ -1,16 +1,16 @@
 package main
 
 import (
-"fmt"
-"io/ioutil"
-"os"
-"path"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 
-"github.com/howardjohn/istio-release/pkg"
-"github.com/howardjohn/istio-release/pkg/build"
-"github.com/spf13/cobra"
+	"github.com/howardjohn/istio-release/pkg"
+	"github.com/howardjohn/istio-release/pkg/build"
+	"github.com/spf13/cobra"
 
-"istio.io/pkg/log"
+	"istio.io/pkg/log"
 )
 
 func setupWorkDir() string {
@@ -32,10 +32,10 @@ func setupWorkDir() string {
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "istio-build",
-		Short: "Builds a release of Istio",
+		Use:          "istio-build",
+		Short:        "Builds a release of Istio",
 		SilenceUsage: true,
-		Args:  cobra.ExactArgs(0),
+		Args:         cobra.ExactArgs(0),
 		RunE: func(c *cobra.Command, _ []string) error {
 			manifest, err := pkg.ReadManifest("release/manifest.yaml")
 			if err != nil {

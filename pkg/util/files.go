@@ -1,7 +1,6 @@
 package util
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -98,24 +97,11 @@ func CopyFile(src, dst string) error {
 
 func Clone(repo model.Dependency, dest string) error {
 	url := fmt.Sprintf("https://github.com/%s/%s", repo.Org, repo.Repo)
-	err := exec.Command("git", "clone", url, dest).Run()
+	err := VerboseCommand("git", "clone", url, dest).Run()
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command("git", "checkout", repo.Ref())
+	cmd := VerboseCommand("git", "checkout", repo.Ref())
 	cmd.Dir = dest
 	return cmd.Run()
-}
-
-func Download(url string, dest string) error {
-	// dirty hack
-	command := fmt.Sprintf("curl -sL %s | tar xvfz - -C %s", url, dest)
-	cmd := exec.Command("sh", "-c", command)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if stderr.String() != "" {
-		log.Warnf("Error downloading %v: %v", url, stderr.String())
-	}
-	return err
 }
