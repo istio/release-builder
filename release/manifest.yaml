@@ -1,7 +1,9 @@
+version: 1.3.0
 dependencies:
-#- repo: istio/api
-#  branch: master
-- repo: istio/installer
-  sha: b45de18499220e85e067cc8a71155e2af79cf170
-#- repo: istio/istio
-#  branch: master
+- org: istio
+  repo: istio
+  branch: master
+- org: istio
+  repo: cni
+  branch: master
+buildOutputs: [Docker, Helm, Debian, Archive]

@@ -5,7 +5,7 @@ test:
 	go test ./...
 
 run:
-	go run main.go
+	go run ./pkg/build/cmd
 
 format:
 	@scripts/run_gofmt.sh
