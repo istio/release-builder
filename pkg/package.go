@@ -3,6 +3,8 @@ package pkg
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
+	"os/exec"
 	"path"
 
 	"github.com/ghodss/yaml"
@@ -64,6 +66,25 @@ func Package(manifest model.Manifest) error {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
 
+	// Full license
+	if err := packageLicense(manifest); err != nil {
+		return fmt.Errorf("failed to package license file: %v", err)
+	}
+	return nil
+}
+
+func packageLicense(manifest model.Manifest) interface{} {
+	cmd := exec.Command("go", "run", "tools/license/get_dep_licenses.go")
+	cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", "istio")
+	o, err := os.Create(path.Join(manifest.WorkingDirectory, "out", "LICENSES"))
+	if err != nil {
+		return err
+	}
+	cmd.Stdout = o
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
 	return nil
 }
 
