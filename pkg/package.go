@@ -13,26 +13,24 @@ import (
 )
 
 func Package(manifest model.Manifest) error {
-	out := path.Join(manifest.WorkingDirectory, "out")
-	istioOut := path.Join(manifest.WorkingDirectory, "work", "out", "linux_amd64", "release")
 
 	if manifest.ShouldBuild(model.Docker) {
-		if err := util.CopyDir(path.Join(istioOut, "docker"), path.Join(out, "docker")); err != nil {
+		if err := util.CopyDir(path.Join(manifest.GoOutDir(), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
 			return fmt.Errorf("failed to package docker images: %v", err)
 		}
 	}
 
 	if manifest.ShouldBuild(model.Helm) {
-		if err := util.CopyDir(path.Join(manifest.WorkingDirectory, "work", "helm", "packages"), path.Join(out, "charts")); err != nil {
+		if err := util.CopyDir(path.Join(manifest.WorkDir(), "helm", "packages"), path.Join(manifest.OutDir(), "charts")); err != nil {
 			return fmt.Errorf("failed to package helm chart: %v", err)
 		}
 	}
 
 	if manifest.ShouldBuild(model.Debian) {
-		if err := util.CopyFile(path.Join(istioOut, "istio-sidecar.deb"), path.Join(out, "deb", "istio-sidecar.deb")); err != nil {
+		if err := util.CopyFile(path.Join(manifest.GoOutDir(), "istio-sidecar.deb"), path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
 			return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 		}
-		if err := util.CreateSha(path.Join(out, "deb", "istio-sidecar.deb")); err != nil {
+		if err := util.CreateSha(path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
 			return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 		}
 	}
@@ -43,8 +41,8 @@ func Package(manifest model.Manifest) error {
 			if arch == "win" {
 				archive = fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
 			}
-			archivePath := path.Join(manifest.WorkingDirectory, "work", "archive", arch, archive)
-			dest := path.Join(out, archive)
+			archivePath := path.Join(manifest.WorkDir(), "archive", arch, archive)
+			dest := path.Join(manifest.OutDir(), archive)
 			if err := util.CopyFile(archivePath, dest); err != nil {
 				return fmt.Errorf("failed to package %v release archive: %v", arch, err)
 			}
@@ -56,7 +54,7 @@ func Package(manifest model.Manifest) error {
 
 	// Bundle sources
 	cmd := util.VerboseCommand("tar", "-czf", "out/sources.tar.gz", "sources")
-	cmd.Dir = path.Join(manifest.WorkingDirectory)
+	cmd.Dir = path.Join(manifest.Directory)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to bundle sources: %v", err)
 	}
@@ -75,8 +73,8 @@ func Package(manifest model.Manifest) error {
 
 func packageLicense(manifest model.Manifest) interface{} {
 	cmd := exec.Command("go", "run", "tools/license/get_dep_licenses.go")
-	cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", "istio")
-	o, err := os.Create(path.Join(manifest.WorkingDirectory, "out", "LICENSES"))
+	cmd.Dir = manifest.RepoDir("istio")
+	o, err := os.Create(path.Join(manifest.OutDir(), "LICENSES"))
 	if err != nil {
 		return err
 	}
@@ -94,7 +92,7 @@ func writeManifest(manifest model.Manifest) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal manifest: %v", err)
 	}
-	if err := ioutil.WriteFile(path.Join(manifest.WorkingDirectory, "out", "manifest.yaml"), yml, 0640); err != nil {
+	if err := ioutil.WriteFile(path.Join(manifest.OutDir(), "manifest.yaml"), yml, 0640); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
 	return nil

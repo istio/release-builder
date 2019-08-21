@@ -49,10 +49,7 @@ func buildDeb(manifest model.Manifest) error {
 }
 
 func buildCharts(manifest model.Manifest) error {
-	helm := path.Join(manifest.WorkingDirectory, "work", "helm")
-	if err := os.MkdirAll(helm, 0750); err != nil {
-		return fmt.Errorf("failed to setup helm directory: %v", err)
-	}
+	helm := path.Join(manifest.WorkDir(), "helm")
 	if err := os.MkdirAll(path.Join(helm, "packages"), 0750); err != nil {
 		return fmt.Errorf("failed to setup helm directory: %v", err)
 	}
@@ -60,19 +57,20 @@ func buildCharts(manifest model.Manifest) error {
 		return fmt.Errorf("failed to setup helm: %v", err)
 	}
 
-	charts := []string{
-		"istio/install/kubernetes/helm/istio",
-		"istio/install/kubernetes/helm/istio-init",
-		"cni/deployments/kubernetes/install/helm/istio-cni",
+	allCharts := map[string][]string{
+		"istio": {"install/kubernetes/helm/istio", "install/kubernetes/helm/istio-init"},
+		"cni":   {"deployments/kubernetes/install/helm/istio-cni"},
 	}
-	for _, chart := range charts {
-		if err := sanitizeChart(path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", chart), manifest); err != nil {
-			return fmt.Errorf("failed to sanitze chart %v: %v", chart, err)
-		}
-		cmd := util.VerboseCommand("helm", "--home", helm, "package", chart, "--destination", path.Join(helm, "packages"))
-		cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io")
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to package %v by `%v`: %v", chart, cmd.Args, err)
+	for repo, charts := range allCharts {
+		for _, chart := range charts {
+			if err := sanitizeChart(path.Join(manifest.RepoDir(repo), chart), manifest.Version); err != nil {
+				return fmt.Errorf("failed to sanitze chart %v: %v", chart, err)
+			}
+			cmd := util.VerboseCommand("helm", "--home", helm, "package", chart, "--destination", path.Join(helm, "packages"))
+			cmd.Dir = manifest.RepoDir(repo)
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("failed to package %v by `%v`: %v", chart, cmd.Args, err)
+			}
 		}
 	}
 	if err := util.VerboseCommand("helm", "--home", helm, "repo", "index", path.Join(helm, "packages")).Run(); err != nil {
@@ -96,15 +94,13 @@ func buildArchive(manifest model.Manifest) error {
 		return fmt.Errorf("failed to make istioctl: %v", err)
 	}
 	for _, arch := range []string{"linux", "osx", "win"} {
-		out := path.Join(manifest.WorkingDirectory, "work", "archive", arch, fmt.Sprintf("istio-%s", manifest.Version))
+		out := path.Join(manifest.Directory, "work", "archive", arch, fmt.Sprintf("istio-%s", manifest.Version))
 		if err := os.MkdirAll(out, 0750); err != nil {
 			return err
 		}
-		istioOut := path.Join(manifest.WorkingDirectory, "work", "out", "linux_amd64", "release")
-		istioSrc := path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", "istio")
 
 		srcToOut := func(p string) error {
-			if err := util.CopyFile(path.Join(istioSrc, p), path.Join(out, p)); err != nil {
+			if err := util.CopyFile(path.Join(manifest.RepoDir("istio"), p), path.Join(out, p)); err != nil {
 				return err
 			}
 			return nil
@@ -131,10 +127,10 @@ func buildArchive(manifest model.Manifest) error {
 		// Set up install and samples. We filter down to only some file patterns
 		// TODO - clean this up. We probably include files we don't want and exclude files we do want.
 		includePatterns := []string{"*.yaml", "*.md", "cleanup.sh", "*.txt", "*.pem", "*.conf", "*.tpl", "*.json"}
-		if err := util.CopyDirFiltered(path.Join(istioSrc, "samples"), path.Join(out, "samples"), includePatterns); err != nil {
+		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "samples"), path.Join(out, "samples"), includePatterns); err != nil {
 			return err
 		}
-		if err := util.CopyDirFiltered(path.Join(istioSrc, "install"), path.Join(out, "install"), includePatterns); err != nil {
+		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "install"), path.Join(out, "install"), includePatterns); err != nil {
 			return err
 		}
 
@@ -142,7 +138,7 @@ func buildArchive(manifest model.Manifest) error {
 		if arch == "win" {
 			istioctlArch += ".exe"
 		}
-		if err := util.CopyFile(path.Join(istioOut, istioctlArch), path.Join(out, "bin", istioctlArch)); err != nil {
+		if err := util.CopyFile(path.Join(manifest.GoOutDir(), istioctlArch), path.Join(out, "bin", istioctlArch)); err != nil {
 			return err
 		}
 
@@ -168,7 +164,7 @@ func buildArchive(manifest model.Manifest) error {
 func runMake(manifest model.Manifest, repo string, env []string, c ...string) error {
 	cmd := exec.Command("make", c...)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "GOPATH="+path.Join(manifest.WorkingDirectory, "work"))
+	cmd.Env = append(cmd.Env, "GOPATH="+manifest.WorkDir())
 	cmd.Env = append(cmd.Env, "TAG="+manifest.Version)
 	// TODO make this less hacky
 	if repo == "istio" {
@@ -177,12 +173,12 @@ func runMake(manifest model.Manifest, repo string, env []string, c ...string) er
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	cmd.Dir = path.Join(manifest.WorkingDirectory, "work", "src", "istio.io", repo)
+	cmd.Dir = manifest.RepoDir(repo)
 	log.Infof("Running make %v with env=%v wd=%v", strings.Join(c, " "), strings.Join(env, " "), cmd.Dir)
 	return cmd.Run()
 }
 
-func sanitizeChart(s string, manifest model.Manifest) error {
+func sanitizeChart(s string, version string) error {
 	// TODO improve this to not use raw string handling of yaml
 	currentVersion, err := ioutil.ReadFile(path.Join(s, "Chart.yaml"))
 	if err != nil {
@@ -205,7 +201,7 @@ func sanitizeChart(s string, manifest model.Manifest) error {
 			contents := string(read)
 			for _, replacement := range []string{"appVersion", "version", "tag"} {
 				before := fmt.Sprintf("%s: %s", replacement, cv)
-				after := fmt.Sprintf("%s: %s", replacement, manifest.Version)
+				after := fmt.Sprintf("%s: %s", replacement, version)
 				contents = strings.ReplaceAll(contents, before, after)
 			}
 

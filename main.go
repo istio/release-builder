@@ -37,14 +37,14 @@ func main() {
 		log.Fatalf("failed to unmarshal manifest: %v", err)
 	}
 
-	if manifest.WorkingDirectory == "" {
-		manifest.WorkingDirectory = setupWorkDir()
+	if manifest.Directory == "" {
+		manifest.Directory = setupWorkDir()
 
 	}
 	if err := pkg.Sources(manifest); err != nil {
 		log.Fatalf("failed to fetch sources: %v", err)
 	}
-	log.Infof("Fetched all sources, setup working directory at %v", path.Join(manifest.WorkingDirectory, "work"))
+	log.Infof("Fetched all sources, setup working directory at %v", manifest.WorkDir())
 
 	if err := pkg.Build(manifest); err != nil {
 		log.Fatalf("failed to build: %v", err)
@@ -55,13 +55,13 @@ func main() {
 		log.Fatalf("failed to package: %v", err)
 	}
 
-	log.Infof("Built release at %v", manifest.WorkingDirectory)
+	log.Infof("Built release at %v", manifest.OutDir())
 }
 
 func readManifest(manifestFile string) (model.Manifest, error) {
 
 	return model.Manifest{
-		//WorkingDirectory: "/tmp/istio-release365668469",
+		//Directory: "/tmp/istio-release365668469",
 		Version: "master-20190820-09-16",
 		Dependencies: []model.Dependency{
 			{
