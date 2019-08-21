@@ -8,11 +8,11 @@ const (
 	Docker BuildOutput = iota
 	Helm
 	Debian
-	Istioctl
+	Archive
 )
 
 var (
-	AllBuildOutputs = []BuildOutput{Docker, Helm, Debian, Istioctl}
+	AllBuildOutputs = []BuildOutput{Docker, Helm, Debian, Archive}
 )
 
 type Manifest struct {

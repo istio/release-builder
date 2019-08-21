@@ -5,8 +5,7 @@ import (
 	"path"
 
 	"github.com/howardjohn/istio-release/pkg/model"
-	"github.com/howardjohn/istio-release/util"
-	"github.com/pkg/errors"
+	"github.com/howardjohn/istio-release/pkg/util"
 
 	"istio.io/pkg/log"
 )
@@ -14,7 +13,7 @@ import (
 func Sources(manifest model.Manifest) error {
 	for _, dependency := range manifest.Dependencies {
 		if err := util.Clone(dependency, path.Join(manifest.SourceDir(), dependency.Repo)); err != nil {
-			return errors.Wrap(err, fmt.Sprintf("failed to resolve: %+v", dependency))
+			return fmt.Errorf("failed to resolve %+v: %v", dependency, err)
 		}
 		log.Infof("Resolved %v", dependency.Repo)
 		src := path.Join(manifest.SourceDir(), dependency.Repo)

@@ -6,15 +6,13 @@ import (
 	"os/user"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"istio.io/pkg/log"
 )
 
 func Docker(image string, wd string, cmd ...string) error {
 	u, err := user.Current()
 	if err != nil {
-		return errors.Wrap(err, "failed to get user")
+		return fmt.Errorf("failed to get user: %v", err)
 	}
 	args := []string{
 		"run",

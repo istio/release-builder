@@ -29,9 +29,6 @@ func setupWorkDir() string {
 }
 
 func main() {
-	for _, s := range log.Scopes() {
-		s.SetLogCallers(true)
-	}
 	manifest, err := readManifest("")
 	if err != nil {
 		log.Fatalf("failed to unmarshal manifest: %v", err)
@@ -48,11 +45,6 @@ func main() {
 
 	if err := pkg.Build(manifest); err != nil {
 		log.Fatalf("failed to build: %v", err)
-	}
-	log.Infof("Build complete")
-
-	if err := pkg.Package(manifest); err != nil {
-		log.Fatalf("failed to package: %v", err)
 	}
 
 	log.Infof("Built release at %v", manifest.OutDir())
@@ -75,8 +67,8 @@ func readManifest(manifestFile string) (model.Manifest, error) {
 				Sha:  "master",
 			},
 		},
-		BuildOutputs: []model.BuildOutput{model.Helm},
-		//BuildOutputs: model.AllBuildOutputs,
+		//BuildOutputs: []model.BuildOutput{model.Helm},
+		BuildOutputs: model.AllBuildOutputs,
 	}, nil
 	//by, err := ioutil.ReadFile(manifestFile)
 	//if err != nil {
