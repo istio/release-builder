@@ -6,4 +6,3 @@ dependencies:
 - org: istio
   repo: cni
   branch: master
-buildOutputs: [Docker, Helm, Debian, Archive]
