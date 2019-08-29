@@ -17,7 +17,7 @@ import (
 )
 
 func VerboseCommand(name string, arg ...string) *exec.Cmd {
-	log.Infof("Running command %v %v", name, strings.Join(arg, " "))
+	log.Infof("Running command: %v %v", name, strings.Join(arg, " "))
 	cmd := exec.Command(name, arg...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout

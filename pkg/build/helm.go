@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -21,7 +20,7 @@ func Helm(manifest model.Manifest) error {
 	if err := os.MkdirAll(path.Join(helm, "packages"), 0750); err != nil {
 		return fmt.Errorf("failed to setup helm directory: %v", err)
 	}
-	if err := exec.Command("helm", "--home", helm, "init", "--client-only").Run(); err != nil {
+	if err := util.VerboseCommand("helm", "--home", helm, "init", "--client-only").Run(); err != nil {
 		return fmt.Errorf("failed to setup helm: %v", err)
 	}
 

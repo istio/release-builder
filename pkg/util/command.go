@@ -2,7 +2,6 @@ package util
 
 import (
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/howardjohn/istio-release/pkg/model"
@@ -11,10 +10,11 @@ import (
 )
 
 func RunMake(manifest model.Manifest, repo string, env []string, c ...string) error {
-	cmd := exec.Command("make", c...)
+	cmd := VerboseCommand("make", c...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "GOPATH="+manifest.WorkDir())
 	cmd.Env = append(cmd.Env, "TAG="+manifest.Version)
+	cmd.Env = append(cmd.Env, "ISTIO_VERSION="+manifest.Version)
 	// TODO make this less hacky
 	if repo == "istio" {
 		cmd.Env = append(cmd.Env, "GOBUILDFLAGS=-mod=vendor")

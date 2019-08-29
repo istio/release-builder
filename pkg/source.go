@@ -3,7 +3,6 @@ package pkg
 import (
 	"bytes"
 	"fmt"
-	"os/exec"
 	"path"
 
 	"github.com/howardjohn/istio-release/pkg/model"
@@ -22,14 +21,23 @@ func Sources(manifest model.Manifest) error {
 		if err := util.CopyDir(src, manifest.RepoDir(dependency.Repo)); err != nil {
 			return fmt.Errorf("failed to copy dependency %v to working directory: %v", dependency.Repo, err)
 		}
+		if err := TagRepo(manifest, dependency.Repo); err != nil {
+			return fmt.Errorf("failed to tag repo %v: %v", dependency.Repo, err)
+		}
 	}
 	return nil
+}
+
+func TagRepo(manifest model.Manifest, repo string) error {
+	cmd := util.VerboseCommand("git", "tag", manifest.Version)
+	cmd.Dir = manifest.RepoDir(repo)
+	return cmd.Run()
 }
 
 func StandardizeManifest(manifest *model.Manifest) error {
 	for i, dep := range manifest.Dependencies {
 		buf := bytes.Buffer{}
-		cmd := exec.Command("git", "rev-parse", "HEAD")
+		cmd := util.VerboseCommand("git", "rev-parse", "HEAD")
 		cmd.Stdout = &buf
 		cmd.Dir = manifest.RepoDir(dep.Repo)
 		if err := cmd.Run(); err != nil {

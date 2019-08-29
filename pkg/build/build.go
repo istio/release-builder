@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 
 	"github.com/ghodss/yaml"
@@ -58,7 +57,7 @@ func Build(manifest model.Manifest) error {
 }
 
 func writeLicense(manifest model.Manifest) interface{} {
-	cmd := exec.Command("go", "run", "tools/license/get_dep_licenses.go")
+	cmd := util.VerboseCommand("go", "run", "tools/license/get_dep_licenses.go")
 	cmd.Dir = manifest.RepoDir("istio")
 	o, err := os.Create(path.Join(manifest.OutDir(), "LICENSES"))
 	if err != nil {
