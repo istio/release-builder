@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/howardjohn/istio-release/pkg/model"
 	"github.com/howardjohn/istio-release/pkg/util"
@@ -43,7 +44,7 @@ func StandardizeManifest(manifest *model.Manifest) error {
 		if err := cmd.Run(); err != nil {
 			return err
 		}
-		dep.Sha = buf.String()
+		dep.Sha = strings.TrimSpace(buf.String())
 		dep.Branch = ""
 		manifest.Dependencies[i] = dep
 	}

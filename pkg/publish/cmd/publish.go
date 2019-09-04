@@ -5,10 +5,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/ghodss/yaml"
 	"github.com/howardjohn/istio-release/pkg"
 	"github.com/howardjohn/istio-release/pkg/model"
 	"github.com/howardjohn/istio-release/pkg/publish"
+	"github.com/howardjohn/istio-release/pkg/util"
 	"github.com/spf13/cobra"
 
 	"istio.io/pkg/log"
@@ -19,6 +19,7 @@ var (
 		release   string
 		dockerhub string
 		gcsbucket string
+		github    string
 	}{}
 	rootCmd = &cobra.Command{
 		Use:          "istio-publish",
@@ -37,8 +38,7 @@ var (
 				return fmt.Errorf("failed to read manifest from release: %v", err)
 			}
 			manifest.Directory = path.Join(flags.release, "..")
-			manifestYaml, _ := yaml.Marshal(manifest)
-			log.Infof("Manifest: %v", string(manifestYaml))
+			util.YamlLog("Manifest", manifest)
 
 			return Publish(manifest)
 		},
@@ -63,6 +63,11 @@ func Publish(manifest model.Manifest) error {
 			return fmt.Errorf("failed to publish to gcs: %v", err)
 		}
 	}
+	if flags.github != "" {
+		if err := publish.Github(manifest, flags.github); err != nil {
+			return fmt.Errorf("failed to publish to github: %v", err)
+		}
+	}
 	return nil
 }
 
@@ -70,9 +75,11 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.release, "release", flags.release,
 		"The directory with the Istio release binary.")
 	rootCmd.PersistentFlags().StringVar(&flags.dockerhub, "dockerhub", flags.dockerhub,
-		"The docker hub to push images to.")
+		"The docker hub to push images to. Example, docker.io/istio.")
 	rootCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
-		"The gcs bucket to publish binaries to.")
+		"The gcs bucket to publish binaries to. Example, gs://istio-release.")
+	rootCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
+		"The Github org to trigger a release, and tag, for. Example: istio.")
 }
 
 func main() {
