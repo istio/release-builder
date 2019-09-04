@@ -18,6 +18,7 @@ var (
 	flags = struct {
 		release   string
 		dockerhub string
+		gcsbucket string
 	}{}
 	rootCmd = &cobra.Command{
 		Use:          "istio-publish",
@@ -45,9 +46,6 @@ var (
 )
 
 func validateFlags() error {
-	if flags.dockerhub == "" {
-		return fmt.Errorf("--dockerhub required")
-	}
 	if flags.release == "" {
 		return fmt.Errorf("--release required")
 	}
@@ -55,8 +53,15 @@ func validateFlags() error {
 }
 
 func Publish(manifest model.Manifest) error {
-	if err := publish.Docker(manifest, flags.dockerhub); err != nil {
-		return fmt.Errorf("failed to publish to docker: %v", err)
+	if flags.dockerhub != "" {
+		if err := publish.Docker(manifest, flags.dockerhub); err != nil {
+			return fmt.Errorf("failed to publish to docker: %v", err)
+		}
+	}
+	if flags.gcsbucket != "" {
+		if err := publish.GcsArchive(manifest, flags.gcsbucket); err != nil {
+			return fmt.Errorf("failed to publish to gcs: %v", err)
+		}
 	}
 	return nil
 }
@@ -66,6 +71,8 @@ func init() {
 		"The directory with the Istio release binary.")
 	rootCmd.PersistentFlags().StringVar(&flags.dockerhub, "dockerhub", flags.dockerhub,
 		"The docker hub to push images to.")
+	rootCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
+		"The gcs bucket to publish binaries to.")
 }
 
 func main() {

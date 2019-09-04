@@ -12,11 +12,11 @@ import (
 )
 
 func Docker(manifest model.Manifest, hub string) error {
-	docker, err := ioutil.ReadDir(path.Join(manifest.OutDir(), "docker"))
+	dockerArchives, err := ioutil.ReadDir(path.Join(manifest.OutDir(), "docker"))
 	if err != nil {
 		return fmt.Errorf("failed to read docker output of release: %v", err)
 	}
-	for _, f := range docker {
+	for _, f := range dockerArchives {
 		if !strings.HasSuffix(f.Name(), "tar.gz") {
 			return fmt.Errorf("invalid image found in docker folder: %v", f.Name())
 		}
