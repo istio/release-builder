@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/howardjohn/istio-release/pkg/model"
 	"github.com/howardjohn/istio-release/pkg/util"
@@ -60,6 +61,20 @@ func GithubRelease(manifest model.Manifest, client *github.Client, githuborg str
 		return fmt.Errorf("failed to publish github release: %v", err)
 	}
 	util.YamlLog("Release", rel)
+
+	fname := fmt.Sprintf("istio-%s-linux.tar.gz", manifest.Version)
+	f, err := os.Open(path.Join(manifest.OutDir(), fname))
+	if err != nil {
+		return fmt.Errorf("failed to read file %v: %v", fname, err)
+	}
+	asset, _, err := client.Repositories.UploadReleaseAsset(ctx, githuborg, "istio", *rel.ID, &github.UploadOptions{
+		Name: fname,
+	}, f)
+	if err != nil {
+		return fmt.Errorf("failed to upload asset %v: %v", fname, err)
+	}
+	util.YamlLog("Release asset", asset)
+
 	return nil
 }
 
