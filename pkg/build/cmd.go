@@ -2,9 +2,6 @@ package build
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
 
 	"github.com/howardjohn/istio-release/pkg"
 	"github.com/spf13/cobra"
@@ -12,39 +9,23 @@ import (
 	"istio.io/pkg/log"
 )
 
-func setupWorkDir() string {
-	tmpdir, err := ioutil.TempDir(os.TempDir(), "istio-release")
-	if err != nil {
-		log.Fatalf("failed to create working directory: %v", err)
+var (
+	flags = struct {
+		manifest string
+	}{
+		manifest: "example/manifest.yaml",
 	}
-	if err := os.Mkdir(path.Join(tmpdir, "sources"), 0750); err != nil {
-		log.Fatalf("failed to set up working directory: %v", err)
-	}
-	if err := os.Mkdir(path.Join(tmpdir, "work"), 0750); err != nil {
-		log.Fatalf("failed to set up working directory: %v", err)
-	}
-	if err := os.Mkdir(path.Join(tmpdir, "out"), 0750); err != nil {
-		log.Fatalf("failed to set up working directory: %v", err)
-	}
-	return tmpdir
-}
-
-func GetBuildCommand() *cobra.Command {
-	return &cobra.Command{
+	buildCmd = &cobra.Command{
 		Use:          "build",
 		Short:        "Builds a release of Istio",
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(0),
 		RunE: func(c *cobra.Command, _ []string) error {
-			manifest, err := pkg.ReadManifest("release/manifest.yaml")
+			manifest, err := pkg.ReadManifest(flags.manifest)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal manifest: %v", err)
 			}
 
-			if manifest.Directory == "" {
-				manifest.Directory = setupWorkDir()
-
-			}
 			if err := pkg.Sources(manifest); err != nil {
 				return fmt.Errorf("failed to fetch sources: %v", err)
 			}
@@ -62,4 +43,13 @@ func GetBuildCommand() *cobra.Command {
 			return nil
 		},
 	}
+)
+
+func init() {
+	buildCmd.PersistentFlags().StringVar(&flags.manifest, "manifest", flags.manifest,
+		"The manifest to build.")
+}
+
+func GetBuildCommand() *cobra.Command {
+	return buildCmd
 }

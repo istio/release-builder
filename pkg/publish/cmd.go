@@ -43,6 +43,18 @@ var (
 	}
 )
 
+
+func init() {
+	publishCmd.PersistentFlags().StringVar(&flags.release, "release", flags.release,
+		"The directory with the Istio release binary.")
+	publishCmd.PersistentFlags().StringVar(&flags.dockerhub, "dockerhub", flags.dockerhub,
+		"The docker hub to push images to. Example, docker.io/istio.")
+	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
+		"The gcs bucket to publish binaries to. Example, gs://istio-release.")
+	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
+		"The Github org to trigger a release, and tag, for. Example: istio.")
+}
+
 func GetPublishCommand() *cobra.Command {
 	return publishCmd
 }
@@ -73,13 +85,3 @@ func Publish(manifest model.Manifest) error {
 	return nil
 }
 
-func init() {
-	publishCmd.PersistentFlags().StringVar(&flags.release, "release", flags.release,
-		"The directory with the Istio release binary.")
-	publishCmd.PersistentFlags().StringVar(&flags.dockerhub, "dockerhub", flags.dockerhub,
-		"The docker hub to push images to. Example, docker.io/istio.")
-	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
-		"The gcs bucket to publish binaries to. Example, gs://istio-release.")
-	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
-		"The Github org to trigger a release, and tag, for. Example: istio.")
-}
