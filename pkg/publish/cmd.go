@@ -1,13 +1,11 @@
-package main
+package publish
 
 import (
 	"fmt"
-	"os"
 	"path"
 
 	"github.com/howardjohn/istio-release/pkg"
 	"github.com/howardjohn/istio-release/pkg/model"
-	"github.com/howardjohn/istio-release/pkg/publish"
 	"github.com/howardjohn/istio-release/pkg/util"
 	"github.com/spf13/cobra"
 
@@ -21,8 +19,8 @@ var (
 		gcsbucket string
 		github    string
 	}{}
-	rootCmd = &cobra.Command{
-		Use:          "istio-publish",
+	publishCmd = &cobra.Command{
+		Use:          "publish",
 		Short:        "Publish a release of Istio",
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(0),
@@ -45,6 +43,10 @@ var (
 	}
 )
 
+func GetPublishCommand() *cobra.Command {
+	return publishCmd
+}
+
 func validateFlags() error {
 	if flags.release == "" {
 		return fmt.Errorf("--release required")
@@ -54,17 +56,17 @@ func validateFlags() error {
 
 func Publish(manifest model.Manifest) error {
 	if flags.dockerhub != "" {
-		if err := publish.Docker(manifest, flags.dockerhub); err != nil {
+		if err := Docker(manifest, flags.dockerhub); err != nil {
 			return fmt.Errorf("failed to publish to docker: %v", err)
 		}
 	}
 	if flags.gcsbucket != "" {
-		if err := publish.GcsArchive(manifest, flags.gcsbucket); err != nil {
+		if err := GcsArchive(manifest, flags.gcsbucket); err != nil {
 			return fmt.Errorf("failed to publish to gcs: %v", err)
 		}
 	}
 	if flags.github != "" {
-		if err := publish.Github(manifest, flags.github); err != nil {
+		if err := Github(manifest, flags.github); err != nil {
 			return fmt.Errorf("failed to publish to github: %v", err)
 		}
 	}
@@ -72,18 +74,12 @@ func Publish(manifest model.Manifest) error {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&flags.release, "release", flags.release,
+	publishCmd.PersistentFlags().StringVar(&flags.release, "release", flags.release,
 		"The directory with the Istio release binary.")
-	rootCmd.PersistentFlags().StringVar(&flags.dockerhub, "dockerhub", flags.dockerhub,
+	publishCmd.PersistentFlags().StringVar(&flags.dockerhub, "dockerhub", flags.dockerhub,
 		"The docker hub to push images to. Example, docker.io/istio.")
-	rootCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
+	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
 		"The gcs bucket to publish binaries to. Example, gs://istio-release.")
-	rootCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
+	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
 		"The Github org to trigger a release, and tag, for. Example: istio.")
-}
-
-func main() {
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(-1)
-	}
 }

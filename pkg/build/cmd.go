@@ -1,4 +1,4 @@
-package main
+package build
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"path"
 
 	"github.com/howardjohn/istio-release/pkg"
-	"github.com/howardjohn/istio-release/pkg/build"
 	"github.com/spf13/cobra"
 
 	"istio.io/pkg/log"
@@ -30,9 +29,9 @@ func setupWorkDir() string {
 	return tmpdir
 }
 
-var (
-	rootCmd = &cobra.Command{
-		Use:          "istio-build",
+func GetBuildCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:          "build",
 		Short:        "Builds a release of Istio",
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(0),
@@ -55,18 +54,12 @@ var (
 				return fmt.Errorf("failed to standardize manifest: %v", err)
 			}
 
-			if err := build.Build(manifest); err != nil {
+			if err := Build(manifest); err != nil {
 				return fmt.Errorf("failed to build: %v", err)
 			}
 
 			log.Infof("Built release at %v", manifest.OutDir())
 			return nil
 		},
-	}
-)
-
-func main() {
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(-1)
 	}
 }
