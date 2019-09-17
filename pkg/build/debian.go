@@ -8,6 +8,7 @@ import (
 	"github.com/howardjohn/istio-release/pkg/util"
 )
 
+// Debian produces a debian package just for the sidecar
 func Debian(manifest model.Manifest) error {
 	if err := util.RunMake(manifest, "istio", nil, "sidecar.deb"); err != nil {
 		return fmt.Errorf("failed to build sidecar.deb: %v", err)
