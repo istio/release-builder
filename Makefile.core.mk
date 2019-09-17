@@ -3,7 +3,7 @@ export GOPROXY ?= https://proxy.golang.org
 
 include common/Makefile.common.mk
 
-lint: lint-dockerfiles lint-scripts lint-yaml lint-go lint-markdown
+lint: lint-all
 
 test:
 	go test ./...

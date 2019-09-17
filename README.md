@@ -22,3 +22,10 @@ The publish step takes in the build artifacts as an input, and publishes them to
 * Publish a Github release
 
 All of these steps can be done in isolation. For example, a daily build will first publish to a staging GCS and dockerhub, then once testing has completed publish again to all locations.
+
+### Credentials
+
+The following credentials are needed
+* Github token as environment variable `GITHUB_TOKEN`.
+* Docker credentials (TODO - how to set these).
+* GCP credentials for GCS (TODO - how to set these).
