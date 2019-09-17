@@ -17,10 +17,45 @@ package pkg
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/howardjohn/istio-release/pkg/model"
 )
+
+func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
+	wd := in.Directory
+	if wd == "" {
+		var err error
+		wd, err = ioutil.TempDir(os.TempDir(), "istio-release")
+		if err != nil {
+			return model.Manifest{}, fmt.Errorf("failed to create working directory: %v", err)
+		}
+	}
+	outputs := map[model.BuildOutput]struct{}{}
+	for _, o := range in.BuildOutputs {
+		switch strings.ToLower(o) {
+		case "docker":
+			outputs[model.Docker] = struct{}{}
+		case "helm":
+			outputs[model.Helm] = struct{}{}
+		case "debian":
+			outputs[model.Debian] = struct{}{}
+		case "archive":
+			outputs[model.Archive] = struct{}{}
+		default:
+			return model.Manifest{}, fmt.Errorf("unknown build output: %v", o)
+		}
+	}
+	return model.Manifest{
+		Dependencies: in.Dependencies,
+		Version:      in.Version,
+		Docker:       in.Docker,
+		Directory:    wd,
+		BuildOutputs: outputs,
+	}, nil
+}
 
 func ReadManifest(manifestFile string) (model.Manifest, error) {
 	manifest := model.Manifest{}
@@ -31,7 +66,17 @@ func ReadManifest(manifestFile string) (model.Manifest, error) {
 	if err := yaml.Unmarshal(by, &manifest); err != nil {
 		return manifest, fmt.Errorf("failed to unmarshal manifest file: %v", err)
 	}
-	// TODO temporary hack to reduce build times in development
-	manifest.BuildOutputs = []model.BuildOutput{model.Archive}
+	return manifest, nil
+}
+
+func ReadInManifest(manifestFile string) (model.InputManifest, error) {
+	manifest := model.InputManifest{}
+	by, err := ioutil.ReadFile(manifestFile)
+	if err != nil {
+		return manifest, fmt.Errorf("failed to read manifest file: %v", err)
+	}
+	if err := yaml.Unmarshal(by, &manifest); err != nil {
+		return manifest, fmt.Errorf("failed to unmarshal manifest file: %v", err)
+	}
 	return manifest, nil
 }

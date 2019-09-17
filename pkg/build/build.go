@@ -28,25 +28,25 @@ import (
 // Build will create all artifacts required by the manifest
 // This assumes the working directory has been setup and sources resolved.
 func Build(manifest model.Manifest) error {
-	if manifest.ShouldBuild(model.Docker) {
+	if _, f := manifest.BuildOutputs[model.Docker]; f {
 		if err := Docker(manifest); err != nil {
 			return fmt.Errorf("failed to build Docker: %v", err)
 		}
 	}
 
-	if manifest.ShouldBuild(model.Helm) {
+	if _, f := manifest.BuildOutputs[model.Helm]; f {
 		if err := Helm(manifest); err != nil {
 			return fmt.Errorf("failed to build Helm: %v", err)
 		}
 	}
 
-	if manifest.ShouldBuild(model.Debian) {
+	if _, f := manifest.BuildOutputs[model.Debian]; f {
 		if err := Debian(manifest); err != nil {
 			return fmt.Errorf("failed to build Debian: %v", err)
 		}
 	}
 
-	if manifest.ShouldBuild(model.Archive) {
+	if _, f := manifest.BuildOutputs[model.Archive]; f {
 		if err := Archive(manifest); err != nil {
 			return fmt.Errorf("failed to build Archive: %v", err)
 		}

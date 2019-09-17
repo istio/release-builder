@@ -24,9 +24,12 @@ NEXT_VERSION=1.4.0
 DATE=$(date '+%Y%m%d-%H-%M')
 VERSION="${NEXT_VERSION}-alpha.${DATE}"
 
+WORK_DIR="${ARTIFACTS:-$(mktemp -d)}"
+
 MANIFEST=$(cat <<EOF
 version: ${VERSION}
 docker: docker.io/istio
+directory: ${WORK_DIR}
 dependencies:
   - org: istio
     repo: istio
@@ -34,6 +37,7 @@ dependencies:
   - org: istio
     repo: cni
     branch: master
+outputs: [archive]
 EOF
 )
 

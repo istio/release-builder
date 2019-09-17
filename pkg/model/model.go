@@ -48,6 +48,21 @@ func (d Dependency) Ref() string {
 }
 
 // Manifest defines what is in a release
+type InputManifest struct {
+	// Dependencies declares all git repositories used to build this release
+	Dependencies []Dependency `json:"dependencies"`
+	// Version specifies what version of Istio this release is
+	Version string `json:"version"`
+	// Docker specifies the docker hub to use in the helm charts.
+	Docker string `json:"docker"`
+	// Directory defines the base working directory for the release.
+	// This is excluded from the final serialization
+	Directory string `json:"directory"`
+	// BuildOutputs defines what components to build. This allows building only some components.
+	BuildOutputs []string `json:"outputs"`
+}
+
+// Manifest defines what is in a release
 type Manifest struct {
 	// Dependencies declares all git repositories used to build this release
 	Dependencies []Dependency `json:"dependencies"`
@@ -59,7 +74,7 @@ type Manifest struct {
 	// This is excluded from the final serialization
 	Directory string `json:"-"`
 	// BuildOutputs defines what components to build. This allows building only some components.
-	BuildOutputs []BuildOutput `json:"-"`
+	BuildOutputs map[BuildOutput]struct{} `json:"-"`
 }
 
 // RepoDir is a helper to return the working directory for a repo
@@ -85,14 +100,4 @@ func (m Manifest) SourceDir() string {
 // OutDir is a help to return the out directory
 func (m Manifest) OutDir() string {
 	return path.Join(m.Directory, "out")
-}
-
-// ShouldBuild is a helper to determine if this manifest should build the given artifact
-func (m Manifest) ShouldBuild(bo BuildOutput) bool {
-	for _, b := range m.BuildOutputs {
-		if bo == b {
-			return true
-		}
-	}
-	return false
 }

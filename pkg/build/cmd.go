@@ -35,12 +35,20 @@ var (
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(0),
 		RunE: func(c *cobra.Command, _ []string) error {
-			manifest, err := pkg.ReadManifest(flags.manifest)
+			inManifest, err := pkg.ReadInManifest(flags.manifest)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal manifest: %v", err)
 			}
-			manifest.Directory = pkg.SetupWorkDir()
-			// Setup the working directory
+
+			manifest, err := pkg.InputManifestToManifest(inManifest)
+			if err != nil {
+				return fmt.Errorf("failed to setup manifest: %v", err)
+			}
+
+			if err := pkg.SetupWorkDir(manifest.Directory); err != nil {
+				return fmt.Errorf("failed to setup work dir: %v", err)
+			}
+
 			if err := pkg.Sources(manifest); err != nil {
 				return fmt.Errorf("failed to fetch sources: %v", err)
 			}

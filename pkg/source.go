@@ -17,7 +17,6 @@ package pkg
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -57,21 +56,17 @@ func Sources(manifest model.Manifest) error {
 // * sources/ contains all of the sources to build from. These should not be modified
 // * work/ initially contains all the sources, but may be modified during the build
 // * out/ contains all final artifacts
-func SetupWorkDir() string {
-	tmpdir, err := ioutil.TempDir(os.TempDir(), "istio-release")
-	if err != nil {
-		log.Fatalf("failed to create working directory: %v", err)
+func SetupWorkDir(dir string) error {
+	if err := os.Mkdir(path.Join(dir, "sources"), 0750); err != nil {
+		return fmt.Errorf("failed to set up working directory: %v", err)
 	}
-	if err := os.Mkdir(path.Join(tmpdir, "sources"), 0750); err != nil {
-		log.Fatalf("failed to set up working directory: %v", err)
+	if err := os.Mkdir(path.Join(dir, "work"), 0750); err != nil {
+		return fmt.Errorf("failed to set up working directory: %v", err)
 	}
-	if err := os.Mkdir(path.Join(tmpdir, "work"), 0750); err != nil {
-		log.Fatalf("failed to set up working directory: %v", err)
+	if err := os.Mkdir(path.Join(dir, "out"), 0750); err != nil {
+		return fmt.Errorf("failed to set up working directory: %v", err)
 	}
-	if err := os.Mkdir(path.Join(tmpdir, "out"), 0750); err != nil {
-		log.Fatalf("failed to set up working directory: %v", err)
-	}
-	return tmpdir
+	return nil
 }
 
 // TagRepo tags a given git repo with the version from the manifest.
