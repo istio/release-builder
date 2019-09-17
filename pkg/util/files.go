@@ -30,6 +30,7 @@ import (
 	"istio.io/pkg/log"
 )
 
+// VerboseCommand runs a command, outputing stderr and stdout
 func VerboseCommand(name string, arg ...string) *exec.Cmd {
 	log.Infof("Running command: %v %v", name, strings.Join(arg, " "))
 	cmd := exec.Command(name, arg...)
@@ -48,6 +49,7 @@ func CopyDir(src, dst string) error {
 	return nil
 }
 
+// CopyDirFiltered copies a directory, but only includes files that match given patterns
 func CopyDirFiltered(src, dst string, include []string) error {
 	if err := CopyDir(src, dst); err != nil {
 		return err
@@ -73,6 +75,7 @@ func CopyDirFiltered(src, dst string, include []string) error {
 	return nil
 }
 
+// CreateSha will create and write a sha256sum of a file
 func CreateSha(src string) error {
 	b, err := ioutil.ReadFile(src)
 	if err != nil {

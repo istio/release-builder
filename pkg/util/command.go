@@ -24,6 +24,7 @@ import (
 	"istio.io/pkg/log"
 )
 
+// RunMake runs a make command for the repo, with standard environment variables set
 func RunMake(manifest model.Manifest, repo string, env []string, c ...string) error {
 	cmd := VerboseCommand("make", c...)
 	cmd.Env = os.Environ()
@@ -36,6 +37,7 @@ func RunMake(manifest model.Manifest, repo string, env []string, c ...string) er
 	return cmd.Run()
 }
 
+// YamlLog logs a object as yaml
 func YamlLog(prefix string, i interface{}) {
 	manifestYaml, _ := yaml.Marshal(i)
 	log.Infof("%s: %v", prefix, string(manifestYaml))

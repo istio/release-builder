@@ -6,6 +6,6 @@ include common/Makefile.common.mk
 lint: lint-all
 
 test:
-	go test ./...
+	go test -race ./...
 
 format: format-go
