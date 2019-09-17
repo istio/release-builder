@@ -39,8 +39,10 @@ type Manifest struct {
 	Dependencies []Dependency `json:"dependencies"`
 	// Version specifies what version of Istio this release is
 	Version string `json:"version"`
+	// Docker specifies the docker hub to use in the helm charts.
+	Docker string `json:"docker"`
 	// Directory defines the base working directory for the release.
-	// This is exluced from the final serialization
+	// This is excluded from the final serialization
 	Directory string `json:"-"`
 	// BuildOutputs defines what components to build. This allows building only some components.
 	BuildOutputs []BuildOutput `json:"-"`

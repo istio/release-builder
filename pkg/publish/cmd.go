@@ -43,7 +43,6 @@ var (
 	}
 )
 
-
 func init() {
 	publishCmd.PersistentFlags().StringVar(&flags.release, "release", flags.release,
 		"The directory with the Istio release binary.")
@@ -84,4 +83,3 @@ func Publish(manifest model.Manifest) error {
 	}
 	return nil
 }
-

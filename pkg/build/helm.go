@@ -32,7 +32,7 @@ func Helm(manifest model.Manifest) error {
 	}
 	for repo, charts := range allCharts {
 		for _, chart := range charts {
-			if err := sanitizeChart(path.Join(manifest.RepoDir(repo), chart), manifest.Version); err != nil {
+			if err := sanitizeChart(manifest, path.Join(manifest.RepoDir(repo), chart)); err != nil {
 				return fmt.Errorf("failed to sanitze chart %v: %v", chart, err)
 			}
 			// Package will create the tar.gz bundle for the given chart
@@ -57,7 +57,7 @@ func Helm(manifest model.Manifest) error {
 // In the final published charts, we need the version and tag to be set for the appropriate version
 // In order to do this, we simply replace the current version with the new one.
 // Currently the current version is not explicitly a placeholder - see https://github.com/istio/istio/issues/17146.
-func sanitizeChart(s string, version string) error {
+func sanitizeChart(manifest model.Manifest, s string) error {
 	// TODO improve this to not use raw string handling of yaml
 	currentVersion, err := ioutil.ReadFile(path.Join(s, "Chart.yaml"))
 	if err != nil {
@@ -83,14 +83,13 @@ func sanitizeChart(s string, version string) error {
 			// These fields contain the version, we swap out the placeholder with the correct version
 			for _, replacement := range []string{"appVersion", "version", "tag"} {
 				before := fmt.Sprintf("%s: %s", replacement, cv)
-				after := fmt.Sprintf("%s: %s", replacement, version)
+				after := fmt.Sprintf("%s: %s", replacement, manifest.Version)
 				contents = strings.ReplaceAll(contents, before, after)
 			}
 
 			// The hub should also be updated
 			before := fmt.Sprintf("%s: %s", "hub", "gcr.io/istio-release")
-			// TODO pass by manifest
-			after := fmt.Sprintf("%s: %s", "hub", "docker.io/istio")
+			after := fmt.Sprintf("%s: %s", "hub", manifest.Docker)
 			contents = strings.ReplaceAll(contents, before, after)
 
 			err = ioutil.WriteFile(p, []byte(contents), 0)
