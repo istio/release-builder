@@ -9,39 +9,36 @@ import (
 	"github.com/howardjohn/istio-release/pkg/util"
 )
 
+// Archive creates the release archive that users will download. This includes the installation templates,
+// istioctl, and various tools.
 func Archive(manifest model.Manifest) error {
+	// First, build all variants of istioctl (linux, osx, windows)
 	if err := util.RunMake(manifest, "istio", nil, "istioctl-all", "istioctl.completion"); err != nil {
 		return fmt.Errorf("failed to make istioctl: %v", err)
 	}
+
+	// We build archives for each arch. These contain the same thing except arch specific istioctl
 	for _, arch := range []string{"linux", "osx", "win"} {
 		out := path.Join(manifest.Directory, "work", "archive", arch, fmt.Sprintf("istio-%s", manifest.Version))
 		if err := os.MkdirAll(out, 0750); err != nil {
 			return err
 		}
 
-		srcToOut := func(p string) error {
-			if err := util.CopyFile(path.Join(manifest.RepoDir("istio"), p), path.Join(out, p)); err != nil {
+		// Some files we just directly copy into the release archive
+		directCopies := []string{
+			"LICENSE",
+			"README.md",
+
+			// Setup tools. The tools/ folder contains a bunch of extra junk, so just select exactly what we want
+			"tools/convert_RbacConfig_to_ClusterRbacConfig.sh",
+			"tools/packaging/common/istio-iptables.sh",
+			"tools/dump_kubernetes.sh",
+		}
+		for _, file := range directCopies {
+			if err := util.CopyFile(path.Join(manifest.RepoDir("istio"), file), path.Join(out, file)); err != nil {
 				return err
 			}
 			return nil
-		}
-
-		if err := srcToOut("LICENSE"); err != nil {
-			return err
-		}
-		if err := srcToOut("README.md"); err != nil {
-			return err
-		}
-
-		// Setup tools. The tools/ folder contains a bunch of extra junk, so just select exactly what we want
-		if err := srcToOut("tools/convert_RbacConfig_to_ClusterRbacConfig.sh"); err != nil {
-			return err
-		}
-		if err := srcToOut("tools/packaging/common/istio-iptables.sh"); err != nil {
-			return err
-		}
-		if err := srcToOut("tools/dump_kubernetes.sh"); err != nil {
-			return err
 		}
 
 		// Set up install and samples. We filter down to only some file patterns
@@ -54,40 +51,38 @@ func Archive(manifest model.Manifest) error {
 			return err
 		}
 
-		istioctlArch := fmt.Sprintf("istioctl-%s", arch)
+		// Copy the istioctl binary over
+		istioctlBinary := fmt.Sprintf("istioctl-%s", arch)
 		if arch == "win" {
-			istioctlArch += ".exe"
+			istioctlBinary += ".exe"
 		}
-		if err := util.CopyFile(path.Join(manifest.GoOutDir(), istioctlArch), path.Join(out, "bin", istioctlArch)); err != nil {
+		if err := util.CopyFile(path.Join(manifest.GoOutDir(), istioctlBinary), path.Join(out, "bin", istioctlBinary)); err != nil {
 			return err
 		}
 
-		if arch == "win" {
-			archive := fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
-			cmd := util.VerboseCommand("zip", "-rq", archive, fmt.Sprintf("istio-%s", manifest.Version))
-			cmd.Dir = path.Join(out, "..")
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		} else {
-			archive := path.Join(out, "..", fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch))
-			cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
-			cmd.Dir = path.Join(out, "..")
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-	}
-	for _, arch := range []string{"linux", "osx", "win"} {
-		archive := fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
+		// Create the archive from all the above files
+		archive := path.Join(out, "..", fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch))
+		cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
+		cmd.Dir = path.Join(out, "..")
+
+		// Windows should use zip instead
 		if arch == "win" {
 			archive = fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
+			cmd = util.VerboseCommand("zip", "-rq", archive, fmt.Sprintf("istio-%s", manifest.Version))
 		}
+
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+
+		// Copy files over to the output directory
 		archivePath := path.Join(manifest.WorkDir(), "archive", arch, archive)
 		dest := path.Join(manifest.OutDir(), archive)
 		if err := util.CopyFile(archivePath, dest); err != nil {
 			return fmt.Errorf("failed to package %v release archive: %v", arch, err)
 		}
+
+		// Create a SHA of the archive
 		if err := util.CreateSha(dest); err != nil {
 			return fmt.Errorf("failed to package %v: %v", dest, err)
 		}

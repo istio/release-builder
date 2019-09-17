@@ -17,6 +17,7 @@ func ReadManifest(manifestFile string) (model.Manifest, error) {
 	if err := yaml.Unmarshal(by, &manifest); err != nil {
 		return manifest, fmt.Errorf("failed to unmarshal manifest file: %v", err)
 	}
-	manifest.BuildOutputs = []model.BuildOutput{model.Docker, model.Archive}
+	// TODO temporary hack to reduce build times in development
+	manifest.BuildOutputs = []model.BuildOutput{model.Archive}
 	return manifest, nil
 }

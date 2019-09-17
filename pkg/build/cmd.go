@@ -26,10 +26,11 @@ var (
 				return fmt.Errorf("failed to unmarshal manifest: %v", err)
 			}
 
+			// Setup the working directory
 			if err := pkg.Sources(manifest); err != nil {
 				return fmt.Errorf("failed to fetch sources: %v", err)
 			}
-			log.Infof("Fetched all sources, setup working directory at %v", manifest.WorkDir())
+			log.Infof("Fetched all sources and setup working directory at %v", manifest.WorkDir())
 
 			if err := pkg.StandardizeManifest(&manifest); err != nil {
 				return fmt.Errorf("failed to standardize manifest: %v", err)

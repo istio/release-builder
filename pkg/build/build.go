@@ -11,6 +11,8 @@ import (
 	"github.com/howardjohn/istio-release/pkg/util"
 )
 
+// Build will create all artifacts required by the manifest
+// This assumes the working directory has been setup and sources resolved.
 func Build(manifest model.Manifest) error {
 	if manifest.ShouldBuild(model.Docker) {
 		if err := Docker(manifest); err != nil {
@@ -36,19 +38,17 @@ func Build(manifest model.Manifest) error {
 		}
 	}
 
-	// Bundle sources
+	// Bundle all sources used in the build
 	cmd := util.VerboseCommand("tar", "-czf", "out/sources.tar.gz", "sources")
 	cmd.Dir = path.Join(manifest.Directory)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to bundle sources: %v", err)
 	}
 
-	// Manifest
 	if err := writeManifest(manifest); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
 
-	// Full license
 	if err := writeLicense(manifest); err != nil {
 		return fmt.Errorf("failed to package license file: %v", err)
 	}
@@ -56,6 +56,7 @@ func Build(manifest model.Manifest) error {
 	return nil
 }
 
+// writeLicense will output a LICENSES file with a complete list of licenses from all dependencies.
 func writeLicense(manifest model.Manifest) interface{} {
 	cmd := util.VerboseCommand("go", "run", "tools/license/get_dep_licenses.go")
 	cmd.Dir = manifest.RepoDir("istio")
@@ -71,8 +72,8 @@ func writeLicense(manifest model.Manifest) interface{} {
 	return nil
 }
 
+// writeManifest will output the manifest to yaml
 func writeManifest(manifest model.Manifest) error {
-	// TODO we should replace indirect refs with SHA (in other part of code)
 	yml, err := yaml.Marshal(manifest)
 	if err != nil {
 		return fmt.Errorf("failed to marshal manifest: %v", err)
