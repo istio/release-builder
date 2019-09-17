@@ -52,7 +52,6 @@ func Archive(manifest model.Manifest) error {
 			if err := util.CopyFile(path.Join(manifest.RepoDir("istio"), file), path.Join(out, file)); err != nil {
 				return err
 			}
-			return nil
 		}
 
 		// Set up install and samples. We filter down to only some file patterns
@@ -75,9 +74,8 @@ func Archive(manifest model.Manifest) error {
 		}
 
 		// Create the archive from all the above files
-		archive := path.Join(out, "..", fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch))
+		archive := fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
 		cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
-		cmd.Dir = path.Join(out, "..")
 
 		// Windows should use zip instead
 		if arch == "win" {
@@ -85,6 +83,7 @@ func Archive(manifest model.Manifest) error {
 			cmd = util.VerboseCommand("zip", "-rq", archive, fmt.Sprintf("istio-%s", manifest.Version))
 		}
 
+		cmd.Dir = path.Join(out, "..")
 		if err := cmd.Run(); err != nil {
 			return err
 		}

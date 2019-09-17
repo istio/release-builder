@@ -32,7 +32,7 @@ import (
 
 // VerboseCommand runs a command, outputing stderr and stdout
 func VerboseCommand(name string, arg ...string) *exec.Cmd {
-	log.Infof("Running command: %v %v", name, strings.Join(arg, " "))
+	log.Infof("Running command: %v %v in", name, strings.Join(arg, " "))
 	cmd := exec.Command(name, arg...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -90,6 +90,7 @@ func CreateSha(src string) error {
 }
 
 func CopyFile(src, dst string) error {
+	log.Infof("Copying %v -> %v", src, dst)
 	in, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open file %v to copy: %v", src, err)
