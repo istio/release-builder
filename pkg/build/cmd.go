@@ -39,7 +39,7 @@ var (
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal manifest: %v", err)
 			}
-
+			manifest.Directory = pkg.SetupWorkDir()
 			// Setup the working directory
 			if err := pkg.Sources(manifest); err != nil {
 				return fmt.Errorf("failed to fetch sources: %v", err)

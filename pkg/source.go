@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -31,8 +32,6 @@ import (
 // Sources will copy all dependencies require, pulling from Github if required, and set up the working tree.
 // This includes locally tagging all git repos with the version being built, so that the right version is present in binaries.
 func Sources(manifest model.Manifest) error {
-	manifest.Directory = SetupWorkDir()
-
 	for _, dependency := range manifest.Dependencies {
 		// Fetch the dependency
 		if err := util.Clone(dependency, path.Join(manifest.SourceDir(), dependency.Repo)); err != nil {
@@ -77,23 +76,44 @@ func SetupWorkDir() string {
 
 // TagRepo tags a given git repo with the version from the manifest.
 func TagRepo(manifest model.Manifest, repo string) error {
+	headSha, err := GetSha(repo, "HEAD")
+	if err != nil {
+		return fmt.Errorf("failed to get HEAD SHA: %v", err)
+	}
+	currentTagSha, _ := GetSha(repo, manifest.Version)
+	if currentTagSha != "" {
+		if currentTagSha == headSha {
+			log.Infof("Tag %v already exists, but points to the right place.", manifest.Version)
+			return nil
+		}
+		return fmt.Errorf("tag %v already exists, retagging would move from %v to %v", manifest.Version, currentTagSha, headSha)
+	}
 	cmd := util.VerboseCommand("git", "tag", manifest.Version)
 	cmd.Dir = repo
 	return cmd.Run()
+}
+
+// GetSha returns the SHA for a given reference, or error if sha is not found
+func GetSha(repo string, ref string) (string, error) {
+	buf := bytes.Buffer{}
+	cmd := exec.Command("git", "rev-parse", ref)
+	cmd.Stdout = &buf
+	cmd.Dir = repo
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // StandardizeManifest will convert a manifest to a fixed SHA, rather than a branch
 // This allows outputting the exact version used after the build is complete
 func StandardizeManifest(manifest *model.Manifest) error {
 	for i, dep := range manifest.Dependencies {
-		buf := bytes.Buffer{}
-		cmd := util.VerboseCommand("git", "rev-parse", "HEAD")
-		cmd.Stdout = &buf
-		cmd.Dir = manifest.RepoDir(dep.Repo)
-		if err := cmd.Run(); err != nil {
-			return err
+		sha, err := GetSha(manifest.RepoDir(dep.Repo), "HEAD")
+		if err != nil {
+			return fmt.Errorf("failed to get SHA for %v: %v", dep.Repo, err)
 		}
-		dep.Sha = strings.TrimSpace(buf.String())
+		dep.Sha = strings.TrimSpace(sha)
 		dep.Branch = ""
 		manifest.Dependencies[i] = dep
 	}
