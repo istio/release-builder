@@ -48,6 +48,12 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 			return model.Manifest{}, fmt.Errorf("unknown build output: %v", o)
 		}
 	}
+	if len(outputs) == 0 {
+		outputs[model.Docker] = struct{}{}
+		outputs[model.Helm] = struct{}{}
+		outputs[model.Debian] = struct{}{}
+		outputs[model.Archive] = struct{}{}
+	}
 	return model.Manifest{
 		Dependencies: in.Dependencies,
 		Version:      in.Version,

@@ -20,10 +20,14 @@ ROOT=$(dirname "$WD")
 
 set -eux
 
+# Reference to the next minor version of Istio
+# This will create a version like 1.4.0-alpha.20191001
 NEXT_VERSION=1.4.0
-DATE=$(date '+%Y%m%d-%H-%M')
+DATE=$(date '+%Y%m%d')
 VERSION="${NEXT_VERSION}-alpha.${DATE}"
 
+# In CI we want to store the outputs to artifacts, which will preserve the build
+# If not specified, we can just create a temporary directory
 WORK_DIR="${ARTIFACTS:-$(mktemp -d)}"
 
 MANIFEST=$(cat <<EOF
@@ -37,7 +41,6 @@ dependencies:
   - org: istio
     repo: cni
     branch: master
-outputs: [archive]
 EOF
 )
 

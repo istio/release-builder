@@ -64,6 +64,11 @@ func Archive(manifest model.Manifest) error {
 			return err
 		}
 
+		// Write manifest
+		if err := writeManifest(manifest, out); err != nil {
+			return fmt.Errorf("failed to write manifest: %v", err)
+		}
+
 		// Copy the istioctl binary over
 		istioctlBinary := fmt.Sprintf("istioctl-%s", arch)
 		if arch == "win" {

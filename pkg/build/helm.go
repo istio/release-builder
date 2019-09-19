@@ -20,6 +20,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -27,6 +28,11 @@ import (
 	"github.com/howardjohn/istio-release/pkg/util"
 
 	"istio.io/pkg/log"
+)
+
+var (
+	// Currently tags are set as `branch-latest-daily`
+	tagRegex = regexp.MustCompile(`tag: .*-latest-daily`)
 )
 
 // Helm outputs the helm charts for the installation
@@ -95,16 +101,15 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 			}
 			contents := string(read)
 			// These fields contain the version, we swap out the placeholder with the correct version
-			for _, replacement := range []string{"appVersion", "version", "tag"} {
+			for _, replacement := range []string{"appVersion", "version"} {
 				before := fmt.Sprintf("%s: %s", replacement, cv)
 				after := fmt.Sprintf("%s: %s", replacement, manifest.Version)
 				contents = strings.ReplaceAll(contents, before, after)
 			}
 
-			// The hub should also be updated
-			before := fmt.Sprintf("%s: %s", "hub", "gcr.io/istio-release")
-			after := fmt.Sprintf("%s: %s", "hub", manifest.Docker)
-			contents = strings.ReplaceAll(contents, before, after)
+			// The hub and tag should also be updated
+			contents = strings.ReplaceAll(contents, "hub: gcr.io/istio-release", fmt.Sprintf("hub: %s", manifest.Docker))
+			contents = tagRegex.ReplaceAllString(contents, fmt.Sprintf("tag: %s", manifest.Version))
 
 			err = ioutil.WriteFile(p, []byte(contents), 0)
 			if err != nil {

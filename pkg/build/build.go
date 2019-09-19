@@ -59,7 +59,7 @@ func Build(manifest model.Manifest) error {
 		return fmt.Errorf("failed to bundle sources: %v", err)
 	}
 
-	if err := writeManifest(manifest); err != nil {
+	if err := writeManifest(manifest, manifest.OutDir()); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
 
@@ -87,12 +87,12 @@ func writeLicense(manifest model.Manifest) interface{} {
 }
 
 // writeManifest will output the manifest to yaml
-func writeManifest(manifest model.Manifest) error {
+func writeManifest(manifest model.Manifest, dir string) error {
 	yml, err := yaml.Marshal(manifest)
 	if err != nil {
 		return fmt.Errorf("failed to marshal manifest: %v", err)
 	}
-	if err := ioutil.WriteFile(path.Join(manifest.OutDir(), "manifest.yaml"), yml, 0640); err != nil {
+	if err := ioutil.WriteFile(path.Join(dir, "manifest.yaml"), yml, 0640); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
 	return nil
