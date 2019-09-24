@@ -47,3 +47,4 @@ EOF
 echo "${MANIFEST}"
 
 go run "${ROOT}/main.go" build --manifest <(echo "${MANIFEST}")
+#go run "${ROOT}/main.go" publish --release "${WORK_DIR}/out" --gcsbucket "gs://howardjohn/release" --dockerhub "gcr.io/howardjohn-istio"
