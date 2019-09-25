@@ -15,18 +15,62 @@
 package publish
 
 import (
+	"bufio"
+	"context"
 	"fmt"
+	"io"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
+	"cloud.google.com/go/storage"
 	"github.com/howardjohn/istio-release/pkg/model"
-	"github.com/howardjohn/istio-release/pkg/util"
+	"istio.io/pkg/log"
 )
 
 // GcsArchive publishes the final release archive to the given GCS bucket
 func GcsArchive(manifest model.Manifest, bucket string) error {
-	// TODO use golang libraries
-	// A bit painful since we cannot just copy the directory it seems, but must do each file
-	if err := util.VerboseCommand("gsutil", "-m", "cp", "-r", manifest.OutDir()+"/*", bucket+"/"+manifest.Version+"/").Run(); err != nil {
-		return fmt.Errorf("failed to write to gcs: %v", err)
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+		return err
 	}
+
+	// Allow the caller to pass a reference like bucket/folder/subfolder, but split this to
+	// bucket, and folder/subfolder prefix
+	splitbucket := strings.SplitN(bucket, "/", 2)
+	bucketName := splitbucket[0]
+	objectPrefix := ""
+	if len(splitbucket) > 1 {
+		objectPrefix = splitbucket[1]
+	}
+	bkt := client.Bucket(bucketName)
+	if err := filepath.Walk(manifest.OutDir(), func(p string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		objName := path.Join(objectPrefix, manifest.Version, strings.TrimPrefix(p, manifest.OutDir()))
+		obj := bkt.Object(objName)
+		w := obj.NewWriter(ctx)
+		f, err := os.Open(p)
+		if err != nil {
+			return fmt.Errorf("failed to open %v: %v", p, err)
+		}
+		r := bufio.NewReader(f)
+		if _, err := io.Copy(w, r); err != nil {
+			return fmt.Errorf("failed writing %v: %v", p, err)
+		}
+		if err := w.Close(); err != nil {
+			return fmt.Errorf("failed to close bucket: %v", err)
+		}
+		log.Infof("Wrote %v to gs://%s/%s", p, bucketName, objName)
+		return nil
+
+	}); err != nil {
+		return err
+	}
+	_ = bkt
 	return nil
 }
