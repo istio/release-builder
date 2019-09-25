@@ -114,6 +114,9 @@ func CopyFile(src, dst string) error {
 }
 
 func Clone(repo model.Dependency, dest string) error {
+	if repo.LocalPath != "" {
+		return CopyDir(repo.LocalPath, dest)
+	}
 	url := fmt.Sprintf("https://github.com/%s/%s", repo.Org, repo.Repo)
 	err := VerboseCommand("git", "clone", url, dest).Run()
 	if err != nil {

@@ -32,10 +32,11 @@ var (
 
 // Dependency defines a git dependency for the build
 type Dependency struct {
-	Org    string `json:"org"`
-	Repo   string `json:"repo"`
-	Branch string `json:"branch,omitempty"`
-	Sha    string `json:"sha,omitempty"`
+	Org       string `json:"org"`
+	Repo      string `json:"repo"`
+	Branch    string `json:"branch,omitempty"`
+	Sha       string `json:"sha,omitempty"`
+	LocalPath string `json:"localpath,omitempty"`
 }
 
 // Ref returns the git reference of a dependency.
