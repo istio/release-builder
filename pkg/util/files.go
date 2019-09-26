@@ -32,7 +32,7 @@ import (
 
 // VerboseCommand runs a command, outputing stderr and stdout
 func VerboseCommand(name string, arg ...string) *exec.Cmd {
-	log.Infof("Running command: %v %v in", name, strings.Join(arg, " "))
+	log.Infof("Running command: %v %v", name, strings.Join(arg, " "))
 	cmd := exec.Command(name, arg...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -122,6 +122,7 @@ func Clone(repo model.Dependency, dest string) error {
 	if err != nil {
 		return err
 	}
+	log.Errorf("howardjohn: Checkout %+v %v", repo, repo.Ref())
 	cmd := VerboseCommand("git", "checkout", repo.Ref())
 	cmd.Dir = dest
 	return cmd.Run()
