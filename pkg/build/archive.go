@@ -78,19 +78,21 @@ func Archive(manifest model.Manifest) error {
 			return err
 		}
 
+		var archive string
 		// Create the archive from all the above files
-		archive := fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
-		cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
-
-		// Windows should use zip instead
+		// Windows should use zip, linux and osx tar
 		if arch == "win" {
 			archive = fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
-			cmd = util.VerboseCommand("zip", "-rq", archive, fmt.Sprintf("istio-%s", manifest.Version))
-		}
-
-		cmd.Dir = path.Join(out, "..")
-		if err := cmd.Run(); err != nil {
-			return err
+			if err := util.ZipFolder(path.Join(out, "..", fmt.Sprintf("istio-%s", manifest.Version)), path.Join(out, "..", archive)); err != nil {
+				return fmt.Errorf("failed to zip istioctl: %v", err)
+			}
+		} else {
+			archive = fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
+			cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
+			cmd.Dir = path.Join(out, "..")
+			if err := cmd.Run(); err != nil {
+				return err
+			}
 		}
 
 		// Copy files over to the output directory
