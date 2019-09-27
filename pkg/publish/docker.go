@@ -26,7 +26,7 @@ import (
 )
 
 // Docker publishes all images to the given hub
-func Docker(manifest model.Manifest, hub string) error {
+func Docker(manifest model.Manifest, hub string, tags []string) error {
 	dockerArchives, err := ioutil.ReadDir(path.Join(manifest.OutDir(), "docker"))
 	if err != nil {
 		return fmt.Errorf("failed to read docker output of release: %v", err)
@@ -48,13 +48,18 @@ func Docker(manifest model.Manifest, hub string) error {
 
 		// Images are always built with the `istio` hub initially. We will retag these to the correct hub
 		currentTag := fmt.Sprintf("istio/%s:%s%s", imageName, manifest.Version, variant)
-		newTag := fmt.Sprintf("%s/%s:%s%s", hub, imageName, manifest.Version, variant)
-		if err := util.VerboseCommand("docker", "tag", currentTag, newTag).Run(); err != nil {
-			return fmt.Errorf("failed to load docker image %v: %v", currentTag, err)
+		if len(tags) == 0 {
+			tags = []string{manifest.Version}
 		}
+		for _, tag := range tags {
+			newTag := fmt.Sprintf("%s/%s:%s%s", hub, imageName, tag, variant)
+			if err := util.VerboseCommand("docker", "tag", currentTag, newTag).Run(); err != nil {
+				return fmt.Errorf("failed to load docker image %v: %v", currentTag, err)
+			}
 
-		if err := util.VerboseCommand("docker", "push", newTag).Run(); err != nil {
-			return fmt.Errorf("failed to push docker image %v: %v", newTag, err)
+			if err := util.VerboseCommand("docker", "push", newTag).Run(); err != nil {
+				return fmt.Errorf("failed to push docker image %v: %v", newTag, err)
+			}
 		}
 	}
 	return nil

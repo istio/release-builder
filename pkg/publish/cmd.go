@@ -29,10 +29,11 @@ import (
 
 var (
 	flags = struct {
-		release   string
-		dockerhub string
-		gcsbucket string
-		github    string
+		release    string
+		dockerhub  string
+		dockertags []string
+		gcsbucket  string
+		github     string
 	}{}
 	publishCmd = &cobra.Command{
 		Use:          "publish",
@@ -62,7 +63,9 @@ func init() {
 	publishCmd.PersistentFlags().StringVar(&flags.release, "release", flags.release,
 		"The directory with the Istio release binary.")
 	publishCmd.PersistentFlags().StringVar(&flags.dockerhub, "dockerhub", flags.dockerhub,
-		"The docker hub to push images to. Example, docker.io/istio.")
+		"The docker hub to push images to. Example: docker.io/istio.")
+	publishCmd.PersistentFlags().StringSliceVar(&flags.dockertags, "dockertags", flags.dockertags,
+		"The tags to apply to docker images. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
 		"The gcs bucket to publish binaries to. Example, gs://istio-release.")
 	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
@@ -82,7 +85,7 @@ func validateFlags() error {
 
 func Publish(manifest model.Manifest) error {
 	if flags.dockerhub != "" {
-		if err := Docker(manifest, flags.dockerhub); err != nil {
+		if err := Docker(manifest, flags.dockerhub, flags.dockertags); err != nil {
 			return fmt.Errorf("failed to publish to docker: %v", err)
 		}
 	}
