@@ -42,7 +42,7 @@ dependencies:
     repo: cni
     branch: master
 outputs:
-- archive
+- docker
 EOF
 )
 
