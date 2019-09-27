@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/howardjohn/istio-release/pkg/model"
-	"github.com/howardjohn/istio-release/pkg/util"
+	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 // Docker publishes all images to the given hub

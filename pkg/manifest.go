@@ -21,7 +21,8 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/howardjohn/istio-release/pkg/model"
+
+	"istio.io/release-builder/pkg/model"
 )
 
 func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {

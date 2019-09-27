@@ -1,4 +1,4 @@
-module github.com/howardjohn/istio-release
+module istio.io/release-builder
 
 go 1.13
 

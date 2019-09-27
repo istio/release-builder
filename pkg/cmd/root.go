@@ -15,9 +15,10 @@
 package cmd
 
 import (
-	"github.com/howardjohn/istio-release/pkg/build"
-	"github.com/howardjohn/istio-release/pkg/publish"
 	"github.com/spf13/cobra"
+
+	"istio.io/release-builder/pkg/build"
+	"istio.io/release-builder/pkg/publish"
 )
 
 // GetRootCmd returns the root of the cobra command-tree.

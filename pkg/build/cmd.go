@@ -17,8 +17,9 @@ package build
 import (
 	"fmt"
 
-	"github.com/howardjohn/istio-release/pkg"
 	"github.com/spf13/cobra"
+
+	"istio.io/release-builder/pkg"
 
 	"istio.io/pkg/log"
 )
