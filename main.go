@@ -17,7 +17,7 @@ package main
 import (
 	"os"
 
-	"github.com/howardjohn/istio-release/pkg/cmd"
+	"istio.io/release-builder/pkg/cmd"
 )
 
 func main() {

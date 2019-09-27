@@ -25,8 +25,9 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"github.com/howardjohn/istio-release/pkg/model"
+
 	"istio.io/pkg/log"
+	"istio.io/release-builder/pkg/model"
 )
 
 // GcsArchive publishes the final release archive to the given GCS bucket
@@ -48,6 +49,9 @@ func GcsArchive(manifest model.Manifest, bucket string) error {
 	}
 	bkt := client.Bucket(bucketName)
 	if err := filepath.Walk(manifest.OutDir(), func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if info.IsDir() {
 			return nil
 		}

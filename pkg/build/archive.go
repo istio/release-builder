@@ -19,8 +19,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/howardjohn/istio-release/pkg/model"
-	"github.com/howardjohn/istio-release/pkg/util"
+	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 // Archive creates the release archive that users will download. This includes the installation templates,

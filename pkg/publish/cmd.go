@@ -18,10 +18,11 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/howardjohn/istio-release/pkg"
-	"github.com/howardjohn/istio-release/pkg/model"
-	"github.com/howardjohn/istio-release/pkg/util"
 	"github.com/spf13/cobra"
+
+	"istio.io/release-builder/pkg"
+	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 
 	"istio.io/pkg/log"
 )

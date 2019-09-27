@@ -26,7 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/howardjohn/istio-release/pkg/model"
+	"istio.io/release-builder/pkg/model"
 
 	"istio.io/pkg/log"
 )
@@ -149,7 +149,7 @@ func ZipFolder(source, target string) error {
 		baseDir = filepath.Base(source)
 	}
 
-	filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -186,6 +186,4 @@ func ZipFolder(source, target string) error {
 		_, err = io.Copy(writer, file)
 		return err
 	})
-
-	return err
 }
