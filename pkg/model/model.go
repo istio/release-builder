@@ -17,12 +17,16 @@ package model
 import "path"
 
 type BuildOutput int
+type AutoDependency string
 
 const (
 	Docker BuildOutput = iota
 	Helm
 	Debian
 	Archive
+
+	// Deps will resolve by looking at the istio.deps file in istio/istio
+	Deps string = "deps"
 )
 
 var (
@@ -30,13 +34,24 @@ var (
 	AllBuildOutputs = []BuildOutput{Docker, Helm, Debian, Archive}
 )
 
+// DependencySource determines where to get the dependency from
+type DependencySource struct {
+	// Checkout the git branch
+	Branch string `json:"branch,omitempty"`
+	// Checkout the git SHA
+	Sha string `json:"sha,omitempty"`
+	// Copy the local path. Note this still needs to be a git repo.
+	LocalPath string `json:"localpath,omitempty"`
+	// Auto will fetch the SHA to use based on other repos. Currently this supports reading
+	// istio.deps from istio/istio only.
+	Auto string `json:"auto,omitempty"`
+}
+
 // Dependency defines a git dependency for the build
 type Dependency struct {
-	Org       string `json:"org"`
-	Repo      string `json:"repo"`
-	Branch    string `json:"branch,omitempty"`
-	Sha       string `json:"sha,omitempty"`
-	LocalPath string `json:"localpath,omitempty"`
+	Org  string `json:"org"`
+	Repo string `json:"repo"`
+	DependencySource
 }
 
 // Ref returns the git reference of a dependency.
@@ -101,4 +116,12 @@ func (m Manifest) SourceDir() string {
 // OutDir is a help to return the out directory
 func (m Manifest) OutDir() string {
 	return path.Join(m.Directory, "out")
+}
+
+// IstioDep identifies a external dependency of Istio.
+type IstioDep struct {
+	Comment       string `json:"_comment,omitempty"`
+	Name          string `json:"name,omitempty"`
+	RepoName      string `json:"repoName,omitempty"`
+	LastStableSHA string `json:"lastStableSHA,omitempty"`
 }

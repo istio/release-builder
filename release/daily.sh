@@ -40,7 +40,7 @@ dependencies:
     branch: master
   - org: istio
     repo: cni
-    branch: master
+    auto: deps
 outputs:
 - docker
 EOF
