@@ -73,7 +73,25 @@ func ReadManifest(manifestFile string) (model.Manifest, error) {
 	if err := yaml.Unmarshal(by, &manifest); err != nil {
 		return manifest, fmt.Errorf("failed to unmarshal manifest file: %v", err)
 	}
+	if err := validateManifestDependencies(manifest.Dependencies); err != nil {
+		return manifest, fmt.Errorf("invalid manifest: %v", err)
+	}
 	return manifest, nil
+}
+
+func validateManifestDependencies(dependencies model.IstioDependencies) error {
+	for _, repo := range dependencies.List() {
+		dep := dependencies.Get(repo)
+		if dep == nil {
+			return fmt.Errorf("missing dependency: %v", repo)
+		}
+		if dep.Branch != "" || dep.Sha != "" || dep.Auto != "" {
+			if dep.Git == "" {
+				return fmt.Errorf("%v has branch/sha/auto selected without git source", repo)
+			}
+		}
+	}
+	return nil
 }
 
 func ReadInManifest(manifestFile string) (model.InputManifest, error) {
@@ -84,6 +102,9 @@ func ReadInManifest(manifestFile string) (model.InputManifest, error) {
 	}
 	if err := yaml.Unmarshal(by, &manifest); err != nil {
 		return manifest, fmt.Errorf("failed to unmarshal manifest file: %v", err)
+	}
+	if err := validateManifestDependencies(manifest.Dependencies); err != nil {
+		return manifest, fmt.Errorf("invalid manifest: %v", err)
 	}
 	return manifest, nil
 }

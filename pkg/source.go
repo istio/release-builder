@@ -31,22 +31,24 @@ import (
 // Sources will copy all dependencies require, pulling from Github if required, and set up the working tree.
 // This includes locally tagging all git repos with the version being built, so that the right version is present in binaries.
 func Sources(manifest model.Manifest) error {
-	for _, dependency := range manifest.Dependencies {
+	for _, repo := range manifest.Dependencies.List() {
+		dependency := manifest.Dependencies.Get(repo)
+		src := path.Join(manifest.SourceDir(), repo)
+
 		// Fetch the dependency
-		if err := util.Clone(dependency, path.Join(manifest.SourceDir(), dependency.Repo)); err != nil {
+		if err := util.Clone(repo, *dependency, src); err != nil {
 			return fmt.Errorf("failed to resolve %+v: %v", dependency, err)
 		}
-		log.Infof("Resolved %v", dependency.Repo)
+		log.Infof("Resolved %v", repo)
 
 		// Also copy it to the working directory
-		src := path.Join(manifest.SourceDir(), dependency.Repo)
-		if err := util.CopyDir(src, manifest.RepoDir(dependency.Repo)); err != nil {
-			return fmt.Errorf("failed to copy dependency %v to working directory: %v", dependency.Repo, err)
+		if err := util.CopyDir(src, manifest.RepoDir(repo)); err != nil {
+			return fmt.Errorf("failed to copy dependency %v to working directory: %v", repo, err)
 		}
 
 		// Tag the repo. This allows the build process to look at the git tag for version information
-		if err := TagRepo(manifest, manifest.RepoDir(dependency.Repo)); err != nil {
-			return fmt.Errorf("failed to tag repo %v: %v", dependency.Repo, err)
+		if err := TagRepo(manifest, manifest.RepoDir(repo)); err != nil {
+			return fmt.Errorf("failed to tag repo %v: %v", repo, err)
 		}
 	}
 	return nil
@@ -103,14 +105,17 @@ func GetSha(repo string, ref string) (string, error) {
 // StandardizeManifest will convert a manifest to a fixed SHA, rather than a branch
 // This allows outputting the exact version used after the build is complete
 func StandardizeManifest(manifest *model.Manifest) error {
-	for i, dep := range manifest.Dependencies {
-		sha, err := GetSha(manifest.RepoDir(dep.Repo), "HEAD")
+	for _, repo := range manifest.Dependencies.List() {
+		dep := manifest.Dependencies.Get(repo)
+		sha, err := GetSha(manifest.RepoDir(repo), "HEAD")
 		if err != nil {
-			return fmt.Errorf("failed to get SHA for %v: %v", dep.Repo, err)
+			return fmt.Errorf("failed to get SHA for %v: %v", repo, err)
 		}
-		dep.Sha = strings.TrimSpace(sha)
-		dep.Branch = ""
-		manifest.Dependencies[i] = dep
+		newDep := model.Dependency{
+			Git: dep.Git,
+			Sha: strings.TrimSpace(sha),
+		}
+		manifest.Dependencies.Set(repo, newDep)
 	}
 	return nil
 }

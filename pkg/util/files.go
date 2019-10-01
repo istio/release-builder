@@ -115,31 +115,31 @@ func CopyFile(src, dst string) error {
 	return nil
 }
 
-func Clone(repo model.Dependency, dest string) error {
-	if repo.LocalPath != "" {
-		return CopyDir(repo.LocalPath, dest)
+func Clone(repo string, dep model.Dependency, dest string) error {
+	if dep.LocalPath != "" {
+		return CopyDir(dep.LocalPath, dest)
 	}
-	if repo.Auto != "" {
+	if dep.Auto != "" {
 		// In Auto mode the dependency will be update to have the correct sha applied
-		if err := FetchAuto(&repo, dest); err != nil {
+		if err := FetchAuto(repo, &dep, dest); err != nil {
 			return err
 		}
 	}
-	url := fmt.Sprintf("https://github.com/%s/%s", repo.Org, repo.Repo)
-	err := VerboseCommand("git", "clone", url, dest).Run()
+	// We must be fetching from git
+	err := VerboseCommand("git", "clone", dep.Git, dest).Run()
 	if err != nil {
 		return err
 	}
 
-	cmd := VerboseCommand("git", "checkout", repo.Ref())
+	cmd := VerboseCommand("git", "checkout", dep.Ref())
 	cmd.Dir = dest
 	return cmd.Run()
 }
 
 // FetchAuto looks up the SHA to use for the dependency from istio/istio
-func FetchAuto(repo *model.Dependency, dest string) error {
-	if repo.Auto != model.Deps {
-		return fmt.Errorf("unknown auto dependency: %v", repo.Auto)
+func FetchAuto(repo string, dep *model.Dependency, dest string) error {
+	if dep.Auto != model.Deps {
+		return fmt.Errorf("unknown auto dependency: %v", dep.Auto)
 	}
 	depsFile, err := ioutil.ReadFile(path.Join(dest, "../istio/istio.deps"))
 	if err != nil {
@@ -151,14 +151,14 @@ func FetchAuto(repo *model.Dependency, dest string) error {
 	}
 	var sha string
 	for _, d := range deps {
-		if d.RepoName == repo.Repo {
+		if d.RepoName == repo {
 			sha = d.LastStableSHA
 		}
 	}
 	if sha == "" {
-		return fmt.Errorf("failed to automatically resolve source for %v", repo.Repo)
+		return fmt.Errorf("failed to automatically resolve source for %v", repo)
 	}
-	repo.Sha = sha
+	dep.Sha = sha
 	return nil
 }
 
