@@ -34,8 +34,10 @@ var (
 	AllBuildOutputs = []BuildOutput{Docker, Helm, Debian, Archive}
 )
 
-// DependencySource determines where to get the dependency from
-type DependencySource struct {
+// Dependency defines a git dependency for the build
+type Dependency struct {
+	// Git repository to pull from. Required if branch or sha is set
+	Git string `json:"git,omitempty"`
 	// Checkout the git branch
 	Branch string `json:"branch,omitempty"`
 	// Checkout the git SHA
@@ -47,13 +49,6 @@ type DependencySource struct {
 	Auto string `json:"auto,omitempty"`
 }
 
-// Dependency defines a git dependency for the build
-type Dependency struct {
-	Org  string `json:"org"`
-	Repo string `json:"repo"`
-	DependencySource
-}
-
 // Ref returns the git reference of a dependency.
 func (d Dependency) Ref() string {
 	ref := d.Branch
@@ -63,10 +58,42 @@ func (d Dependency) Ref() string {
 	return ref
 }
 
+// Dependencies for the build
+type IstioDependencies struct {
+	Istio Dependency `json:"istio"`
+	Cni   Dependency `json:"cni"`
+}
+
+func (i IstioDependencies) List() []string {
+	return []string{"istio", "cni"}
+}
+
+func (i IstioDependencies) Get(repo string) *Dependency {
+	switch repo {
+	case "istio":
+		return &i.Istio
+	case "cni":
+		return &i.Cni
+	default:
+		panic("unknown dependency " + repo)
+	}
+}
+
+func (i *IstioDependencies) Set(repo string, dependency Dependency) {
+	switch repo {
+	case "istio":
+		i.Istio = dependency
+	case "cni":
+		i.Cni = dependency
+	default:
+		panic("unknown dependency " + repo)
+	}
+}
+
 // Manifest defines what is in a release
 type InputManifest struct {
 	// Dependencies declares all git repositories used to build this release
-	Dependencies []Dependency `json:"dependencies"`
+	Dependencies IstioDependencies `json:"dependencies"`
 	// Version specifies what version of Istio this release is
 	Version string `json:"version"`
 	// Docker specifies the docker hub to use in the helm charts.
@@ -81,7 +108,7 @@ type InputManifest struct {
 // Manifest defines what is in a release
 type Manifest struct {
 	// Dependencies declares all git repositories used to build this release
-	Dependencies []Dependency `json:"dependencies"`
+	Dependencies IstioDependencies `json:"dependencies"`
 	// Version specifies what version of Istio this release is
 	Version string `json:"version"`
 	// Docker specifies the docker hub to use in the helm charts.

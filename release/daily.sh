@@ -35,14 +35,14 @@ version: ${VERSION}
 docker: docker.io/istio
 directory: ${WORK_DIR}
 dependencies:
-  - org: istio
-    repo: istio
+  istio:
     branch: master
-  - org: istio
-    repo: cni
+    git: https://github.com/istio/istio
+  cni:
     auto: deps
+    git: https://github.com/istio/cni
 outputs:
-- docker
+- archive
 EOF
 )
 
