@@ -73,9 +73,6 @@ func ReadManifest(manifestFile string) (model.Manifest, error) {
 	if err := yaml.Unmarshal(by, &manifest); err != nil {
 		return manifest, fmt.Errorf("failed to unmarshal manifest file: %v", err)
 	}
-	if err := validateManifestDependencies(manifest.Dependencies); err != nil {
-		return manifest, fmt.Errorf("invalid manifest: %v", err)
-	}
 	return manifest, nil
 }
 
