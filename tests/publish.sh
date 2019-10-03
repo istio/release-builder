@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Copyright Istio Authors
 #
@@ -16,19 +16,23 @@
 
 WD=$(dirname "$0")
 WD=$(cd "$WD"; pwd)
-ROOT=$(dirname "$WD")
 
 set -eux
 
-# Reference to the next minor version of Istio
-# This will create a version like 1.4.0-alpha.20191001
-NEXT_VERSION=1.4.0
-DATE=$(date '+%Y%m%d')
-VERSION="${NEXT_VERSION}-alpha.${DATE}"
+if [[ $(command -v gcloud) ]]; then
+  gcloud auth configure-docker -q
+elif [[ $(command -v docker-credential-gcr) ]]; then
+  docker-credential-gcr configure-docker
+else
+  echo "No credential helpers found, push to docker may not function properly"
+fi
 
-# In CI we want to store the outputs to artifacts, which will preserve the build
-# If not specified, we can just create a temporary directory
-WORK_DIR="${ARTIFACTS:-$(mktemp -d)}"
+DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
+GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/test}
+VERSION="release-builder-$(git rev-parse HEAD)"
+
+WORK_DIR="$(mktemp -d)/build"
+mkdir -p "${WORK_DIR}"
 
 MANIFEST=$(cat <<EOF
 version: ${VERSION}
@@ -36,17 +40,19 @@ docker: docker.io/istio
 directory: ${WORK_DIR}
 dependencies:
   istio:
-    branch: master
     git: https://github.com/istio/istio
+    branch: master
   cni:
-    auto: deps
     git: https://github.com/istio/cni
-outputs:
-- archive
+    auto: deps
 EOF
 )
 
-echo "${MANIFEST}"
+# "Temporary" hacks
+export PATH=${GOPATH}/bin:${PATH}
 
-go run "${ROOT}/main.go" build --manifest <(echo "${MANIFEST}")
-#go run "${ROOT}/main.go" publish --release "${WORK_DIR}/out" --gcsbucket howardjohn/release --dockerhub "gcr.io/howardjohn-istio"
+go run main.go build --manifest <(echo "${MANIFEST}")
+
+if [[ -z "${DRY_RUN:-}" ]]; then
+  go run main.go publish --release "${WORK_DIR}/out" --gcsbucket "${GCS_BUCKET}" --dockerhub "${DOCKER_HUB}" --dockertags "${TAG}"
+fi
