@@ -28,7 +28,7 @@ else
 fi
 
 DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
-GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/test}
+GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
 VERSION="release-builder-$(git rev-parse HEAD)"
 
 WORK_DIR="$(mktemp -d)/build"
@@ -54,5 +54,5 @@ export PATH=${GOPATH}/bin:${PATH}
 go run main.go build --manifest <(echo "${MANIFEST}")
 
 if [[ -z "${DRY_RUN:-}" ]]; then
-  go run main.go publish --release "${WORK_DIR}/out" --gcsbucket "${GCS_BUCKET}" --dockerhub "${DOCKER_HUB}" --dockertags "${TAG}"
+  go run main.go publish --release "${WORK_DIR}/out" --gcsbucket "${GCS_BUCKET}" --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}"
 fi
