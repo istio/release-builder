@@ -28,7 +28,7 @@ else
 fi
 
 DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
-GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/test}
+GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
 VERSION="release-builder-$(git rev-parse HEAD)"
 
 WORK_DIR="$(mktemp -d)/build"
