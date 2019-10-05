@@ -36,7 +36,7 @@ mkdir -p "${WORK_DIR}"
 
 MANIFEST=$(cat <<EOF
 version: ${VERSION}
-docker: docker.io/istio
+docker: ${DOCKER_HUB}
 directory: ${WORK_DIR}
 dependencies:
   istio:

@@ -35,6 +35,10 @@ func Build(manifest model.Manifest) error {
 		}
 	}
 
+	if err := SanitizeAllCharts(manifest); err != nil {
+		return fmt.Errorf("failed to sanitize charts")
+	}
+
 	if _, f := manifest.BuildOutputs[model.Helm]; f {
 		if err := Helm(manifest); err != nil {
 			return fmt.Errorf("failed to build Helm: %v", err)
@@ -73,7 +77,7 @@ func Build(manifest model.Manifest) error {
 
 // writeLicense will output a LICENSES file with a complete list of licenses from all dependencies.
 func writeLicense(manifest model.Manifest) interface{} {
-	cmd := util.VerboseCommand("go", "run", "istio.io/tools/cmd/license-lint", "--report")
+	cmd := util.VerboseCommand("go", "run", "istio.io/tools/cmd/license-lint", "--config", "common/config/license-lint.yml", "--report")
 	cmd.Dir = manifest.RepoDir("istio")
 	o, err := os.Create(path.Join(manifest.OutDir(), "LICENSES"))
 	if err != nil {
