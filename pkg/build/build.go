@@ -76,7 +76,11 @@ func Build(manifest model.Manifest) error {
 }
 
 // writeLicense will output a LICENSES file with a complete list of licenses from all dependencies.
-func writeLicense(manifest model.Manifest) interface{} {
+func writeLicense(manifest model.Manifest) error {
+	// License tool requires all dependencies to be downloaded
+	if err := util.VerboseCommand("go", "mod", "download").Run(); err != nil {
+		return err
+	}
 	cmd := util.VerboseCommand("go", "run", "istio.io/tools/cmd/license-lint", "--config", "common/config/license-lint.yml", "--report")
 	cmd.Dir = manifest.RepoDir("istio")
 	o, err := os.Create(path.Join(manifest.OutDir(), "LICENSES"))
