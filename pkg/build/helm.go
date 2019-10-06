@@ -34,7 +34,25 @@ import (
 var (
 	// Currently tags are set as `branch-latest-daily`
 	tagRegex = regexp.MustCompile(`tag: .*-latest-daily`)
+
+	allCharts = map[string][]string{
+		"istio": {"install/kubernetes/helm/istio", "install/kubernetes/helm/istio-init"},
+		"cni":   {"deployments/kubernetes/install/helm/istio-cni"},
+	}
 )
+
+// SanitizeAllCharts rewrites versions, tags, and hubs for helm charts. This is done independent of Helm
+// as it is required for both the helm charts and the archive
+func SanitizeAllCharts(manifest model.Manifest) error {
+	for repo, charts := range allCharts {
+		for _, chart := range charts {
+			if err := sanitizeChart(manifest, path.Join(manifest.RepoDir(repo), chart)); err != nil {
+				return fmt.Errorf("failed to sanitze chart %v: %v", chart, err)
+			}
+		}
+	}
+	return nil
+}
 
 // Helm outputs the helm charts for the installation
 func Helm(manifest model.Manifest) error {
@@ -47,15 +65,8 @@ func Helm(manifest model.Manifest) error {
 		return fmt.Errorf("failed to setup helm: %v", err)
 	}
 
-	allCharts := map[string][]string{
-		"istio": {"install/kubernetes/helm/istio", "install/kubernetes/helm/istio-init"},
-		"cni":   {"deployments/kubernetes/install/helm/istio-cni"},
-	}
 	for repo, charts := range allCharts {
 		for _, chart := range charts {
-			if err := sanitizeChart(manifest, path.Join(manifest.RepoDir(repo), chart)); err != nil {
-				return fmt.Errorf("failed to sanitze chart %v: %v", chart, err)
-			}
 			// Package will create the tar.gz bundle for the given chart
 			cmd := util.VerboseCommand("helm", "--home", helm, "package", chart, "--destination", path.Join(helm, "packages"))
 			cmd.Dir = manifest.RepoDir(repo)
@@ -95,7 +106,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 	cv := chart["appVersion"].(string)
 	if err := filepath.Walk(s, func(p string, info os.FileInfo, err error) error {
 		fname := path.Base(p)
-		if fname == "Chart.yaml" || fname == "values.yaml" {
+		if fname == "Chart.yaml" || fname == "values.yaml" || fname == "values_gke.yaml" {
 			read, err := ioutil.ReadFile(p)
 			if err != nil {
 				return err

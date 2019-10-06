@@ -63,6 +63,10 @@ func Archive(manifest model.Manifest) error {
 		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "install"), path.Join(out, "install"), includePatterns); err != nil {
 			return err
 		}
+		cniSource := path.Join(manifest.RepoDir("cni"), "deployments/kubernetes/install/helm/istio-cni")
+		if err := util.CopyDirFiltered(cniSource, path.Join(out, "install/kubernetes/helm"), includePatterns); err != nil {
+			return err
+		}
 
 		// Write manifest
 		if err := writeManifest(manifest, out); err != nil {
@@ -71,10 +75,15 @@ func Archive(manifest model.Manifest) error {
 
 		// Copy the istioctl binary over
 		istioctlBinary := fmt.Sprintf("istioctl-%s", arch)
+		istioctlDest := "istioctl"
 		if arch == "win" {
 			istioctlBinary += ".exe"
+			istioctlDest += ".exe"
 		}
-		if err := util.CopyFile(path.Join(manifest.GoOutDir(), istioctlBinary), path.Join(out, "bin", istioctlBinary)); err != nil {
+		if err := util.CopyFile(path.Join(manifest.GoOutDir(), istioctlBinary), path.Join(out, "bin", istioctlDest)); err != nil {
+			return err
+		}
+		if err := os.Chmod(path.Join(out, "bin", istioctlDest), 0755); err != nil {
 			return err
 		}
 

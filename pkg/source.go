@@ -106,13 +106,11 @@ func GetSha(repo string, ref string) (string, error) {
 // This allows outputting the exact version used after the build is complete
 func StandardizeManifest(manifest *model.Manifest) error {
 	for _, repo := range manifest.Dependencies.List() {
-		dep := manifest.Dependencies.Get(repo)
 		sha, err := GetSha(manifest.RepoDir(repo), "HEAD")
 		if err != nil {
 			return fmt.Errorf("failed to get SHA for %v: %v", repo, err)
 		}
 		newDep := model.Dependency{
-			Git: dep.Git,
 			Sha: strings.TrimSpace(sha),
 		}
 		manifest.Dependencies.Set(repo, newDep)
