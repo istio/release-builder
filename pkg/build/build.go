@@ -22,6 +22,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
+	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
@@ -90,7 +91,9 @@ func writeLicense(manifest model.Manifest) error {
 	cmd.Stdout = o
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		// TODO fail hard
+		log.Errorf("failed to get license: %v", err)
+		return nil
 	}
 	return nil
 }
