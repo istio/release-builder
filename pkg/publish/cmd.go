@@ -33,6 +33,7 @@ var (
 		dockerhub  string
 		dockertags []string
 		gcsbucket  string
+		gcsaliases []string
 		github     string
 	}{}
 	publishCmd = &cobra.Command{
@@ -51,7 +52,7 @@ var (
 			if err != nil {
 				return fmt.Errorf("failed to read manifest from release: %v", err)
 			}
-			manifest.Directory = path.Join(flags.release, "..")
+			manifest.Directory = path.Join(flags.release)
 			util.YamlLog("Manifest", manifest)
 
 			return Publish(manifest)
@@ -67,7 +68,9 @@ func init() {
 	publishCmd.PersistentFlags().StringSliceVar(&flags.dockertags, "dockertags", flags.dockertags,
 		"The tags to apply to docker images. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
-		"The gcs bucket to publish binaries to. Example, gs://istio-release.")
+		"The gcs bucket to publish binaries to. Example: gs://istio-release.")
+	publishCmd.PersistentFlags().StringSliceVar(&flags.gcsaliases, "gcsaliases", flags.gcsaliases,
+		"Alias to publish to gcs. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
 		"The Github org to trigger a release, and tag, for. Example: istio.")
 }
@@ -90,7 +93,7 @@ func Publish(manifest model.Manifest) error {
 		}
 	}
 	if flags.gcsbucket != "" {
-		if err := GcsArchive(manifest, flags.gcsbucket); err != nil {
+		if err := GcsArchive(manifest, flags.gcsbucket, flags.gcsaliases); err != nil {
 			return fmt.Errorf("failed to publish to gcs: %v", err)
 		}
 	}

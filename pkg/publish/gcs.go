@@ -31,7 +31,7 @@ import (
 )
 
 // GcsArchive publishes the final release archive to the given GCS bucket
-func GcsArchive(manifest model.Manifest, bucket string) error {
+func GcsArchive(manifest model.Manifest, bucket string, aliases []string) error {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
@@ -48,14 +48,14 @@ func GcsArchive(manifest model.Manifest, bucket string) error {
 		objectPrefix = splitbucket[1]
 	}
 	bkt := client.Bucket(bucketName)
-	if err := filepath.Walk(manifest.OutDir(), func(p string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(manifest.Directory, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
 			return nil
 		}
-		objName := path.Join(objectPrefix, manifest.Version, strings.TrimPrefix(p, manifest.OutDir()))
+		objName := path.Join(objectPrefix, manifest.Version, strings.TrimPrefix(p, manifest.Directory))
 		obj := bkt.Object(objName)
 		w := obj.NewWriter(ctx)
 		f, err := os.Open(p)
@@ -73,8 +73,20 @@ func GcsArchive(manifest model.Manifest, bucket string) error {
 		return nil
 
 	}); err != nil {
-		return err
+		return fmt.Errorf("failed to walk directory: %v", err)
 	}
-	_ = bkt
+
+	// Add alias objects. These are basically symlinks/tags for GCS, pointing to the latest version
+	for _, alias := range aliases {
+		w := bkt.Object(path.Join(objectPrefix, alias)).NewWriter(ctx)
+		if _, err := w.Write([]byte(manifest.Version)); err != nil {
+			return fmt.Errorf("failed to write alias %v: %v", alias, err)
+		}
+		if err := w.Close(); err != nil {
+			return fmt.Errorf("failed to close bucket: %v", err)
+		}
+		log.Infof("Wrote %v to gs://%s/%s", alias, bucketName, path.Join(objectPrefix, alias))
+	}
+
 	return nil
 }

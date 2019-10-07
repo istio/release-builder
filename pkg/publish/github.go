@@ -83,7 +83,7 @@ func GithubRelease(manifest model.Manifest, client *github.Client, githuborg str
 
 	// TODO upload all assets
 	fname := fmt.Sprintf("istio-%s-linux.tar.gz", manifest.Version)
-	f, err := os.Open(path.Join(manifest.OutDir(), fname))
+	f, err := os.Open(path.Join(manifest.Directory, fname))
 	if err != nil {
 		return fmt.Errorf("failed to read file %v: %v", fname, err)
 	}
