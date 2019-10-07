@@ -27,7 +27,7 @@ import (
 
 // Docker publishes all images to the given hub
 func Docker(manifest model.Manifest, hub string, tags []string) error {
-	dockerArchives, err := ioutil.ReadDir(path.Join(manifest.OutDir(), "docker"))
+	dockerArchives, err := ioutil.ReadDir(path.Join(manifest.Directory, "docker"))
 	if err != nil {
 		return fmt.Errorf("failed to read docker output of release: %v", err)
 	}
@@ -42,7 +42,7 @@ func Docker(manifest model.Manifest, hub string, tags []string) error {
 			// Prepend - so it shows up as name-variant in the final tag
 			variant = "-" + variant
 		}
-		if err := util.VerboseCommand("docker", "load", "-i", path.Join(manifest.OutDir(), "docker", f.Name())).Run(); err != nil {
+		if err := util.VerboseCommand("docker", "load", "-i", path.Join(manifest.Directory, "docker", f.Name())).Run(); err != nil {
 			return fmt.Errorf("failed to load docker image %v: %v", f.Name(), err)
 		}
 
