@@ -93,7 +93,7 @@ func writeLicense(manifest model.Manifest) error {
 	cmd.Stdout = o
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("unable to generate license repo for istio: %v", err)
+		return fmt.Errorf("unable to generate license report for the istio repo: %v", err)
 	}
 	return nil
 }
