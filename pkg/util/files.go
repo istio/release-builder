@@ -27,6 +27,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/rogpeppe/go-internal/modfile"
+
 	"istio.io/release-builder/pkg/model"
 
 	"istio.io/pkg/log"
@@ -138,9 +140,39 @@ func Clone(repo string, dep model.Dependency, dest string) error {
 
 // FetchAuto looks up the SHA to use for the dependency from istio/istio
 func FetchAuto(repo string, dep *model.Dependency, dest string) error {
-	if dep.Auto != model.Deps {
-		return fmt.Errorf("unknown auto dependency: %v", dep.Auto)
+	if dep.Auto == model.Deps {
+		return fetchAutoDeps(repo, dep, dest)
+	} else if dep.Auto == model.Modules {
+		return fetchAutoModules(repo, dep, dest)
 	}
+	return fmt.Errorf("unknown auto dependency: %v", dep.Auto)
+}
+
+func fetchAutoModules(repo string, dep *model.Dependency, dest string) error {
+	modFile, err := ioutil.ReadFile(path.Join(dest, "../istio/go.mod"))
+	if err != nil {
+		return err
+	}
+	mod, err := modfile.Parse("", modFile, nil)
+	if err != nil {
+		return err
+	}
+	for _, r := range mod.Require {
+		if r.Mod.Path == "istio.io/"+repo {
+			ver := r.Mod.Version
+			if len(strings.Split(ver, "-")) == 3 {
+				// We are dealing with a pseudo version
+				ver = strings.Split(ver, "-")[2]
+			}
+			dep.Sha = ver
+			return nil
+		}
+	}
+
+	return fmt.Errorf("failed to automatically resolve source for %v", repo)
+}
+
+func fetchAutoDeps(repo string, dep *model.Dependency, dest string) error {
 	depsFile, err := ioutil.ReadFile(path.Join(dest, "../istio/istio.deps"))
 	if err != nil {
 		return err

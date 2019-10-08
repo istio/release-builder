@@ -27,6 +27,8 @@ const (
 
 	// Deps will resolve by looking at the istio.deps file in istio/istio
 	Deps string = "deps"
+	// Modules will resolve by looking at the go.mod file in istio/istio
+	Modules string = "modules"
 )
 
 var (
@@ -60,12 +62,13 @@ func (d Dependency) Ref() string {
 
 // Dependencies for the build
 type IstioDependencies struct {
-	Istio Dependency `json:"istio"`
-	Cni   Dependency `json:"cni"`
+	Istio    Dependency `json:"istio"`
+	Cni      Dependency `json:"cni"`
+	Operator Dependency `json:"operator"`
 }
 
 func (i IstioDependencies) List() []string {
-	return []string{"istio", "cni"}
+	return []string{"istio", "cni", "operator"}
 }
 
 func (i IstioDependencies) Get(repo string) *Dependency {
@@ -74,6 +77,8 @@ func (i IstioDependencies) Get(repo string) *Dependency {
 		return &i.Istio
 	case "cni":
 		return &i.Cni
+	case "operator":
+		return &i.Operator
 	default:
 		panic("unknown dependency " + repo)
 	}
@@ -85,6 +90,8 @@ func (i *IstioDependencies) Set(repo string, dependency Dependency) {
 		i.Istio = dependency
 	case "cni":
 		i.Cni = dependency
+	case "operator":
+		i.Operator = dependency
 	default:
 		panic("unknown dependency " + repo)
 	}
