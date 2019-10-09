@@ -22,7 +22,6 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
@@ -79,10 +78,13 @@ func Build(manifest model.Manifest) error {
 // writeLicense will output a LICENSES file with a complete list of licenses from all dependencies.
 func writeLicense(manifest model.Manifest) error {
 	// License tool requires all dependencies to be downloaded
-	if err := util.VerboseCommand("go", "mod", "download").Run(); err != nil {
+	mcmd := util.VerboseCommand("go", "mod", "download")
+	mcmd.Dir = manifest.RepoDir("istio")
+	if err := mcmd.Run(); err != nil {
 		return err
 	}
-	cmd := util.VerboseCommand("go", "run", "istio.io/tools/cmd/license-lint", "--config", "common/config/license-lint.yml", "--report")
+
+	cmd := util.VerboseCommand("license-lint", "--config", "common/config/license-lint.yml", "--report")
 	cmd.Dir = manifest.RepoDir("istio")
 	o, err := os.Create(path.Join(manifest.OutDir(), "LICENSES"))
 	if err != nil {
@@ -91,9 +93,7 @@ func writeLicense(manifest model.Manifest) error {
 	cmd.Stdout = o
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		// TODO fail hard
-		log.Errorf("failed to get license: %v", err)
-		return nil
+		return fmt.Errorf("unable to generate license report for the istio repo: %v", err)
 	}
 	return nil
 }
