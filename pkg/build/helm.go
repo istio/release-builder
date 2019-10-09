@@ -119,12 +119,12 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 				contents = strings.ReplaceAll(contents, before, after)
 			}
 
-			// The hub and tag should also be updated
-			contents = strings.ReplaceAll(contents, "hub: gcr.io/istio-release", fmt.Sprintf("hub: %s", manifest.Docker))
-			contents = tagRegex.ReplaceAllString(contents, fmt.Sprintf("tag: %s", manifest.Version))
-
 			err = ioutil.WriteFile(p, []byte(contents), 0)
 			if err != nil {
+				return err
+			}
+
+			if err := sanitizeTemplate(manifest, p); err != nil {
 				return err
 			}
 		}
@@ -132,5 +132,26 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 	}); err != nil {
 		return err
 	}
+	return nil
+}
+
+// Similar to sanitizeChart, but works on generic templates rather than only Helm charts.
+// This updates the hub and tag fields for a single file
+func sanitizeTemplate(manifest model.Manifest, p string) error {
+	read, err := ioutil.ReadFile(p)
+	if err != nil {
+		return err
+	}
+	contents := string(read)
+
+	// The hub and tag should be update
+	contents = strings.ReplaceAll(contents, "hub: gcr.io/istio-release", fmt.Sprintf("hub: %s", manifest.Docker))
+	contents = tagRegex.ReplaceAllString(contents, fmt.Sprintf("tag: %s", manifest.Version))
+
+	err = ioutil.WriteFile(p, []byte(contents), 0)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

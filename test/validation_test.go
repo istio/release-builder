@@ -145,6 +145,22 @@ func TestHelmVersions(t *testing.T) {
 			}
 		})
 	}
+	operatorChecks := []string{
+		"install/kubernetes/operator/profiles/default.yaml",
+	}
+	for _, f := range operatorChecks {
+		t.Run(f, func(t *testing.T) {
+			values := getValues(t, filepath.Join(archive, f))
+			tag := GenericMap{values}.Path([]string{"spec", "tag"})
+			if tag != manifest.Version {
+				t.Fatalf("archive tag incorrect, got %v expected %v", tag, manifest.Version)
+			}
+			hub := GenericMap{values}.Path([]string{"spec", "hub"})
+			if hub != manifest.Docker {
+				t.Fatalf("hub incorrect, got %v expected %v", hub, manifest.Docker)
+			}
+		})
+	}
 }
 
 func TestManifest(t *testing.T) {
