@@ -113,7 +113,7 @@ func createStandaloneIstioctl(arch string, manifest model.Manifest, out string) 
 	// Windows should use zip, linux and osx tar
 	if arch == "win" {
 		istioctlArchive = fmt.Sprintf("istioctl-%s-%s.zip", manifest.Version, arch)
-		if err := util.ZipFolder(path.Join(out, "bin"), path.Join(out, "..", istioctlArchive)); err != nil {
+		if err := util.ZipFolder(path.Join(out, "bin", "istioctl.exe"), path.Join(out, "bin", istioctlArchive)); err != nil {
 			return fmt.Errorf("failed to zip istioctl: %v", err)
 		}
 	} else {
