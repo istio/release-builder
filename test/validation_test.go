@@ -66,16 +66,37 @@ func TestMain(m *testing.M) {
 }
 
 func TestIstioctl(t *testing.T) {
-	buf := &bytes.Buffer{}
-	cmd := exec.Command(filepath.Join(archive, "bin", "istioctl"), "version", "--remote=false", "--short")
-	cmd.Stdout = buf
-	if err := cmd.Run(); err != nil {
-		t.Fatal(err)
-	}
-	got := strings.TrimSpace(buf.String())
-	if got != manifest.Version {
-		t.Fatalf("istioctl version output incorrect, got %v expected %v", got, manifest.Version)
-	}
+	// Check istioctl from archive
+	t.Run("archive", func(t *testing.T) {
+		buf := &bytes.Buffer{}
+		cmd := exec.Command(filepath.Join(archive, "bin", "istioctl"), "version", "--remote=false", "--short")
+		cmd.Stdout = buf
+		if err := cmd.Run(); err != nil {
+			t.Fatal(err)
+		}
+		got := strings.TrimSpace(buf.String())
+		if got != manifest.Version {
+			t.Fatalf("istioctl version output incorrect, got %v expected %v", got, manifest.Version)
+		}
+	})
+
+	// Check istioctl from stand-alone archive
+	t.Run("standalone", func(t *testing.T) {
+		istioctlArchivePath := filepath.Join(*release, fmt.Sprintf("istioctl-%s-linux.tar.gz", manifest.Version))
+		if err := exec.Command("tar", "xvf", istioctlArchivePath, "-C", tmpDir).Run(); err != nil {
+			t.Fatal(err)
+		}
+		buf := &bytes.Buffer{}
+		cmd := exec.Command(filepath.Join(tmpDir, "istioctl"), "version", "--remote=false", "--short")
+		cmd.Stdout = buf
+		if err := cmd.Run(); err != nil {
+			t.Fatal(err)
+		}
+		got := strings.TrimSpace(buf.String())
+		if got != manifest.Version {
+			t.Fatalf("istioctl version output incorrect, got %v expected %v", got, manifest.Version)
+		}
+	})
 }
 
 type GenericMap struct {

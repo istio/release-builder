@@ -96,34 +96,75 @@ func Archive(manifest model.Manifest) error {
 			return err
 		}
 
-		var archive string
-		// Create the archive from all the above files
-		// Windows should use zip, linux and osx tar
-		if arch == "win" {
-			archive = fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
-			if err := util.ZipFolder(path.Join(out, "..", fmt.Sprintf("istio-%s", manifest.Version)), path.Join(out, "..", archive)); err != nil {
-				return fmt.Errorf("failed to zip istioctl: %v", err)
-			}
-		} else {
-			archive = fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
-			cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
-			cmd.Dir = path.Join(out, "..")
-			if err := cmd.Run(); err != nil {
-				return err
-			}
+		if err := createArchive(arch, manifest, out); err != nil {
+			return err
 		}
 
-		// Copy files over to the output directory
-		archivePath := path.Join(manifest.WorkDir(), "archive", arch, archive)
-		dest := path.Join(manifest.OutDir(), archive)
-		if err := util.CopyFile(archivePath, dest); err != nil {
-			return fmt.Errorf("failed to package %v release archive: %v", arch, err)
+		if err := createStandaloneIstioctl(arch, manifest, out); err != nil {
+			return err
 		}
+	}
+	return nil
+}
 
-		// Create a SHA of the archive
-		if err := util.CreateSha(dest); err != nil {
-			return fmt.Errorf("failed to package %v: %v", dest, err)
+func createStandaloneIstioctl(arch string, manifest model.Manifest, out string) error {
+	var istioctlArchive string
+	// Create a stand alone archive for istioctl
+	// Windows should use zip, linux and osx tar
+	if arch == "win" {
+		istioctlArchive = fmt.Sprintf("istioctl-%s-%s.zip", manifest.Version, arch)
+		if err := util.ZipFolder(path.Join(out, "bin"), path.Join(out, "..", istioctlArchive)); err != nil {
+			return fmt.Errorf("failed to zip istioctl: %v", err)
 		}
+	} else {
+		istioctlArchive = fmt.Sprintf("istioctl-%s-%s.tar.gz", manifest.Version, arch)
+		icmd := util.VerboseCommand("tar", "-czf", istioctlArchive, fmt.Sprintf("istioctl"))
+		icmd.Dir = path.Join(out, "bin")
+		if err := icmd.Run(); err != nil {
+			return fmt.Errorf("failed to tar istioctl: %v", err)
+		}
+	}
+	// Copy files over to the output directory
+	archivePath := path.Join(out, "bin", istioctlArchive)
+	dest := path.Join(manifest.OutDir(), istioctlArchive)
+	if err := util.CopyFile(archivePath, dest); err != nil {
+		return fmt.Errorf("failed to package %v release archive: %v", arch, err)
+	}
+
+	// Create a SHA of the archive
+	if err := util.CreateSha(dest); err != nil {
+		return fmt.Errorf("failed to package %v: %v", dest, err)
+	}
+	return nil
+}
+
+func createArchive(arch string, manifest model.Manifest, out string) error {
+	var archive string
+	// Create the archive from all the above files
+	// Windows should use zip, linux and osx tar
+	if arch == "win" {
+		archive = fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
+		if err := util.ZipFolder(path.Join(out, "..", fmt.Sprintf("istio-%s", manifest.Version)), path.Join(out, "..", archive)); err != nil {
+			return fmt.Errorf("failed to zip istioctl: %v", err)
+		}
+	} else {
+		archive = fmt.Sprintf("istio-%s-%s.tar.gz", manifest.Version, arch)
+		cmd := util.VerboseCommand("tar", "-czf", archive, fmt.Sprintf("istio-%s", manifest.Version))
+		cmd.Dir = path.Join(out, "..")
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+
+	// Copy files over to the output directory
+	archivePath := path.Join(manifest.WorkDir(), "archive", arch, archive)
+	dest := path.Join(manifest.OutDir(), archive)
+	if err := util.CopyFile(archivePath, dest); err != nil {
+		return fmt.Errorf("failed to package %v release archive: %v", arch, err)
+	}
+	// Create a SHA of the archive
+	if err := util.CreateSha(dest); err != nil {
+		return fmt.Errorf("failed to package %v: %v", dest, err)
 	}
 	return nil
 }
