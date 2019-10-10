@@ -32,8 +32,15 @@ import (
 )
 
 var (
-	// Currently tags are set as `branch-latest-daily`
-	tagRegex = regexp.MustCompile(`tag: .*-latest-daily`)
+	// Currently tags are set as `release-1.x-latest-daily` or `latest` or `1.x-dev`
+	tagRegexes = []*regexp.Regexp{
+		regexp.MustCompile(`tag: .*-latest-daily$`),
+		regexp.MustCompile(`tag: latest$`),
+		regexp.MustCompile(`tag: 1\..-dev$`),
+	}
+
+	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
+	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
 
 	allCharts = map[string][]string{
 		"istio": {"install/kubernetes/helm/istio", "install/kubernetes/helm/istio-init"},
@@ -145,8 +152,12 @@ func sanitizeTemplate(manifest model.Manifest, p string) error {
 	contents := string(read)
 
 	// The hub and tag should be update
-	contents = strings.ReplaceAll(contents, "hub: gcr.io/istio-release", fmt.Sprintf("hub: %s", manifest.Docker))
-	contents = tagRegex.ReplaceAllString(contents, fmt.Sprintf("tag: %s", manifest.Version))
+	for _, hub := range hubs {
+		contents = strings.ReplaceAll(contents, fmt.Sprintf("hub: %s", hub), fmt.Sprintf("hub: %s", manifest.Docker))
+	}
+	for _, tagRegex := range tagRegexes {
+		contents = tagRegex.ReplaceAllString(contents, fmt.Sprintf("tag: %s", manifest.Version))
+	}
 
 	err = ioutil.WriteFile(p, []byte(contents), 0)
 	if err != nil {
