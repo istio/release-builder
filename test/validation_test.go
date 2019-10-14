@@ -185,10 +185,10 @@ func TestHelmVersions(t *testing.T) {
 }
 
 func TestManifest(t *testing.T) {
-	for _, repo := range manifest.Dependencies.List() {
+	for _, repo := range []string{"api", "cni", "gogo-genproto", "istio", "operator", "pkg", "proxy"} {
 		t.Run(repo, func(t *testing.T) {
-			d := manifest.Dependencies.Get(repo)
-			if d.Sha == "" {
+			d, f := manifest.AllDependencies[repo]
+			if !f || d == "" {
 				t.Fatalf("Got empty SHA")
 			}
 		})
