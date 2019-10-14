@@ -56,11 +56,12 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 		outputs[model.Archive] = struct{}{}
 	}
 	return model.Manifest{
-		Dependencies: in.Dependencies,
-		Version:      in.Version,
-		Docker:       in.Docker,
-		Directory:    wd,
-		BuildOutputs: outputs,
+		TopDependencies: in.Dependencies,
+		AllDependencies: make(map[string]string),
+		Version:         in.Version,
+		Docker:          in.Docker,
+		Directory:       wd,
+		BuildOutputs:    outputs,
 	}, nil
 }
 

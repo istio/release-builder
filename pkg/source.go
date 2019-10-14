@@ -16,11 +16,15 @@ package pkg
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
+
+	"github.com/rogpeppe/go-internal/modfile"
 
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
@@ -31,8 +35,8 @@ import (
 // Sources will copy all dependencies require, pulling from Github if required, and set up the working tree.
 // This includes locally tagging all git repos with the version being built, so that the right version is present in binaries.
 func Sources(manifest model.Manifest) error {
-	for _, repo := range manifest.Dependencies.List() {
-		dependency := manifest.Dependencies.Get(repo)
+	for _, repo := range manifest.TopDependencies.List() {
+		dependency := manifest.TopDependencies.Get(repo)
 		src := path.Join(manifest.SourceDir(), repo)
 
 		// Fetch the dependency
@@ -105,7 +109,7 @@ func GetSha(repo string, ref string) (string, error) {
 // StandardizeManifest will convert a manifest to a fixed SHA, rather than a branch
 // This allows outputting the exact version used after the build is complete
 func StandardizeManifest(manifest *model.Manifest) error {
-	for _, repo := range manifest.Dependencies.List() {
+	for _, repo := range manifest.TopDependencies.List() {
 		sha, err := GetSha(manifest.RepoDir(repo), "HEAD")
 		if err != nil {
 			return fmt.Errorf("failed to get SHA for %v: %v", repo, err)
@@ -113,7 +117,57 @@ func StandardizeManifest(manifest *model.Manifest) error {
 		newDep := model.Dependency{
 			Sha: strings.TrimSpace(sha),
 		}
-		manifest.Dependencies.Set(repo, newDep)
+		manifest.TopDependencies.Set(repo, newDep)
+	}
+	if err := fetchTransitiveDependencies(manifest); err != nil {
+		return fmt.Errorf("failed to get transitive dependencies: %v", err)
+	}
+	return nil
+}
+
+func fetchTransitiveDependencies(manifest *model.Manifest) error {
+	// Add known versions
+	for _, repo := range manifest.TopDependencies.List() {
+		dep := manifest.TopDependencies.Get(repo)
+		// For consistency with go.mod files, limit to 12 ch
+		manifest.AllDependencies[repo] = dep.Sha[:12]
+	}
+	// Read istio go.mod
+	modFile, err := ioutil.ReadFile(path.Join(manifest.RepoDir("istio"), "go.mod"))
+	if err != nil {
+		return err
+	}
+	mod, err := modfile.Parse("", modFile, nil)
+	if err != nil {
+		return err
+	}
+	for _, r := range mod.Require {
+		if strings.HasPrefix(r.Mod.Path, "istio.io/") {
+			ver := r.Mod.Version
+			if len(strings.Split(ver, "-")) == 3 {
+				// We are dealing with a pseudo version
+				ver = strings.Split(ver, "-")[2]
+			}
+			pathsplit := strings.Split(r.Mod.Path, "/")
+			if _, f := manifest.AllDependencies[pathsplit[1]]; !f {
+				manifest.AllDependencies[pathsplit[1]] = ver
+			}
+		}
+	}
+	// Read istio istio.deps
+	depsFile, err := ioutil.ReadFile(path.Join(manifest.RepoDir("istio"), "istio.deps"))
+	if err != nil {
+		return err
+	}
+	deps := make([]model.IstioDep, 0)
+	if err := json.Unmarshal(depsFile, &deps); err != nil {
+		return err
+	}
+	for _, d := range deps {
+		if _, f := manifest.AllDependencies[d.RepoName]; !f {
+			// For consistency with go.mod files, limit to 12 ch
+			manifest.AllDependencies[d.RepoName] = d.LastStableSHA[:12]
+		}
 	}
 	return nil
 }

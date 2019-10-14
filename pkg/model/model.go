@@ -114,8 +114,10 @@ type InputManifest struct {
 
 // Manifest defines what is in a release
 type Manifest struct {
-	// Dependencies declares all git repositories used to build this release
-	Dependencies IstioDependencies `json:"dependencies"`
+	// TopDependencies declares all git repositories used to build this release
+	TopDependencies IstioDependencies `json:"-"`
+	// AllDependencies includes all Istio dependencies, as well as transitive dependencies
+	AllDependencies map[string]string `json:"dependencies"`
 	// Version specifies what version of Istio this release is
 	Version string `json:"version"`
 	// Docker specifies the docker hub to use in the helm charts.
