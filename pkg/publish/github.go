@@ -17,9 +17,12 @@ package publish
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
+	"regexp"
 
+	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 
@@ -28,6 +31,8 @@ import (
 )
 
 var ptrue = true
+
+var githubArtifiactsPattern = regexp.MustCompile("istio.*")
 
 // Github triggers a complete release to github. This includes tagging all source branches, and publishing
 // a release to the main istio repo.
@@ -59,16 +64,13 @@ func Github(manifest model.Manifest, githubOrg string) error {
 func GithubRelease(manifest model.Manifest, client *github.Client, githuborg string) error {
 	ctx := context.Background()
 
-	// TODO this may not be the right location. Derive from GCS url.
-	body := fmt.Sprintf(`[ARTIFACTS](http://gcsweb.istio.io/gcs/istio-release/releases/%s/)
-* [istio-sidecar.deb](https://storage.googleapis.com/istio-release/releases/%s/deb/istio-sidecar.deb)
-* [istio-sidecar.deb.sha256](https://storage.googleapis.com/istio-release/releases/%s/deb/istio-sidecar.deb.sha256)
-* [Helm Chart Index](https://storage.googleapis.com/istio-release/releases/%s/charts/index.yaml)
-
-[RELEASE NOTES](https://istio.io/about/notes/%s.html)`,
-		manifest.Version, manifest.Version, manifest.Version, manifest.Version, manifest.Version)
+	// TODO(https://github.com/istio/istio.io/issues/5151) don't hard code date
+	body := fmt.Sprintf(`[Artifacts](http://gcsweb.istio.io/gcs/istio-release/releases/%s/)
+[Release Notes](https://istio.io/news/2019/announcing-%s/)`,
+		manifest.Version, manifest.Version)
 
 	relName := fmt.Sprintf("Istio %s", manifest.Version)
+
 	rel, _, err := client.Repositories.CreateRelease(ctx, githuborg, "istio", &github.RepositoryRelease{
 		TagName:    &manifest.Version,
 		Body:       &body,
@@ -81,20 +83,36 @@ func GithubRelease(manifest model.Manifest, client *github.Client, githuborg str
 	}
 	util.YamlLog("Release", rel)
 
-	// TODO upload all assets
-	fname := fmt.Sprintf("istio-%s-linux.tar.gz", manifest.Version)
-	f, err := os.Open(path.Join(manifest.Directory, fname))
-	if err != nil {
-		return fmt.Errorf("failed to read file %v: %v", fname, err)
+	if err := GithubUploadReleaseAssets(ctx, manifest, client, githuborg, rel); err != nil {
+		return fmt.Errorf("failed to publish github release assets: %v", err)
 	}
-	asset, _, err := client.Repositories.UploadReleaseAsset(ctx, githuborg, "istio", *rel.ID, &github.UploadOptions{
-		Name: fname,
-	}, f)
-	if err != nil {
-		return fmt.Errorf("failed to upload asset %v: %v", fname, err)
-	}
-	util.YamlLog("Release asset", asset)
+	return nil
+}
 
+func GithubUploadReleaseAssets(ctx context.Context, manifest model.Manifest, client *github.Client, githuborg string, rel *github.RepositoryRelease) error {
+	files, err := ioutil.ReadDir(path.Join(manifest.Directory))
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		fname := file.Name()
+		if githubArtifiactsPattern.MatchString(fname) {
+			log.Infof("github: uploading file %v", fname)
+			f, err := os.Open(path.Join(manifest.Directory, fname))
+			if err != nil {
+				return fmt.Errorf("failed to read file %v: %v", fname, err)
+			}
+			asset, _, err := client.Repositories.UploadReleaseAsset(ctx, githuborg, "istio", *rel.ID, &github.UploadOptions{
+				Name: fname,
+			}, f)
+			if err != nil {
+				return fmt.Errorf("failed to upload asset %v: %v", fname, err)
+			}
+			util.YamlLog("Release asset", asset)
+		} else {
+			log.Infof("github: skipping upload of file %v", fname)
+		}
+	}
 	return nil
 }
 
@@ -113,6 +131,7 @@ func GithubTag(client *github.Client, org string, repo string, version string, s
 			SHA:  &sha,
 		},
 	})
+
 	if err != nil {
 		return fmt.Errorf("failed to create tag: %v", err)
 	}
@@ -124,7 +143,7 @@ func GithubTag(client *github.Client, org string, repo string, version string, s
 		Ref: &ref,
 		Object: &github.GitObject{
 			Type: &tagType,
-			SHA:  &sha,
+			SHA:  tag.SHA,
 		},
 	})
 	if err != nil {
