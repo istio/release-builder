@@ -34,9 +34,9 @@ import (
 var (
 	// Currently tags are set as `release-1.x-latest-daily` or `latest` or `1.x-dev`
 	tagRegexes = []*regexp.Regexp{
-		regexp.MustCompile(`tag: .*-latest-daily$`),
-		regexp.MustCompile(`tag: latest$`),
-		regexp.MustCompile(`tag: 1\..-dev$`),
+		regexp.MustCompile(`tag: .*-latest-daily`),
+		regexp.MustCompile(`tag: latest`),
+		regexp.MustCompile(`tag: 1\..-dev`),
 	}
 
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
