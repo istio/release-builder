@@ -45,7 +45,7 @@ Docker Hub: ${DOCKER_HUB}
 Github Org: ${GITHUB_ORG}
 Source: ${SOURCE_GCS_BUCKET}/${VERSION}
 Contents:
-$(gsutil ls -r gs://${SOURCE_GCS_BUCKET}/${VERSION})
+$(gsutil ls -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}")
 EOF
 
 exit 2
