@@ -19,7 +19,7 @@ WD=$(cd "$WD"; pwd)
 
 set -eux
 
-gcloud auth activate-service-account --key-file="$(GOOGLE_APPLICATION_CREDENTIALS)"
+gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
 
 VERSION="$(cat "${WD}/trigger-publish")"
 
