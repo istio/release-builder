@@ -19,13 +19,7 @@ WD=$(cd "$WD"; pwd)
 
 set -eux
 
-if [[ $(command -v gcloud) ]]; then
-  gcloud auth configure-docker -q
-elif [[ $(command -v docker-credential-gcr) ]]; then
-  docker-credential-gcr configure-docker
-else
-  echo "No credential helpers found, push to docker may not function properly"
-fi
+gcloud auth activate-service-account --key-file="$(GOOGLE_APPLICATION_CREDENTIALS)"
 
 VERSION="$(cat "${WD}/trigger-publish")"
 
