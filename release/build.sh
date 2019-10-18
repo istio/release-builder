@@ -19,7 +19,7 @@ WD=$(cd "$WD"; pwd)
 
 set -eux
 
-gcloud auth activate-service-account --key-file="$(GOOGLE_APPLICATION_CREDENTIALS)"
+gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
 
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
