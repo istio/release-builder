@@ -21,6 +21,12 @@ set -eux
 
 gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
 
+# Temporary hack to get around some gcloud credential issues
+mkdir ~/.docker
+cp "${DOCKER_CONFIG}/config.json" ~/.docker/
+export DOCKER_CONFIG=~/.docker
+gcloud auth configure-docker -q
+
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
 
