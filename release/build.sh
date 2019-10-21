@@ -39,7 +39,7 @@ directory: ${WORK_DIR}
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.4
   cni:
     git: https://github.com/istio/cni
     auto: deps
