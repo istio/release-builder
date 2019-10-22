@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -120,7 +121,7 @@ func getGithubToken(file string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to read github token: %v", file)
 		}
-		return string(b), nil
+		return strings.TrimSpace(string(b)), nil
 	}
 	return os.Getenv("GITHUB_TOKEN"), nil
 }
