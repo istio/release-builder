@@ -26,6 +26,6 @@ All of these steps can be done in isolation. For example, a daily build will fir
 ### Credentials
 
 The following credentials are needed
-* Github token as environment variable `GITHUB_TOKEN`.
+* Github token: as environment variable `GITHUB_TOKEN` or `--githubtoken file`.
 * Docker credentials (TODO - how to set these).
 * GCP credentials for GCS (TODO - how to set these).
