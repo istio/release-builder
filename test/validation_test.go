@@ -185,7 +185,7 @@ func TestHelmVersions(t *testing.T) {
 }
 
 func TestManifest(t *testing.T) {
-	for _, repo := range []string{"api", "cni", "gogo-genproto", "istio", "operator", "pkg", "proxy"} {
+	for _, repo := range []string{"api", "cni", "client-go", "istio", "operator", "pkg", "proxy"} {
 		t.Run(repo, func(t *testing.T) {
 			d, f := manifest.Dependencies.Get()[repo]
 			if !f || d.Sha == "" {
