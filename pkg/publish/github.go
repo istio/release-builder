@@ -45,9 +45,9 @@ func Github(manifest model.Manifest, githubOrg string, githubToken string) error
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
 
-	for repo, sha := range manifest.AllDependencies {
+	for repo, dep := range manifest.Dependencies.Get() {
 		// Do not use dep.Org, as the source org is not necessarily the same as the publishing org
-		if err := GithubTag(client, githubOrg, repo, manifest.Version, sha); err != nil {
+		if err := GithubTag(client, githubOrg, repo, manifest.Version, dep.Sha); err != nil {
 			return fmt.Errorf("failed to tag repo %v: %v", repo, err)
 		}
 	}

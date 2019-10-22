@@ -14,7 +14,10 @@
 
 package model
 
-import "path"
+import (
+	"encoding/json"
+	"path"
+)
 
 type BuildOutput int
 type AutoDependency string
@@ -29,11 +32,6 @@ const (
 	Deps string = "deps"
 	// Modules will resolve by looking at the go.mod file in istio/istio
 	Modules string = "modules"
-)
-
-var (
-	// AllBuildOutputs defines all possible release artifacts
-	AllBuildOutputs = []BuildOutput{Docker, Helm, Debian, Archive}
 )
 
 // Dependency defines a git dependency for the build
@@ -65,36 +63,36 @@ type IstioDependencies struct {
 	Istio    Dependency `json:"istio"`
 	Cni      Dependency `json:"cni"`
 	Operator Dependency `json:"operator"`
+	Api      Dependency `json:"api"`
+	Proxy    Dependency `json:"proxy"`
+	Pkg      Dependency `json:"pkg"`
+	Client   Dependency `json:"client-go"`
 }
 
-func (i IstioDependencies) List() []string {
-	return []string{"istio", "cni", "operator"}
-}
-
-func (i IstioDependencies) Get(repo string) *Dependency {
-	switch repo {
-	case "istio":
-		return &i.Istio
-	case "cni":
-		return &i.Cni
-	case "operator":
-		return &i.Operator
-	default:
-		panic("unknown dependency " + repo)
+func (i *IstioDependencies) Get() map[string]*Dependency {
+	return map[string]*Dependency{
+		"istio":     &i.Istio,
+		"cni":       &i.Cni,
+		"operator":  &i.Operator,
+		"api":       &i.Api,
+		"proxy":     &i.Proxy,
+		"pkg":       &i.Pkg,
+		"client-go": &i.Client,
 	}
+}
+
+// MarshalJSON writes the dependencies, exposing just the SHA
+func (i IstioDependencies) MarshalJSON() ([]byte, error) {
+	deps := make(map[string]Dependency)
+	for repo, dep := range i.Get() {
+		deps[repo] = Dependency{Sha: dep.Sha}
+	}
+	return json.Marshal(deps)
 }
 
 func (i *IstioDependencies) Set(repo string, dependency Dependency) {
-	switch repo {
-	case "istio":
-		i.Istio = dependency
-	case "cni":
-		i.Cni = dependency
-	case "operator":
-		i.Operator = dependency
-	default:
-		panic("unknown dependency " + repo)
-	}
+	dp := i.Get()[repo]
+	*dp = dependency
 }
 
 // Manifest defines what is in a release
@@ -114,10 +112,8 @@ type InputManifest struct {
 
 // Manifest defines what is in a release
 type Manifest struct {
-	// TopDependencies declares all git repositories used to build this release
-	TopDependencies IstioDependencies `json:"-"`
-	// AllDependencies includes all Istio dependencies, as well as transitive dependencies
-	AllDependencies map[string]string `json:"dependencies"`
+	// Dependencies declares all git repositories used to build this release
+	Dependencies IstioDependencies `json:"dependencies"`
 	// Version specifies what version of Istio this release is
 	Version string `json:"version"`
 	// Docker specifies the docker hub to use in the helm charts.
