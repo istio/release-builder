@@ -41,4 +41,4 @@ mkdir -p "${WORK_DIR}"
 export PATH=${GOPATH}/bin:${PATH}
 
 gsutil -m cp -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}/*" "${WORK_DIR}"
-go run main.go publish --release "${WORK_DIR}" --gcsbucket "${GCS_BUCKET}" --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" --github "${GITHUB}"
+go run main.go publish --release "${WORK_DIR}" --gcsbucket "${GCS_BUCKET}" --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" --github "${GITHUB_ORG}"
