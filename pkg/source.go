@@ -16,15 +16,11 @@ package pkg
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
-
-	"github.com/rogpeppe/go-internal/modfile"
 
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
@@ -35,25 +31,36 @@ import (
 // Sources will copy all dependencies require, pulling from Github if required, and set up the working tree.
 // This includes locally tagging all git repos with the version being built, so that the right version is present in binaries.
 func Sources(manifest model.Manifest) error {
-	for _, repo := range manifest.TopDependencies.List() {
-		dependency := manifest.TopDependencies.Get(repo)
-		src := path.Join(manifest.SourceDir(), repo)
+	// Clone istio first, as it is needed to determine which other dependencies to use
+	if err := cloneRepo(manifest, "istio", &manifest.Dependencies.Istio); err != nil {
+		return err
+	}
 
-		// Fetch the dependency
-		if err := util.Clone(repo, *dependency, src); err != nil {
-			return fmt.Errorf("failed to resolve %+v: %v", dependency, err)
+	for repo, dependency := range manifest.Dependencies.Get() {
+		if repo == "istio" {
+			continue
 		}
-		log.Infof("Resolved %v", repo)
+		if err := cloneRepo(manifest, repo, dependency); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-		// Also copy it to the working directory
-		if err := util.CopyDir(src, manifest.RepoDir(repo)); err != nil {
-			return fmt.Errorf("failed to copy dependency %v to working directory: %v", repo, err)
-		}
-
-		// Tag the repo. This allows the build process to look at the git tag for version information
-		if err := TagRepo(manifest, manifest.RepoDir(repo)); err != nil {
-			return fmt.Errorf("failed to tag repo %v: %v", repo, err)
-		}
+func cloneRepo(manifest model.Manifest, repo string, dependency *model.Dependency) error {
+	src := path.Join(manifest.SourceDir(), repo)
+	// Fetch the dependency
+	if err := util.Clone(repo, *dependency, src); err != nil {
+		return fmt.Errorf("failed to resolve %+v: %v", dependency, err)
+	}
+	log.Infof("Resolved %v", repo)
+	// Also copy it to the working directory
+	if err := util.CopyDir(src, manifest.RepoDir(repo)); err != nil {
+		return fmt.Errorf("failed to copy dependency %v to working directory: %v", repo, err)
+	}
+	// Tag the repo. This allows the build process to look at the git tag for version information
+	if err := TagRepo(manifest, manifest.RepoDir(repo)); err != nil {
+		return fmt.Errorf("failed to tag repo %v: %v", repo, err)
 	}
 	return nil
 }
@@ -109,7 +116,7 @@ func GetSha(repo string, ref string) (string, error) {
 // StandardizeManifest will convert a manifest to a fixed SHA, rather than a branch
 // This allows outputting the exact version used after the build is complete
 func StandardizeManifest(manifest *model.Manifest) error {
-	for _, repo := range manifest.TopDependencies.List() {
+	for repo := range manifest.Dependencies.Get() {
 		sha, err := GetSha(manifest.RepoDir(repo), "HEAD")
 		if err != nil {
 			return fmt.Errorf("failed to get SHA for %v: %v", repo, err)
@@ -117,57 +124,7 @@ func StandardizeManifest(manifest *model.Manifest) error {
 		newDep := model.Dependency{
 			Sha: strings.TrimSpace(sha),
 		}
-		manifest.TopDependencies.Set(repo, newDep)
-	}
-	if err := fetchTransitiveDependencies(manifest); err != nil {
-		return fmt.Errorf("failed to get transitive dependencies: %v", err)
-	}
-	return nil
-}
-
-func fetchTransitiveDependencies(manifest *model.Manifest) error {
-	// Add known versions
-	for _, repo := range manifest.TopDependencies.List() {
-		dep := manifest.TopDependencies.Get(repo)
-		// For consistency with go.mod files, limit to 12 ch
-		manifest.AllDependencies[repo] = dep.Sha[:12]
-	}
-	// Read istio go.mod
-	modFile, err := ioutil.ReadFile(path.Join(manifest.RepoDir("istio"), "go.mod"))
-	if err != nil {
-		return err
-	}
-	mod, err := modfile.Parse("", modFile, nil)
-	if err != nil {
-		return err
-	}
-	for _, r := range mod.Require {
-		if strings.HasPrefix(r.Mod.Path, "istio.io/") {
-			ver := r.Mod.Version
-			if len(strings.Split(ver, "-")) == 3 {
-				// We are dealing with a pseudo version
-				ver = strings.Split(ver, "-")[2]
-			}
-			pathsplit := strings.Split(r.Mod.Path, "/")
-			if _, f := manifest.AllDependencies[pathsplit[1]]; !f {
-				manifest.AllDependencies[pathsplit[1]] = ver
-			}
-		}
-	}
-	// Read istio istio.deps
-	depsFile, err := ioutil.ReadFile(path.Join(manifest.RepoDir("istio"), "istio.deps"))
-	if err != nil {
-		return err
-	}
-	deps := make([]model.IstioDep, 0)
-	if err := json.Unmarshal(depsFile, &deps); err != nil {
-		return err
-	}
-	for _, d := range deps {
-		if _, f := manifest.AllDependencies[d.RepoName]; !f {
-			// For consistency with go.mod files, limit to 12 ch
-			manifest.AllDependencies[d.RepoName] = d.LastStableSHA[:12]
-		}
+		manifest.Dependencies.Set(repo, newDep)
 	}
 	return nil
 }

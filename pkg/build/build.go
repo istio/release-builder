@@ -84,7 +84,7 @@ func writeLicense(manifest model.Manifest) error {
 		return err
 	}
 
-	cmd := util.VerboseCommand("license-lint", "--config", "common/config/license-lint.yml", "--report")
+	cmd := util.VerboseCommand("license-lint", "--config", "common/config/license-lint.yml", "--dump")
 	cmd.Dir = manifest.RepoDir("istio")
 	o, err := os.Create(path.Join(manifest.OutDir(), "LICENSES"))
 	if err != nil {

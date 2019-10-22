@@ -48,6 +48,18 @@ dependencies:
   operator:
     git: https://github.com/istio/operator
     auto: modules
+  api:
+    git: https://github.com/istio/api
+    auto: modules
+  proxy:
+    git: https://github.com/istio/proxy
+    auto: deps
+  pkg:
+    git: https://github.com/istio/pkg
+    auto: modules
+  client-go:
+    git: https://github.com/istio/client-go
+    branch: master
 EOF
 )
 
