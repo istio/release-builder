@@ -16,6 +16,8 @@ package publish
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path"
 
 	"github.com/spf13/cobra"
@@ -29,12 +31,13 @@ import (
 
 var (
 	flags = struct {
-		release    string
-		dockerhub  string
-		dockertags []string
-		gcsbucket  string
-		gcsaliases []string
-		github     string
+		release     string
+		dockerhub   string
+		dockertags  []string
+		gcsbucket   string
+		gcsaliases  []string
+		github      string
+		githubtoken string
 	}{}
 	publishCmd = &cobra.Command{
 		Use:          "publish",
@@ -73,6 +76,8 @@ func init() {
 		"Alias to publish to gcs. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
 		"The Github org to trigger a release, and tag, for. Example: istio.")
+	publishCmd.PersistentFlags().StringVar(&flags.githubtoken, "githubtoken", flags.githubtoken,
+		"The file containing a github token.")
 }
 
 func GetPublishCommand() *cobra.Command {
@@ -98,9 +103,24 @@ func Publish(manifest model.Manifest) error {
 		}
 	}
 	if flags.github != "" {
-		if err := Github(manifest, flags.github); err != nil {
+		token, err := getGithubToken(flags.githubtoken)
+		if err != nil {
+			return err
+		}
+		if err := Github(manifest, flags.github, token); err != nil {
 			return fmt.Errorf("failed to publish to github: %v", err)
 		}
 	}
 	return nil
+}
+
+func getGithubToken(file string) (string, error) {
+	if file != "" {
+		b, err := ioutil.ReadFile(file)
+		if err != nil {
+			return "", fmt.Errorf("failed to read github token: %v", file)
+		}
+		return string(b), nil
+	}
+	return os.Getenv("GITHUB_TOKEN"), nil
 }

@@ -36,10 +36,10 @@ var githubArtifiactsPattern = regexp.MustCompile("istio.*")
 
 // Github triggers a complete release to github. This includes tagging all source branches, and publishing
 // a release to the main istio repo.
-func Github(manifest model.Manifest, githubOrg string) error {
+func Github(manifest model.Manifest, githubOrg string, githubToken string) error {
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+		&oauth2.Token{AccessToken: githubToken},
 	)
 
 	tc := oauth2.NewClient(ctx, ts)
