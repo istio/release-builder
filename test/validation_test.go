@@ -198,6 +198,18 @@ func TestManifest(t *testing.T) {
 	}
 }
 
+func TestDemo(t *testing.T) {
+	d, err := ioutil.ReadFile(filepath.Join(archive, "install/kubernetes/istio-demo.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var parsed interface{}
+	// Just validate the demo is valid yaml at least
+	if err := yaml.Unmarshal(d, &parsed); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestLicenses(t *testing.T) {
 	l, err := ioutil.ReadFile(filepath.Join(*release, "LICENSES"))
 	license := string(l)
