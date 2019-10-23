@@ -199,10 +199,16 @@ func TestManifest(t *testing.T) {
 }
 
 func TestLicenses(t *testing.T) {
-	license, err := ioutil.ReadFile(filepath.Join(*release, "LICENSES"))
+	l, err := ioutil.ReadFile(filepath.Join(*release, "LICENSES"))
+	license := string(l)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// TODO validate license once it is fixed
-	_ = license
+	// We don't have a great way to validate the license file was generated properly
+	// If it has an Apache and MIT license, we can have at least some level of confidence
+	for _, l := range []string{"Apache License", "MIT License"} {
+		if !strings.Contains(license, l) {
+			t.Fatalf("LICENSE may be invalid. Expected %v but got: %v", l, license)
+		}
+	}
 }
