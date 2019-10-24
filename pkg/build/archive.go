@@ -30,6 +30,10 @@ func Archive(manifest model.Manifest) error {
 	if err := util.RunMake(manifest, "istio", nil, "istioctl-all", "istioctl.completion"); err != nil {
 		return fmt.Errorf("failed to make istioctl: %v", err)
 	}
+	// Generate the demo rendered yaml file
+	if err := util.RunMake(manifest, "istio", nil, "istio-demo.yaml"); err != nil {
+		return fmt.Errorf("failed to make istio-demo.yaml: %v", err)
+	}
 
 	// We build archives for each arch. These contain the same thing except arch specific istioctl
 	for _, arch := range []string{"linux", "osx", "win"} {
