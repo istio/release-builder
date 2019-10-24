@@ -8,4 +8,8 @@ lint: lint-all
 test:
 	go test -race ./...
 
-format: format-go
+gen: tidy-go mirror-licenses
+
+gen-check: gen check-clean-repo
+
+format: format-go tidy-go
