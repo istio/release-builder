@@ -26,7 +26,14 @@ import (
 // docker.save in the repos does most of the work, we just need to call this and copy the files over
 func Docker(manifest model.Manifest) error {
 	// Build both default and distroless variants
-	if err := util.RunMake(manifest, "istio", []string{"DOCKER_BUILD_VARIANTS=default distroless"}, "docker.save"); err != nil {
+	env := []string{"DOCKER_BUILD_VARIANTS=default distroless"}
+
+	if manifest.ProxyOverride != "" {
+		// Add the vars to tell Istio to use our own Envoy binary
+		env = append(env, "USE_LOCAL_PROXY=1", "ISTIO_ENVOY_LOCAL_PATH="+manifest.ProxyOverride, "ISTIO_ENVOY_LOCAL="+manifest.ProxyOverride)
+	}
+
+	if err := util.RunMake(manifest, "istio", env, "docker.save"); err != nil {
 		return fmt.Errorf("failed to create docker archives: %v", err)
 	}
 	if err := util.RunMake(manifest, "cni", nil, "docker.save"); err != nil {
