@@ -122,7 +122,7 @@ type Manifest struct {
 	Docker string `json:"docker"`
 	// Directory defines the base working directory for the release.
 	// This is excluded from the final serialization
-	Directory  string `json:"-"`
+	Directory string `json:"-"`
 	// ProxyOverride specifies a path to an Envoy binary to use instead of the default proxy
 	ProxyOverride string `json:"proxyOverride"`
 	// BuildOutputs defines what components to build. This allows building only some components.
