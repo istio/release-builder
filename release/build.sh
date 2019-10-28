@@ -80,5 +80,5 @@ EOF
 export PATH=${GOPATH}/bin:${PATH}
 
 go run main.go build --manifest <(echo "${MANIFEST}")
-go test ./test/... --release "${WORK_DIR}/out" -v
+go run main.go validate --release "${WORK_DIR}/out"
 go run main.go publish --release "${WORK_DIR}/out" --gcsbucket "${GCS_BUCKET}" --dockerhub "${PRERELEASE_DOCKER_HUB}" --dockertags "${VERSION}"

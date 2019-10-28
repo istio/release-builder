@@ -63,7 +63,7 @@ type IstioDependencies struct {
 	Istio        *Dependency `json:"istio"`
 	Cni          *Dependency `json:"cni"`
 	Operator     *Dependency `json:"operator"`
-	Api          *Dependency `json:"api"` //nolint: golint, stylechecker
+	Api          *Dependency `json:"api"` //nolint: golint, stylecheck
 	Proxy        *Dependency `json:"proxy"`
 	Pkg          *Dependency `json:"pkg"`
 	ClientGo     *Dependency `json:"client-go"`

@@ -5,6 +5,9 @@ include common/Makefile.common.mk
 
 lint: lint-all
 
+install:
+	go install ./...
+
 test:
 	go test -race ./...
 
