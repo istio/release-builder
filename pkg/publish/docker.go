@@ -47,7 +47,7 @@ func Docker(manifest model.Manifest, hub string, tags []string) error {
 		}
 
 		// Images are always built with the `istio` hub initially. We will retag these to the correct hub
-		currentTag := fmt.Sprintf("istio/%s:%s%s", imageName, manifest.Version, variant)
+		currentTag := fmt.Sprintf("%s/%s:%s%s", manifest.Docker, imageName, manifest.Version, variant)
 		if len(tags) == 0 {
 			tags = []string{manifest.Version}
 		}
