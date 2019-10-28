@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package validate
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
@@ -29,26 +28,6 @@ import (
 	"istio.io/release-builder/pkg"
 	"istio.io/release-builder/pkg/model"
 )
-
-var (
-	release *string
-)
-
-func main() {
-	release = flag.String("release", "", "directory for the release")
-	flag.Parse()
-	passed, failed := ValidateRelease(*release)
-	for _, pass := range passed {
-		log.Infof("Check passed: %v", pass)
-	}
-	for _, fail := range failed {
-		log.Infof("Check failed: %v", fail)
-	}
-	if len(failed) > 0 {
-		log.Fatal("Release validation FAILED")
-	}
-	log.Info("Release validation PASSED")
-}
 
 func NewReleaseInfo(release string) ReleaseInfo {
 	tmpDir, err := ioutil.TempDir("/tmp", "release-test")
@@ -80,7 +59,7 @@ type ReleaseInfo struct {
 	archive  string
 }
 
-func ValidateRelease(release string) ([]string, []error) {
+func CheckRelease(release string) ([]string, []error) {
 	r := NewReleaseInfo(release)
 	checks := map[string]ValidationFunction{
 		"IstioctlArchive":      TestIstioctlArchive,
@@ -122,7 +101,7 @@ func TestIstioctlArchive(r ReleaseInfo) error {
 
 func TestIstioctlStandalone(r ReleaseInfo) error {
 	// Check istioctl from stand-alone archive
-	istioctlArchivePath := filepath.Join(*release, fmt.Sprintf("istioctl-%s-linux.tar.gz", r.manifest.Version))
+	istioctlArchivePath := filepath.Join(flags.release, fmt.Sprintf("istioctl-%s-linux.tar.gz", r.manifest.Version))
 	if err := exec.Command("tar", "xvf", istioctlArchivePath, "-C", r.tmpDir).Run(); err != nil {
 		return err
 	}
@@ -253,7 +232,7 @@ func TestDemo(r ReleaseInfo) error {
 }
 
 func TestLicenses(r ReleaseInfo) error {
-	l, err := ioutil.ReadFile(filepath.Join(*release, "LICENSES"))
+	l, err := ioutil.ReadFile(filepath.Join(flags.release, "LICENSES"))
 	license := string(l)
 	if err != nil {
 		return err

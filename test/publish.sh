@@ -77,7 +77,7 @@ export PATH=${GOPATH}/bin:${PATH}
 
 go run main.go build --manifest <(echo "${MANIFEST}")
 
-go run test/validate.go --release "${WORK_DIR}/out"
+go run main.go validate --release "${WORK_DIR}/out"
 
 if [[ -z "${DRY_RUN:-}" ]]; then
   go run main.go publish --release "${WORK_DIR}/out" --gcsbucket "${GCS_BUCKET}" --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}"

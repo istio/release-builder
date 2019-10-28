@@ -17,6 +17,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
+	"istio.io/release-builder/pkg/validate"
+
 	"istio.io/release-builder/pkg/build"
 	"istio.io/release-builder/pkg/publish"
 )
@@ -30,6 +32,7 @@ func GetRootCmd(args []string) *cobra.Command {
 	}
 
 	rootCmd.AddCommand(build.GetBuildCommand())
+	rootCmd.AddCommand(validate.GetValidateCommand())
 	rootCmd.AddCommand(publish.GetPublishCommand())
 
 	return rootCmd
