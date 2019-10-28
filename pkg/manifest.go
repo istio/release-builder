@@ -22,6 +22,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
+	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
 
@@ -80,7 +81,10 @@ func ReadManifest(manifestFile string) (model.Manifest, error) {
 func validateManifestDependencies(dependencies model.IstioDependencies) error {
 	for repo, dep := range dependencies.Get() {
 		if dep == nil {
-			return fmt.Errorf("missing dependency: %v", repo)
+			// Missing a dependency is not always a failure; many are optional dependencies just for
+			// tagging.
+			log.Warnf("missing dependency: %v", repo)
+			continue
 		}
 		if dep.Branch != "" || dep.Sha != "" || dep.Auto != "" {
 			if dep.Git == "" {

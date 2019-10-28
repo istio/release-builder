@@ -46,6 +46,10 @@ func Github(manifest model.Manifest, githubOrg string, githubToken string) error
 	client := github.NewClient(tc)
 
 	for repo, dep := range manifest.Dependencies.Get() {
+		if dep == nil {
+			log.Warnf("skipping missing dependency %v", repo)
+			continue
+		}
 		// Do not use dep.Org, as the source org is not necessarily the same as the publishing org
 		if err := GithubTag(client, githubOrg, repo, manifest.Version, dep.Sha); err != nil {
 			return fmt.Errorf("failed to tag repo %v: %v", repo, err)

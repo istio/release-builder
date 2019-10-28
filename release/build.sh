@@ -64,6 +64,15 @@ dependencies:
   client-go:
     git: https://github.com/istio/client-go
     branch: release-1.4
+  gogo-genproto:
+    git: https://github.com/istio/gogo-genproto
+    branch: release-1.4
+  test-infra:
+    git: https://github.com/istio/test-infra
+    branch: release-1.4
+  tools:
+    git: https://github.com/istio/tools
+    branch: release-1.4
 EOF
 )
 
