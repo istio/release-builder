@@ -32,12 +32,16 @@ import (
 // This includes locally tagging all git repos with the version being built, so that the right version is present in binaries.
 func Sources(manifest model.Manifest) error {
 	// Clone istio first, as it is needed to determine which other dependencies to use
-	if err := cloneRepo(manifest, "istio", &manifest.Dependencies.Istio); err != nil {
+	if err := cloneRepo(manifest, "istio", manifest.Dependencies.Istio); err != nil {
 		return err
 	}
 
 	for repo, dependency := range manifest.Dependencies.Get() {
 		if repo == "istio" {
+			continue
+		}
+		if dependency == nil {
+			log.Warnf("skipping clone of missing dependency: %v", repo)
 			continue
 		}
 		if err := cloneRepo(manifest, repo, dependency); err != nil {
@@ -116,7 +120,10 @@ func GetSha(repo string, ref string) (string, error) {
 // StandardizeManifest will convert a manifest to a fixed SHA, rather than a branch
 // This allows outputting the exact version used after the build is complete
 func StandardizeManifest(manifest *model.Manifest) error {
-	for repo := range manifest.Dependencies.Get() {
+	for repo, dep := range manifest.Dependencies.Get() {
+		if dep == nil {
+			continue
+		}
 		sha, err := GetSha(manifest.RepoDir(repo), "HEAD")
 		if err != nil {
 			return fmt.Errorf("failed to get SHA for %v: %v", repo, err)

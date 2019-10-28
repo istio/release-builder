@@ -19,8 +19,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/ghodss/yaml"
+
+	"istio.io/pkg/log"
 
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
@@ -75,25 +78,18 @@ func Build(manifest model.Manifest) error {
 	return nil
 }
 
-// writeLicense will output a LICENSES file with a complete list of licenses from all dependencies.
+// writeLicense copies the complete list of licenses for all dependant repos
 func writeLicense(manifest model.Manifest) error {
-	// License tool requires all dependencies to be downloaded
-	mcmd := util.VerboseCommand("go", "mod", "download")
-	mcmd.Dir = manifest.RepoDir("istio")
-	if err := mcmd.Run(); err != nil {
-		return err
-	}
-
-	cmd := util.VerboseCommand("license-lint", "--config", "common/config/license-lint.yml", "--dump")
-	cmd.Dir = manifest.RepoDir("istio")
-	o, err := os.Create(path.Join(manifest.OutDir(), "LICENSES"))
-	if err != nil {
-		return err
-	}
-	cmd.Stdout = o
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("unable to generate license report for the istio repo: %v", err)
+	for repo := range manifest.Dependencies.Get() {
+		src := filepath.Join(manifest.RepoDir(repo), "licenses")
+		// Just skip these, we can fail in the validation tests afterwards for repos we expect license for
+		if _, err := os.Stat(src); os.IsNotExist(err) {
+			log.Warnf("skipping license for %v", repo)
+			continue
+		}
+		if err := util.CopyDir(src, filepath.Join(manifest.OutDir(), "licenses", repo)); err != nil {
+			return fmt.Errorf("failed to copy license for %v: %v", repo, err)
+		}
 	}
 	return nil
 }

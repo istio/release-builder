@@ -211,16 +211,24 @@ func TestDemo(t *testing.T) {
 }
 
 func TestLicenses(t *testing.T) {
-	l, err := ioutil.ReadFile(filepath.Join(*release, "LICENSES"))
-	license := string(l)
+	l, err := ioutil.ReadDir(filepath.Join(*release, "licenses"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	// We don't have a great way to validate the license file was generated properly
-	// If it has an Apache and MIT license, we can have at least some level of confidence
-	for _, l := range []string{"Apache License", "MIT License"} {
-		if !strings.Contains(license, l) {
-			t.Fatalf("LICENSE may be invalid. Expected %v but got: %v", l, license)
-		}
+	// Expect to find license folders for these repos
+	expect := map[string]struct{}{
+		"istio":         {},
+		"gogo-genproto": {},
+		"client-go":     {},
+		"tools":         {},
+		"test-infra":    {},
+	}
+
+	for _, repo := range l {
+		delete(expect, repo.Name())
+	}
+
+	if len(expect) > 0 {
+		t.Fatalf("Failed to find licenses for: %v", expect)
 	}
 }

@@ -60,24 +60,30 @@ func (d Dependency) Ref() string {
 
 // Dependencies for the build
 type IstioDependencies struct {
-	Istio    Dependency `json:"istio"`
-	Cni      Dependency `json:"cni"`
-	Operator Dependency `json:"operator"`
-	Api      Dependency `json:"api"` //nolint: golint, stylechecker
-	Proxy    Dependency `json:"proxy"`
-	Pkg      Dependency `json:"pkg"`
-	Client   Dependency `json:"client-go"`
+	Istio        *Dependency `json:"istio"`
+	Cni          *Dependency `json:"cni"`
+	Operator     *Dependency `json:"operator"`
+	Api          *Dependency `json:"api"` //nolint: golint, stylechecker
+	Proxy        *Dependency `json:"proxy"`
+	Pkg          *Dependency `json:"pkg"`
+	ClientGo     *Dependency `json:"client-go"`
+	GogoGenproto *Dependency `json:"gogo-genproto"`
+	TestInfra    *Dependency `json:"test-infra"`
+	Tools        *Dependency `json:"tools"`
 }
 
 func (i *IstioDependencies) Get() map[string]*Dependency {
 	return map[string]*Dependency{
-		"istio":     &i.Istio,
-		"cni":       &i.Cni,
-		"operator":  &i.Operator,
-		"api":       &i.Api,
-		"proxy":     &i.Proxy,
-		"pkg":       &i.Pkg,
-		"client-go": &i.Client,
+		"istio":         i.Istio,
+		"cni":           i.Cni,
+		"operator":      i.Operator,
+		"api":           i.Api,
+		"proxy":         i.Proxy,
+		"pkg":           i.Pkg,
+		"client-go":     i.ClientGo,
+		"gogo-genproto": i.GogoGenproto,
+		"test-infra":    i.TestInfra,
+		"tools":         i.Tools,
 	}
 }
 
@@ -85,6 +91,9 @@ func (i *IstioDependencies) Get() map[string]*Dependency {
 func (i IstioDependencies) MarshalJSON() ([]byte, error) {
 	deps := make(map[string]Dependency)
 	for repo, dep := range i.Get() {
+		if dep == nil {
+			continue
+		}
 		deps[repo] = Dependency{Sha: dep.Sha}
 	}
 	return json.Marshal(deps)
