@@ -84,7 +84,7 @@ func writeLicense(manifest model.Manifest) error {
 		src := filepath.Join(manifest.RepoDir(repo), "licenses")
 		// Just skip these, we can fail in the validation tests afterwards for repos we expect license for
 		if _, err := os.Stat(src); os.IsNotExist(err) {
-			log.Warnf("skipping license for %v")
+			log.Warnf("skipping license for %v", repo)
 			continue
 		}
 		if err := util.CopyDir(src, filepath.Join(manifest.OutDir(), "licenses", repo)); err != nil {
