@@ -66,7 +66,7 @@ dependencies:
     branch: release-1.4
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: master
+    branch: release-1.4
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
