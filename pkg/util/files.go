@@ -53,6 +53,29 @@ func CopyDir(src, dst string) error {
 	return nil
 }
 
+// CopyFilesToDir copies all files in one directory to another
+func CopyFilesToDir(src, dst string) error {
+	if err := VerboseCommand("mkdir", "-p", path.Join(dst, "..")).Run(); err != nil {
+		return fmt.Errorf("failed to create output directory: %v", err)
+	}
+	dir, err := ioutil.ReadDir(src)
+	if err != nil {
+		return err
+	}
+	for _, i := range dir {
+		if err := CopyFile(filepath.Join(src, i.Name()), filepath.Join(dst, i.Name())); err != nil {
+			return fmt.Errorf("failed to copy: %v", err)
+		}
+	}
+	return nil
+}
+
+// FileExists checks if a file exists
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
+}
+
 // CopyDirFiltered copies a directory, but only includes files that match given patterns
 func CopyDirFiltered(src, dst string, include []string) error {
 	if err := CopyDir(src, dst); err != nil {

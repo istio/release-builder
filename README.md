@@ -82,6 +82,6 @@ The following credentials are needed
 
 ## Running a build
 
-To ensure a consistent environment, the build should run in a docker container, `gcr.io/istio-testing/build-tools`, with environment variable `BUILD_WITH_CONTAINER=0`.
+To ensure a consistent environment, the build should run in a docker container, `gcr.io/istio-testing/build-tools`.
 
 The exact config used, including the specific docker tag, for Istio builds can be found at <https://github.com/istio/test-infra/blob/master/prow/config/jobs/release-builder.yaml>.

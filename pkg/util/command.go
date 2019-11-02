@@ -35,6 +35,7 @@ func RunMake(manifest model.Manifest, repo string, env []string, c ...string) er
 		"VERSION="+manifest.Version,
 		"ISTIO_VERSION="+manifest.Version,
 		"HUB="+manifest.Docker,
+		"BUILD_WITH_CONTAINER=0", // Build should already run in container, having multiple layers of docker causes issues
 	)
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stderr = os.Stderr
