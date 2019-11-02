@@ -48,6 +48,7 @@ func NewReleaseInfo(release string) ReleaseInfo {
 		tmpDir:   tmpDir,
 		manifest: manifest,
 		archive:  filepath.Join(tmpDir, "istio-"+manifest.Version),
+		release:  release,
 	}
 }
 
@@ -57,6 +58,7 @@ type ReleaseInfo struct {
 	tmpDir   string
 	manifest model.Manifest
 	archive  string
+	release  string
 }
 
 func CheckRelease(release string) ([]string, []error) {
@@ -66,6 +68,7 @@ func CheckRelease(release string) ([]string, []error) {
 		"IstioctlStandalone":   TestIstioctlStandalone,
 		"HelmVersionsIstio":    TestHelmVersionsIstio,
 		"HelmVersionsCni":      TestHelmVersionsCni,
+		"TestDocker":           TestDocker,
 		"HelmVersionsOperator": TestHelmVersionsOperator,
 		"Manifest":             TestManifest,
 		"Demo":                 TestDemo,
@@ -101,7 +104,7 @@ func TestIstioctlArchive(r ReleaseInfo) error {
 
 func TestIstioctlStandalone(r ReleaseInfo) error {
 	// Check istioctl from stand-alone archive
-	istioctlArchivePath := filepath.Join(flags.release, fmt.Sprintf("istioctl-%s-linux.tar.gz", r.manifest.Version))
+	istioctlArchivePath := filepath.Join(r.release, fmt.Sprintf("istioctl-%s-linux.tar.gz", r.manifest.Version))
 	if err := exec.Command("tar", "xvf", istioctlArchivePath, "-C", r.tmpDir).Run(); err != nil {
 		return err
 	}
@@ -163,6 +166,24 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		hub := GenericMap{values}.Path([]string{"global", "hub"})
 		if hub != r.manifest.Docker {
 			return fmt.Errorf("hub incorrect, got %v expected %v", hub, r.manifest.Docker)
+		}
+	}
+	return nil
+}
+
+func TestDocker(r ReleaseInfo) error {
+	expected := []string{"pilot-distroless", "pilot", "install-cni", "proxyv2", "proxyv2-distroless", "operator"}
+	found := map[string]struct{}{}
+	d, err := ioutil.ReadDir(filepath.Join(r.release, "docker"))
+	if err != nil {
+		return fmt.Errorf("failed to read docker dir: %v", err)
+	}
+	for _, i := range d {
+		found[i.Name()] = struct{}{}
+	}
+	for _, image := range expected {
+		if _, f := found[image]; !f {
+			return fmt.Errorf("expected docker image %v, but had %v", image, found)
 		}
 	}
 	return nil
@@ -232,7 +253,7 @@ func TestDemo(r ReleaseInfo) error {
 }
 
 func TestLicenses(r ReleaseInfo) error {
-	l, err := ioutil.ReadDir(filepath.Join(flags.release, "licenses"))
+	l, err := ioutil.ReadDir(filepath.Join(r.release, "licenses"))
 	if err != nil {
 		return err
 	}

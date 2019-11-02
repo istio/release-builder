@@ -33,16 +33,19 @@ func Docker(manifest model.Manifest) error {
 		env = append(env, "USE_LOCAL_PROXY=1", "ISTIO_ENVOY_LOCAL_PATH="+manifest.ProxyOverride, "ISTIO_ENVOY_LOCAL="+manifest.ProxyOverride)
 	}
 
-	if err := util.RunMake(manifest, "istio", env, "docker.save"); err != nil {
-		return fmt.Errorf("failed to create docker archives: %v", err)
+	for _, repo := range []string{"istio", "cni", "operator"} {
+		if err := util.RunMake(manifest, repo, env, "docker.save"); err != nil {
+			return fmt.Errorf("failed to create %v docker archives: %v", repo, err)
+		}
+		if util.FileExists(path.Join(manifest.RepoOutDir(repo), "docker")) {
+			// Some repos output docker files to the source repo
+			if err := util.CopyFilesToDir(path.Join(manifest.RepoOutDir(repo), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
+				return fmt.Errorf("failed to package docker images: %v", err)
+			}
+		}
 	}
-	if err := util.RunMake(manifest, "cni", nil, "docker.save"); err != nil {
-		return fmt.Errorf("failed to create cni docker archives: %v", err)
-	}
-	if err := util.RunMake(manifest, "operator", nil, "docker.save"); err != nil {
-		return fmt.Errorf("failed to create operator docker archives: %v", err)
-	}
-	if err := util.CopyDir(path.Join(manifest.GoOutDir(), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
+	// Others output to GoOut, so copy those as well
+	if err := util.CopyFilesToDir(path.Join(manifest.GoOutDir(), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
 		return fmt.Errorf("failed to package docker images: %v", err)
 	}
 	return nil
