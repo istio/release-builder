@@ -181,7 +181,8 @@ func TestDocker(r ReleaseInfo) error {
 	for _, i := range d {
 		found[i.Name()] = struct{}{}
 	}
-	for _, image := range expected {
+	for _, i := range expected {
+		image := i + ".tar.gz"
 		if _, f := found[image]; !f {
 			return fmt.Errorf("expected docker image %v, but had %v", image, found)
 		}
