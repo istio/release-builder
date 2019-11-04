@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -70,6 +71,7 @@ func CheckRelease(release string) ([]string, []error) {
 		"HelmVersionsCni":      TestHelmVersionsCni,
 		"TestDocker":           TestDocker,
 		"HelmVersionsOperator": TestHelmVersionsOperator,
+		"Operator":             TestOperator,
 		"Manifest":             TestManifest,
 		"Demo":                 TestDemo,
 		"Licenses":             TestLicenses,
@@ -125,19 +127,32 @@ type GenericMap struct {
 	data map[string]interface{}
 }
 
-func (g GenericMap) Path(path []string) interface{} {
+func (g GenericMap) Path(path []string) (interface{}, error) {
 	current := g.data
+	var tmpList []interface{}
 	for _, p := range path {
-		switch v := current[p].(type) {
+		val := current[p]
+		// If the last path was a list, instead treat p as the index into that list
+		if tmpList != nil {
+			i, err := strconv.Atoi(p)
+			if err != nil {
+				return nil, fmt.Errorf("list requires integer path: %v in %v", p, path)
+			}
+			val = tmpList[i]
+			tmpList = nil
+		}
+		switch v := val.(type) {
 		case string:
-			return v
+			return v, nil
 		case map[string]interface{}:
 			current = v
+		case []interface{}:
+			tmpList = v
 		default:
-			panic("expected map or string")
+			return nil, fmt.Errorf("expected map or string, got %T for %v in %v", v, p, path)
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func getValues(path string) map[string]interface{} {
@@ -159,11 +174,17 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 	}
 	for _, f := range checks {
 		values := getValues(filepath.Join(r.archive, f))
-		tag := GenericMap{values}.Path([]string{"global", "tag"})
+		tag, err := GenericMap{values}.Path([]string{"global", "tag"})
+		if err != nil {
+			return fmt.Errorf("invalid path: %v", err)
+		}
 		if tag != r.manifest.Version {
 			return fmt.Errorf("archive tag incorrect, got %v expected %v", tag, r.manifest.Version)
 		}
-		hub := GenericMap{values}.Path([]string{"global", "hub"})
+		hub, err := GenericMap{values}.Path([]string{"global", "hub"})
+		if err != nil {
+			return fmt.Errorf("invalid path: %v", err)
+		}
 		if hub != r.manifest.Docker {
 			return fmt.Errorf("hub incorrect, got %v expected %v", hub, r.manifest.Docker)
 		}
@@ -197,11 +218,17 @@ func TestHelmVersionsCni(r ReleaseInfo) error {
 	}
 	for _, f := range cniChecks {
 		values := getValues(filepath.Join(r.archive, f))
-		tag := GenericMap{values}.Path([]string{"tag"})
+		tag, err := GenericMap{values}.Path([]string{"tag"})
+		if err != nil {
+			return fmt.Errorf("invalid path: %v", err)
+		}
 		if tag != r.manifest.Version {
 			return fmt.Errorf("archive tag incorrect, got %v expected %v", tag, r.manifest.Version)
 		}
-		hub := GenericMap{values}.Path([]string{"hub"})
+		hub, err := GenericMap{values}.Path([]string{"hub"})
+		if err != nil {
+			return fmt.Errorf("invalid path: %v", err)
+		}
 		if hub != r.manifest.Docker {
 			return fmt.Errorf("hub incorrect, got %v expected %v", hub, r.manifest.Docker)
 		}
@@ -215,13 +242,37 @@ func TestHelmVersionsOperator(r ReleaseInfo) error {
 	}
 	for _, f := range operatorChecks {
 		values := getValues(filepath.Join(r.archive, f))
-		tag := GenericMap{values}.Path([]string{"spec", "tag"})
+		tag, err := GenericMap{values}.Path([]string{"spec", "tag"})
+		if err != nil {
+			return fmt.Errorf("invalid path: %v", err)
+		}
 		if tag != r.manifest.Version {
 			return fmt.Errorf("archive tag incorrect, got %v expected %v", tag, r.manifest.Version)
 		}
-		hub := GenericMap{values}.Path([]string{"spec", "hub"})
+		hub, err := GenericMap{values}.Path([]string{"spec", "hub"})
+		if err != nil {
+			return fmt.Errorf("invalid path: %v", err)
+		}
 		if hub != r.manifest.Docker {
 			return fmt.Errorf("hub incorrect, got %v expected %v", hub, r.manifest.Docker)
+		}
+	}
+	return nil
+}
+
+func TestOperator(r ReleaseInfo) error {
+	operatorChecks := []string{
+		"install/kubernetes/operator/deploy/operator.yaml",
+	}
+	for _, f := range operatorChecks {
+		expected := fmt.Sprintf("%s/operator:%s", r.manifest.Docker, r.manifest.Version)
+		values := getValues(filepath.Join(r.archive, f))
+		image, err := GenericMap{values}.Path([]string{"spec", "template", "spec", "containers", "0", "image"})
+		if err != nil {
+			return fmt.Errorf("invalid path: %v", err)
+		}
+		if image != expected {
+			return fmt.Errorf("operator image incorrect, got %v expected %v", image, expected)
 		}
 	}
 	return nil
