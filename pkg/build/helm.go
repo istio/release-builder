@@ -39,6 +39,8 @@ var (
 		regexp.MustCompile(`tag: 1\..-dev`),
 	}
 
+	operatorDeployRegex = regexp.MustCompile(`image: gcr.io/istio-testing/operator:.*`)
+
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
 	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
 
@@ -158,6 +160,10 @@ func sanitizeTemplate(manifest model.Manifest, p string) error {
 	for _, tagRegex := range tagRegexes {
 		contents = tagRegex.ReplaceAllString(contents, fmt.Sprintf("tag: %s", manifest.Version))
 	}
+
+	// Some manifests have images directly embedded
+	// Rather than try to make a very generic regex, specifically enumerate these to avoid false positives
+	contents = operatorDeployRegex.ReplaceAllString(contents, fmt.Sprintf("image: %s/operator:%s", manifest.Docker, manifest.Version))
 
 	err = ioutil.WriteFile(p, []byte(contents), 0)
 	if err != nil {
