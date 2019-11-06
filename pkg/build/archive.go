@@ -16,6 +16,7 @@ package build
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
@@ -78,14 +79,20 @@ func Archive(manifest model.Manifest) error {
 		if err := cmd.Run(); err != nil {
 			return err
 		}
-		if err := sanitizeTemplate(manifest, path.Join(out, "install/kubernetes/operator/profiles/default.yaml")); err != nil {
-			return fmt.Errorf("failed to sanitize charts")
+		profiles, err := ioutil.ReadDir(path.Join(out, "install/kubernetes/operator/profiles"))
+		if err != nil {
+			return fmt.Errorf("failed to read profiles: %v", err)
+		}
+		for _, p := range profiles {
+			if err := sanitizeTemplate(manifest, path.Join(out, "install/kubernetes/operator/profiles", p.Name())); err != nil {
+				return fmt.Errorf("failed to sanitize profile %v: %v", p.Name(), err)
+			}
 		}
 		if err := util.CopyDir(path.Join(manifest.RepoDir("operator"), "deploy"), path.Join(out, "install/kubernetes/operator/deploy")); err != nil {
 			return err
 		}
 		if err := sanitizeTemplate(manifest, path.Join(out, "install/kubernetes/operator/deploy/operator.yaml")); err != nil {
-			return fmt.Errorf("failed to sanitize operator manifest")
+			return fmt.Errorf("failed to sanitize operator manifest: %v", err)
 		}
 		if err := util.CopyDir(path.Join(manifest.RepoDir("operator"), "samples"), path.Join(out, "samples/operator")); err != nil {
 			return err

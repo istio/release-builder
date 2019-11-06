@@ -239,6 +239,8 @@ func TestHelmVersionsCni(r ReleaseInfo) error {
 func TestHelmVersionsOperator(r ReleaseInfo) error {
 	operatorChecks := []string{
 		"install/kubernetes/operator/profiles/default.yaml",
+		"install/kubernetes/operator/profiles/sds.yaml",
+		"install/kubernetes/operator/profiles/minimal.yaml",
 	}
 	for _, f := range operatorChecks {
 		values := getValues(filepath.Join(r.archive, f))
