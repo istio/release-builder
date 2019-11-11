@@ -136,6 +136,8 @@ type Manifest struct {
 	ProxyOverride string `json:"proxyOverride"`
 	// BuildOutputs defines what components to build. This allows building only some components.
 	BuildOutputs map[BuildOutput]struct{} `json:"-"`
+	// BuildInfoFileName stores the path for BUILDINFO, used by build scripts
+	BuildInfoFileName string `json:"-"`
 }
 
 // RepoDir is a helper to return the working directory for a repo

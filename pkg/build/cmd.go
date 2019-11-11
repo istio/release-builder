@@ -59,6 +59,10 @@ var (
 				return fmt.Errorf("failed to standardize manifest: %v", err)
 			}
 
+			if err := pkg.GenerateBuildInfoFile(&manifest); err != nil {
+				return fmt.Errorf("failed to generate BUILDINFO file: %v", err)
+			}
+
 			if err := Build(manifest); err != nil {
 				return fmt.Errorf("failed to build: %v", err)
 			}

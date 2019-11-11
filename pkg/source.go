@@ -25,6 +25,8 @@ import (
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 
+	"io/ioutil"
+
 	"istio.io/pkg/log"
 )
 
@@ -133,5 +135,36 @@ func StandardizeManifest(manifest *model.Manifest) error {
 		}
 		manifest.Dependencies.Set(repo, newDep)
 	}
+	return nil
+}
+
+// GenerateBuildInfoFile creates the BUILDINFO file, used by build scripts
+func GenerateBuildInfoFile(manifest *model.Manifest) error {
+	content := fmt.Sprintf(
+		`istio.io/pkg/version.buildVersion=%s
+istio.io/pkg/version.buildGitRevision=%s
+istio.io/pkg/version.buildStatus=Clean
+istio.io/pkg/version.buildTag=%s
+istio.io/pkg/version.buildHub=%s
+`,
+		manifest.Version,
+		manifest.Dependencies.Istio.Sha,
+		manifest.Version,
+		manifest.Docker)
+
+	f, err := ioutil.TempFile("", "BUILDINFO_")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(content)
+	if err != nil {
+		return err
+	}
+
+	manifest.BuildInfoFileName = f.Name()
+	log.Infof("Created buildInfo file: %s", manifest.BuildInfoFileName)
+
 	return nil
 }
