@@ -91,8 +91,8 @@ func writeLicense(manifest model.Manifest) error {
 			continue
 		}
 		// Package as a tar.gz since there are hundreds of files
-		cmd := util.VerboseCommand("tar", "-czf", filepath.Join(manifest.OutDir(), "licenses", repo+".tar.gz"), src)
-		cmd.Dir = path.Join(manifest.Directory)
+		cmd := util.VerboseCommand("tar", "-czf", filepath.Join(manifest.OutDir(), "licenses", repo+".tar.gz"), ".")
+		cmd.Dir = src
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("failed to compress license: %v", err)
 		}
