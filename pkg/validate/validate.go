@@ -311,11 +311,11 @@ func TestLicenses(r ReleaseInfo) error {
 	}
 	// Expect to find license folders for these repos
 	expect := map[string]struct{}{
-		"istio":         {},
-		"gogo-genproto": {},
-		"client-go":     {},
-		"tools":         {},
-		"test-infra":    {},
+		"istio.tar.gz":         {},
+		"gogo-genproto.tar.gz": {},
+		"client-go.tar.gz":     {},
+		"tools.tar.gz":         {},
+		"test-infra.tar.gz":    {},
 	}
 
 	for _, repo := range l {
