@@ -80,6 +80,9 @@ func Build(manifest model.Manifest) error {
 
 // writeLicense copies the complete list of licenses for all dependant repos
 func writeLicense(manifest model.Manifest) error {
+	if err := os.Mkdir(filepath.Join(manifest.OutDir(), "licenses"), 0750); err != nil {
+		return fmt.Errorf("failed to create license dir: %v", err)
+	}
 	for repo := range manifest.Dependencies.Get() {
 		src := filepath.Join(manifest.RepoDir(repo), "licenses")
 		// Just skip these, we can fail in the validation tests afterwards for repos we expect license for
@@ -87,8 +90,11 @@ func writeLicense(manifest model.Manifest) error {
 			log.Warnf("skipping license for %v", repo)
 			continue
 		}
-		if err := util.CopyDir(src, filepath.Join(manifest.OutDir(), "licenses", repo)); err != nil {
-			return fmt.Errorf("failed to copy license for %v: %v", repo, err)
+		// Package as a tar.gz since there are hundreds of files
+		cmd := util.VerboseCommand("tar", "-czf", filepath.Join(manifest.OutDir(), "licenses", repo+".tar.gz"), src)
+		cmd.Dir = path.Join(manifest.Directory)
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to compress license: %v", err)
 		}
 	}
 	return nil
