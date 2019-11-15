@@ -30,7 +30,7 @@ func Docker(manifest model.Manifest) error {
 
 	if manifest.ProxyOverride != "" {
 		// Add the vars to tell Istio to use our own Envoy binary
-		env = append(env, "USE_LOCAL_PROXY=1", "ISTIO_ENVOY_LOCAL_PATH="+manifest.ProxyOverride, "ISTIO_ENVOY_LOCAL="+manifest.ProxyOverride)
+		env = append(env, "ISTIO_ENVOY_BASE_URL="+manifest.ProxyOverride)
 	}
 
 	for _, repo := range []string{"istio", "cni", "operator"} {
