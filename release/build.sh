@@ -30,6 +30,10 @@ gcloud auth configure-docker -q
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
 
+if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
+  PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
+fi
+
 # We shouldn't push here right now, this is just which version to embed in the Helm charts
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 
@@ -73,6 +77,7 @@ dependencies:
   tools:
     git: https://github.com/istio/tools
     branch: release-1.4
+${PROXY_OVERRIDE:-}
 EOF
 )
 
