@@ -41,7 +41,7 @@ func RunMake(manifest model.Manifest, repo string, env []string, c ...string) er
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Dir = manifest.RepoDir(repo)
-	log.Infof("Running make %v with env=%v wd=%v", strings.Join(c, " "), strings.Join(env, " "), cmd.Dir)
+	log.Infof("Running make %v with env=%v wd=%v", strings.Join(c, " "), strings.Join(cmd.Env, " "), cmd.Dir)
 	return cmd.Run()
 }
 
