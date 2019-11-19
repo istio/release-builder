@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -75,6 +76,7 @@ func CheckRelease(release string) ([]string, []error) {
 		"Manifest":             TestManifest,
 		"Demo":                 TestDemo,
 		"Licenses":             TestLicenses,
+		"CompletionFiles":      TestCompletionFiles,
 	}
 	var errors []error
 	var success []string
@@ -324,6 +326,16 @@ func TestLicenses(r ReleaseInfo) error {
 
 	if len(expect) > 0 {
 		return fmt.Errorf("failed to find licenses for: %v", expect)
+	}
+	return nil
+}
+
+func TestCompletionFiles(r ReleaseInfo) error {
+	for _, file := range []string{"istioctl.bash", "_istioctl"} {
+		_, err := os.Stat(filepath.Join(r.release, "tools", file))
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
