@@ -332,7 +332,7 @@ func TestLicenses(r ReleaseInfo) error {
 
 func TestCompletionFiles(r ReleaseInfo) error {
 	for _, file := range []string{"istioctl.bash", "_istioctl"} {
-		if !util.FileExists(filepath.Join(r.release, "tools", file)) {
+		if !util.FileExists(filepath.Join(r.archive, "tools", file)) {
 			return fmt.Errorf("file not found %s", filepath.Join(r.release, "tools", file))
 		}
 	}
