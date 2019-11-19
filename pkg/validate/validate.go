@@ -28,6 +28,7 @@ import (
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg"
 	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 func NewReleaseInfo(release string) ReleaseInfo {
@@ -75,6 +76,7 @@ func CheckRelease(release string) ([]string, []error) {
 		"Manifest":             TestManifest,
 		"Demo":                 TestDemo,
 		"Licenses":             TestLicenses,
+		"CompletionFiles":      TestCompletionFiles,
 	}
 	var errors []error
 	var success []string
@@ -324,6 +326,15 @@ func TestLicenses(r ReleaseInfo) error {
 
 	if len(expect) > 0 {
 		return fmt.Errorf("failed to find licenses for: %v", expect)
+	}
+	return nil
+}
+
+func TestCompletionFiles(r ReleaseInfo) error {
+	for _, file := range []string{"istioctl.bash", "_istioctl"} {
+		if !util.FileExists(filepath.Join(r.archive, "tools", file)) {
+			return fmt.Errorf("file not found %s", filepath.Join(r.release, "tools", file))
+		}
 	}
 	return nil
 }
