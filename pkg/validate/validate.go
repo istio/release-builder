@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -29,6 +28,7 @@ import (
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg"
 	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 func NewReleaseInfo(release string) ReleaseInfo {
@@ -332,9 +332,8 @@ func TestLicenses(r ReleaseInfo) error {
 
 func TestCompletionFiles(r ReleaseInfo) error {
 	for _, file := range []string{"istioctl.bash", "_istioctl"} {
-		_, err := os.Stat(filepath.Join(r.release, "tools", file))
-		if err != nil {
-			return err
+		if !util.FileExists(filepath.Join(r.release, "tools", file)) {
+			return fmt.Errorf("file not found %s", filepath.Join(r.release, "tools", file))
 		}
 	}
 	return nil
