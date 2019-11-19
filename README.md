@@ -58,8 +58,8 @@ dependencies:
   proxy:
     git: https://github.com/istio/proxy
     auto: deps
-# proxyOverride specifies an Envoy binary to use, instead of pulling one from GCS
-proxyOverride: /path/to/envoy
+# proxyOverride specifies an alternative URL to pull Envoy binary from
+proxyOverride: https://storage.googleapis.com/istio-build/proxy
 ```
 
 ## Publish
