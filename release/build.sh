@@ -77,6 +77,9 @@ dependencies:
   tools:
     git: https://github.com/istio/tools
     branch: release-1.4
+  installer:
+    git: https://github.com/istio/installer
+    branch: release-1.4
 ${PROXY_OVERRIDE:-}
 EOF
 )
