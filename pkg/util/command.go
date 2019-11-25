@@ -29,7 +29,7 @@ import (
 func RunMake(manifest model.Manifest, repo string, env []string, c ...string) error {
 	cmd := VerboseCommand("make", c...)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env,
+	env = append(env,
 		"GOPATH="+manifest.WorkDir(),
 		"TAG="+manifest.Version,
 		"VERSION="+manifest.Version,
@@ -41,7 +41,7 @@ func RunMake(manifest model.Manifest, repo string, env []string, c ...string) er
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Dir = manifest.RepoDir(repo)
-	log.Infof("Running make %v with env=%v wd=%v", strings.Join(c, " "), strings.Join(cmd.Env, " "), cmd.Dir)
+	log.Infof("Running make %v with env=%v wd=%v", strings.Join(c, " "), strings.Join(env, " "), cmd.Dir)
 	return cmd.Run()
 }
 
