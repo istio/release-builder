@@ -47,6 +47,7 @@ version: ${VERSION}
 docker: ${DOCKER_HUB}
 directory: ${WORK_DIR}
 dependencies:
+${DEPENDENCIES:-$(cat <<EOD
   istio:
     git: https://github.com/istio/istio
     branch: release-1.4
@@ -80,6 +81,8 @@ dependencies:
   installer:
     git: https://github.com/istio/installer
     branch: release-1.4
+EOD
+)}
 ${PROXY_OVERRIDE:-}
 EOF
 )
