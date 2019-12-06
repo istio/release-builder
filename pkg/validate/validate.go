@@ -283,7 +283,10 @@ func TestOperator(r ReleaseInfo) error {
 func TestManifest(r ReleaseInfo) error {
 	for _, repo := range []string{"api", "cni", "client-go", "istio", "operator", "pkg", "proxy"} {
 		d, f := r.manifest.Dependencies.Get()[repo]
-		if !f || d.Sha == "" {
+		if !f || d == nil {
+			continue
+		}
+		if d.Sha == "" {
 			return fmt.Errorf("got empty SHA for %v", repo)
 		}
 	}
