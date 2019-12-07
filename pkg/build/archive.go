@@ -49,7 +49,6 @@ func Archive(manifest model.Manifest) error {
 
 			// Setup tools. The tools/ folder contains a bunch of extra junk, so just select exactly what we want
 			"tools/convert_RbacConfig_to_ClusterRbacConfig.sh",
-			"tools/packaging/common/istio-iptables.sh",
 			"tools/dump_kubernetes.sh",
 		}
 		for _, file := range directCopies {
