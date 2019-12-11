@@ -67,9 +67,8 @@ func Github(manifest model.Manifest, githubOrg string, githubToken string) error
 func GithubRelease(manifest model.Manifest, client *github.Client, githuborg string) error {
 	ctx := context.Background()
 
-	// TODO(https://github.com/istio/istio.io/issues/5151) don't hard code date
 	body := fmt.Sprintf(`[Artifacts](http://gcsweb.istio.io/gcs/istio-release/releases/%s/)
-[Release Notes](https://istio.io/news/2019/announcing-%s/)`,
+[Release Notes](https://istio.io/news/announcing-%s/)`,
 		manifest.Version, manifest.Version)
 
 	relName := fmt.Sprintf("Istio %s", manifest.Version)
