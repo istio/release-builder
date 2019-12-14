@@ -25,12 +25,22 @@ import (
 	"istio.io/pkg/log"
 )
 
+// The version for a build could be an arbitrary string, but the version embedded in the proxy
+// metadata must be a semver that describes its capabilities to Pilot (and potentially others).
+func getProxyVersion(fallback string) string {
+	pv, f := os.LookupEnv("PROXY_VERSION")
+	if !f {
+		return fallback
+	}
+	return pv
+}
+
 func StandardEnv(manifest model.Manifest) []string {
 	env := os.Environ()
 	env = append(env,
 		"GOPATH="+manifest.WorkDir(),
 		"TAG="+manifest.Version,
-		"VERSION="+manifest.Version,
+		"VERSION="+getProxyVersion(manifest.Version),
 		"ISTIO_VERSION="+manifest.Version,
 		"HUB="+manifest.Docker,
 		"BUILD_WITH_CONTAINER=0", // Build should already run in container, having multiple layers of docker causes issues
