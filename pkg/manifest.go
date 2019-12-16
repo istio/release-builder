@@ -20,7 +20,6 @@ import (
 	"os"
 	"strings"
 
-	semver "github.com/Masterminds/semver/v3"
 	"github.com/ghodss/yaml"
 
 	"istio.io/pkg/log"
@@ -107,9 +106,6 @@ func ReadInManifest(manifestFile string) (model.InputManifest, error) {
 	}
 	if err := validateManifestDependencies(manifest.Dependencies); err != nil {
 		return manifest, fmt.Errorf("invalid manifest: %v", err)
-	}
-	if _, err = semver.StrictNewVersion(manifest.Version); err != nil {
-		return manifest, fmt.Errorf("invalid semantic version: %v", err)
 	}
 	return manifest, nil
 }

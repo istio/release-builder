@@ -27,6 +27,7 @@ import (
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 
+	semver "github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v28/github"
 	"golang.org/x/oauth2"
 )
@@ -126,6 +127,9 @@ func GithubTag(client *github.Client, org string, repo string, version string, g
 	// append `v` in front of the Istio version number to comply with
 	// Go module versioning convention.
 	if goVersionEnabled && !strings.HasPrefix(version, "v") {
+		if _, err := semver.StrictNewVersion(version); err != nil {
+			return fmt.Errorf("cannot tag %v with invalid semantic version %v: %v", repo, version, err)
+		}
 		version = fmt.Sprintf("v%s", version)
 	}
 
