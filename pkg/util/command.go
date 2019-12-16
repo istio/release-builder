@@ -25,11 +25,9 @@ import (
 	"istio.io/pkg/log"
 )
 
-// RunMake runs a make command for the repo, with standard environment variables set
-func RunMake(manifest model.Manifest, repo string, env []string, c ...string) error {
-	cmd := VerboseCommand("make", c...)
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env,
+func StandardEnv(manifest model.Manifest) []string {
+	env := os.Environ()
+	env = append(env,
 		"GOPATH="+manifest.WorkDir(),
 		"TAG="+manifest.Version,
 		"VERSION="+manifest.Version,
@@ -37,6 +35,13 @@ func RunMake(manifest model.Manifest, repo string, env []string, c ...string) er
 		"HUB="+manifest.Docker,
 		"BUILD_WITH_CONTAINER=0", // Build should already run in container, having multiple layers of docker causes issues
 	)
+	return env
+}
+
+// RunMake runs a make command for the repo, with standard environment variables set
+func RunMake(manifest model.Manifest, repo string, env []string, c ...string) error {
+	cmd := VerboseCommand("make", c...)
+	cmd.Env = StandardEnv(manifest)
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
