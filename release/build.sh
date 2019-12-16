@@ -69,6 +69,7 @@ ${DEPENDENCIES:-$(cat <<EOD
   client-go:
     git: https://github.com/istio/client-go
     branch: release-1.4
+    goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
     branch: release-1.4

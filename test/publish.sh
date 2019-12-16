@@ -60,6 +60,7 @@ dependencies:
   client-go:
     git: https://github.com/istio/client-go
     branch: master
+    goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
     branch: master
