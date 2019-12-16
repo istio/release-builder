@@ -21,11 +21,13 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 
+	semver "github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v28/github"
 	"golang.org/x/oauth2"
 )
@@ -51,7 +53,7 @@ func Github(manifest model.Manifest, githubOrg string, githubToken string) error
 			continue
 		}
 		// Do not use dep.Org, as the source org is not necessarily the same as the publishing org
-		if err := GithubTag(client, githubOrg, repo, manifest.Version, dep.Sha); err != nil {
+		if err := GithubTag(client, githubOrg, repo, manifest.Version, dep.GoVersionEnabled, dep.Sha); err != nil {
 			return fmt.Errorf("failed to tag repo %v: %v", repo, err)
 		}
 	}
@@ -119,8 +121,17 @@ func GithubUploadReleaseAssets(ctx context.Context, manifest model.Manifest, cli
 }
 
 // GithubTag tags a given repo with a version
-func GithubTag(client *github.Client, org string, repo string, version string, sha string) error {
+func GithubTag(client *github.Client, org string, repo string, version string, goVersionEnabled bool, sha string) error {
 	ctx := context.Background()
+
+	// append `v` in front of the Istio version number to comply with
+	// Go module versioning convention.
+	if goVersionEnabled && !strings.HasPrefix(version, "v") {
+		if _, err := semver.StrictNewVersion(version); err != nil {
+			return fmt.Errorf("cannot tag %v with invalid semantic version %v: %v", repo, version, err)
+		}
+		version = fmt.Sprintf("v%s", version)
+	}
 
 	// First, create a tag
 	msg := fmt.Sprintf("Istio release %s", version)

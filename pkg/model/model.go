@@ -47,6 +47,8 @@ type Dependency struct {
 	// Auto will fetch the SHA to use based on other repos. Currently this supports reading
 	// istio.deps from istio/istio only.
 	Auto string `json:"auto,omitempty"`
+	// If true, go version semantic will be used for tagging the git repo, e.g. v1.2.3.
+	GoVersionEnabled bool `json:"goversionenabled,omitempty"`
 }
 
 // Ref returns the git reference of a dependency.

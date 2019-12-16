@@ -29,7 +29,7 @@ fi
 
 DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
-VERSION="release-builder-$(git rev-parse --short HEAD)"
+VERSION="0.0.1-releasebuilder.$(git rev-parse --short HEAD)"
 
 WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
@@ -60,6 +60,7 @@ dependencies:
   client-go:
     git: https://github.com/istio/client-go
     branch: master
+    goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
     branch: master
