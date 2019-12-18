@@ -137,7 +137,7 @@ type Manifest struct {
 	Directory string `json:"-"`
 	// ProxyOverride specifies a URL to an Envoy binary to use instead of the default proxy
 	// The binary will be pulled from `$proxyOverride/envoy-alpha-SHA.tar.gz`
-	ProxyOverride string `json:"proxyOverride"`
+	ProxyOverride string `json:"-"`
 	// BuildOutputs defines what components to build. This allows building only some components.
 	BuildOutputs map[BuildOutput]struct{} `json:"-"`
 }
