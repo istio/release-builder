@@ -113,7 +113,7 @@ func Archive(manifest model.Manifest) error {
 		// Copy the istioctl completions files to the tools directory
 		completionFiles := []string{"istioctl.bash", "_istioctl"}
 		for _, file := range completionFiles {
-			if err := util.CopyFile(path.Join(manifest.GoOutDir(), file), path.Join(out, "tools", file)); err != nil {
+			if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), file), path.Join(out, "tools", file)); err != nil {
 				return err
 			}
 		}
