@@ -103,7 +103,7 @@ func Archive(manifest model.Manifest) error {
 			istioctlBinary += ".exe"
 			istioctlDest += ".exe"
 		}
-		if err := util.CopyFile(path.Join(manifest.GoOutDir(), istioctlBinary), path.Join(out, "bin", istioctlDest)); err != nil {
+		if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), istioctlBinary), path.Join(out, "bin", istioctlDest)); err != nil {
 			return err
 		}
 		if err := os.Chmod(path.Join(out, "bin", istioctlDest), 0755); err != nil {
