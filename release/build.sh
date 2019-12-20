@@ -50,7 +50,7 @@ dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
     git: https://github.com/istio/istio
-    branch: release-1.4
+    branch: master
   cni:
     git: https://github.com/istio/cni
     auto: deps
@@ -68,20 +68,20 @@ ${DEPENDENCIES:-$(cat <<EOD
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: release-1.4
+    branch: master
     goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: release-1.4
+    branch: master
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: release-1.4
+    branch: master
   installer:
     git: https://github.com/istio/installer
-    branch: release-1.4
+    branch: master
 EOD
 )}
 ${PROXY_OVERRIDE:-}
