@@ -74,7 +74,9 @@ EOF
 )
 
 # "Temporary" hacks
-export PATH=${GOPATH}/bin:${PATH}
+if [[ -z ${GOPATH} ]]; then
+  export PATH=${GOPATH}/bin:${PATH}
+fi
 
 go run main.go build --manifest <(echo "${MANIFEST}")
 
