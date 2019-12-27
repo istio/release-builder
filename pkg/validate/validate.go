@@ -16,6 +16,7 @@ package validate
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
@@ -64,6 +65,9 @@ type ReleaseInfo struct {
 }
 
 func CheckRelease(release string) ([]string, []error) {
+	if release == "" {
+		return nil, []error{fmt.Errorf("--release must be passed")}
+	}
 	r := NewReleaseInfo(release)
 	checks := map[string]ValidationFunction{
 		"IstioctlArchive":      TestIstioctlArchive,
@@ -77,6 +81,7 @@ func CheckRelease(release string) ([]string, []error) {
 		"Demo":                 TestDemo,
 		"Licenses":             TestLicenses,
 		"CompletionFiles":      TestCompletionFiles,
+		"ProxyVersion":         TestProxyVersion,
 	}
 	var errors []error
 	var success []string
@@ -210,6 +215,64 @@ func TestDocker(r ReleaseInfo) error {
 			return fmt.Errorf("expected docker image %v, but had %v", image, found)
 		}
 	}
+	return nil
+}
+
+type DockerManifest struct {
+	Config string `json:"Config"`
+}
+
+type DockerConfig struct {
+	Config DockerConfigConfig `json:"config"`
+}
+
+type DockerConfigConfig struct {
+	Env []string `json:"Env"`
+}
+
+func TestProxyVersion(r ReleaseInfo) error {
+	image := filepath.Join(r.release, "docker", "proxyv2.tar.gz")
+	if err := exec.Command("tar", "xvf", image, "-C", r.tmpDir).Run(); err != nil {
+		log.Warnf("failed to unpackage release archive")
+	}
+
+	manifestBytes, err := ioutil.ReadFile(filepath.Join(r.tmpDir, "manifest.json"))
+	if err != nil {
+		return fmt.Errorf("couldn't read manifest: %v", err)
+	}
+	manifest := []DockerManifest{}
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return fmt.Errorf("failed to unmarshal manifest: %v", err)
+	}
+
+	configBytes, err := ioutil.ReadFile(filepath.Join(r.tmpDir, manifest[0].Config))
+	if err != nil {
+		return fmt.Errorf("couldn't read config: %v", err)
+	}
+	config := DockerConfig{}
+	if err := json.Unmarshal(configBytes, &config); err != nil {
+		return fmt.Errorf("failed to unmarshal config: %v", err)
+	}
+
+	found := false
+	for _, env := range config.Config.Env {
+		sp := strings.Split(env, "=")
+		if len(sp) != 2 {
+			return fmt.Errorf("invalid env: %v", env)
+		}
+
+		if sp[0] == "ISTIO_META_ISTIO_VERSION" {
+			found = true
+			if sp[1] != r.manifest.Version {
+				return fmt.Errorf("expected proxy version to be %v, got %v", r.manifest.Version, sp[1])
+			}
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("did not find proxy version variable")
+	}
+
 	return nil
 }
 
