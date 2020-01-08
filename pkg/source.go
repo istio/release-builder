@@ -129,7 +129,8 @@ func StandardizeManifest(manifest *model.Manifest) error {
 			return fmt.Errorf("failed to get SHA for %v: %v", repo, err)
 		}
 		newDep := model.Dependency{
-			Sha: strings.TrimSpace(sha),
+			Sha:              strings.TrimSpace(sha),
+			GoVersionEnabled: dep.GoVersionEnabled,
 		}
 		manifest.Dependencies.Set(repo, newDep)
 	}
