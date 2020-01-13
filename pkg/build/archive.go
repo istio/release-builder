@@ -72,8 +72,8 @@ func Archive(manifest model.Manifest) error {
 			return err
 		}
 
-		cmd := util.VerboseCommand("./release/create_release_charts.sh", "-o", path.Join(out, "install/kubernetes/operator"))
-		cmd.Dir = manifest.RepoDir("operator")
+		cmd := util.VerboseCommand("./operator/release/create_release_charts.sh", "-o", path.Join(out, "install/kubernetes/operator"))
+		cmd.Dir = manifest.RepoDir("istio")
 		cmd.Env = util.StandardEnv(manifest)
 		if err := cmd.Run(); err != nil {
 			return err
@@ -81,13 +81,13 @@ func Archive(manifest model.Manifest) error {
 		if err := sanitizeTemplate(manifest, path.Join(out, "install/kubernetes/operator/profiles/default.yaml")); err != nil {
 			return fmt.Errorf("failed to sanitize charts")
 		}
-		if err := util.CopyDir(path.Join(manifest.RepoDir("operator"), "deploy"), path.Join(out, "install/kubernetes/operator/deploy")); err != nil {
+		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "operator", "deploy"), path.Join(out, "install/kubernetes/operator/deploy")); err != nil {
 			return err
 		}
 		if err := sanitizeTemplate(manifest, path.Join(out, "install/kubernetes/operator/deploy/operator.yaml")); err != nil {
 			return fmt.Errorf("failed to sanitize operator manifest")
 		}
-		if err := util.CopyDir(path.Join(manifest.RepoDir("operator"), "samples"), path.Join(out, "samples/operator")); err != nil {
+		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "operator", "samples"), path.Join(out, "samples/operator")); err != nil {
 			return err
 		}
 

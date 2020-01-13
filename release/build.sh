@@ -54,9 +54,6 @@ ${DEPENDENCIES:-$(cat <<EOD
   cni:
     git: https://github.com/istio/cni
     auto: deps
-  operator:
-    git: https://github.com/istio/operator
-    auto: modules
   api:
     git: https://github.com/istio/api
     auto: modules
@@ -78,9 +75,6 @@ ${DEPENDENCIES:-$(cat <<EOD
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
-  installer:
-    git: https://github.com/istio/installer
     branch: master
 EOD
 )}
