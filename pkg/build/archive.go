@@ -81,7 +81,7 @@ func Archive(manifest model.Manifest) error {
 		if err := sanitizeTemplate(manifest, path.Join(out, "install/kubernetes/operator/profiles/default.yaml")); err != nil {
 			return fmt.Errorf("failed to sanitize charts")
 		}
-		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests"), path.Join(out, "install/kubernetes/operator/deploy")); err != nil {
+		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "operator", "deploy"), path.Join(out, "install/kubernetes/operator/deploy")); err != nil {
 			return err
 		}
 		if err := sanitizeTemplate(manifest, path.Join(out, "install/kubernetes/operator/deploy/operator.yaml")); err != nil {
