@@ -71,7 +71,6 @@ type IstioDependencies struct {
 	GogoGenproto *Dependency `json:"gogo-genproto"`
 	TestInfra    *Dependency `json:"test-infra"`
 	Tools        *Dependency `json:"tools"`
-	Installer    *Dependency `json:"installer"`
 }
 
 func (i *IstioDependencies) Get() map[string]*Dependency {
@@ -85,7 +84,6 @@ func (i *IstioDependencies) Get() map[string]*Dependency {
 		"gogo-genproto": i.GogoGenproto,
 		"test-infra":    i.TestInfra,
 		"tools":         i.Tools,
-		"installer":     i.Installer,
 	}
 }
 

@@ -76,9 +76,6 @@ ${DEPENDENCIES:-$(cat <<EOD
   tools:
     git: https://github.com/istio/tools
     branch: master
-  installer:
-    git: https://github.com/istio/installer
-    branch: master
 EOD
 )}
 ${PROXY_OVERRIDE:-}
