@@ -33,7 +33,7 @@ func Docker(manifest model.Manifest) error {
 		env = append(env, "ISTIO_ENVOY_BASE_URL="+manifest.ProxyOverride)
 	}
 
-	for _, repo := range []string{"istio", "cni", "operator"} {
+	for _, repo := range []string{"istio", "cni"} {
 		if err := util.RunMake(manifest, repo, env, "docker.save"); err != nil {
 			return fmt.Errorf("failed to create %v docker archives: %v", repo, err)
 		}
