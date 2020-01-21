@@ -16,6 +16,7 @@ package build
 
 import (
 	"fmt"
+	"os"
 	"path"
 
 	"istio.io/release-builder/pkg/model"
@@ -24,10 +25,13 @@ import (
 
 // Debian produces a debian package just for the sidecar
 func Debian(manifest model.Manifest) error {
+	// Create the artifacts in the manifest directory structure
+	// env := []string{"TARGET_OUT_LINUX=" + manifest.RepoDir("istio"), "TARGET_OUT=" + manifest.RepoDir("istio")}
+
 	if err := util.RunMake(manifest, "istio", nil, "sidecar.deb"); err != nil {
 		return fmt.Errorf("failed to build sidecar.deb: %v", err)
 	}
-	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.deb"), path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
+	if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.deb"), path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
 		return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 	}
 	if err := util.CreateSha(path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {

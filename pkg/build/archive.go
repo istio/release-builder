@@ -103,7 +103,7 @@ func Archive(manifest model.Manifest) error {
 			istioctlBinary += ".exe"
 			istioctlDest += ".exe"
 		}
-		if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), istioctlBinary), path.Join(out, "bin", istioctlDest)); err != nil {
+		if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT"), "release", istioctlBinary), path.Join(out, "bin", istioctlDest)); err != nil {
 			return err
 		}
 		if err := os.Chmod(path.Join(out, "bin", istioctlDest), 0755); err != nil {
@@ -113,7 +113,7 @@ func Archive(manifest model.Manifest) error {
 		// Copy the istioctl completions files to the tools directory
 		completionFiles := []string{"istioctl.bash", "_istioctl"}
 		for _, file := range completionFiles {
-			if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), file), path.Join(out, "tools", file)); err != nil {
+			if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT"), "release", file), path.Join(out, "tools", file)); err != nil {
 				return err
 			}
 		}

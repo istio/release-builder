@@ -45,8 +45,10 @@ func Docker(manifest model.Manifest) error {
 		}
 	}
 	// Others output to GoOut, so copy those as well
-	if err := util.CopyFilesToDir(path.Join(manifest.GoOutDir(), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
-		return fmt.Errorf("failed to package docker images: %v", err)
+	if util.FileExists(path.Join(manifest.GoOutDir(), "docker")) {
+		if err := util.CopyFilesToDir(path.Join(manifest.GoOutDir(), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
+			return fmt.Errorf("failed to package docker images: %v", err)
+		}
 	}
 	return nil
 }
