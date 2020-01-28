@@ -41,7 +41,7 @@ directory: ${WORK_DIR}
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: release-1.5
+    branch: master
   cni:
     git: https://github.com/istio/cni
     auto: deps
@@ -56,17 +56,17 @@ dependencies:
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: release-1.5
+    branch: master
     goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: release-1.5
+    branch: master
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: release-1.5
+    branch: master
 EOF
 )
 
