@@ -72,13 +72,10 @@ func CheckRelease(release string) ([]string, []error) {
 	checks := map[string]ValidationFunction{
 		"IstioctlArchive":      TestIstioctlArchive,
 		"IstioctlStandalone":   TestIstioctlStandalone,
-		"HelmVersionsIstio":    TestHelmVersionsIstio,
-		"HelmVersionsCni":      TestHelmVersionsCni,
 		"TestDocker":           TestDocker,
 		"HelmVersionsOperator": TestHelmVersionsOperator,
 		"Operator":             TestOperator,
 		"Manifest":             TestManifest,
-		"Demo":                 TestDemo,
 		"Licenses":             TestLicenses,
 		"CompletionFiles":      TestCompletionFiles,
 		"ProxyVersion":         TestProxyVersion,
@@ -174,31 +171,6 @@ func getValues(path string) map[string]interface{} {
 	return typedValues
 }
 
-func TestHelmVersionsIstio(r ReleaseInfo) error {
-	checks := []string{
-		"install/kubernetes/helm/istio/values.yaml",
-		"install/kubernetes/helm/istio-init/values.yaml",
-	}
-	for _, f := range checks {
-		values := getValues(filepath.Join(r.archive, f))
-		tag, err := GenericMap{values}.Path([]string{"global", "tag"})
-		if err != nil {
-			return fmt.Errorf("invalid path: %v", err)
-		}
-		if tag != r.manifest.Version {
-			return fmt.Errorf("archive tag incorrect, got %v expected %v", tag, r.manifest.Version)
-		}
-		hub, err := GenericMap{values}.Path([]string{"global", "hub"})
-		if err != nil {
-			return fmt.Errorf("invalid path: %v", err)
-		}
-		if hub != r.manifest.Docker {
-			return fmt.Errorf("hub incorrect, got %v expected %v", hub, r.manifest.Docker)
-		}
-	}
-	return nil
-}
-
 func TestDocker(r ReleaseInfo) error {
 	expected := []string{"pilot-distroless", "pilot", "install-cni", "proxyv2", "proxyv2-distroless", "operator"}
 	found := map[string]struct{}{}
@@ -276,31 +248,6 @@ func TestProxyVersion(r ReleaseInfo) error {
 	return nil
 }
 
-func TestHelmVersionsCni(r ReleaseInfo) error {
-	cniChecks := []string{
-		"install/kubernetes/helm/istio-cni/values.yaml",
-		"install/kubernetes/helm/istio-cni/values_gke.yaml",
-	}
-	for _, f := range cniChecks {
-		values := getValues(filepath.Join(r.archive, f))
-		tag, err := GenericMap{values}.Path([]string{"tag"})
-		if err != nil {
-			return fmt.Errorf("invalid path: %v", err)
-		}
-		if tag != r.manifest.Version {
-			return fmt.Errorf("archive tag incorrect, got %v expected %v", tag, r.manifest.Version)
-		}
-		hub, err := GenericMap{values}.Path([]string{"hub"})
-		if err != nil {
-			return fmt.Errorf("invalid path: %v", err)
-		}
-		if hub != r.manifest.Docker {
-			return fmt.Errorf("hub incorrect, got %v expected %v", hub, r.manifest.Docker)
-		}
-	}
-	return nil
-}
-
 func TestHelmVersionsOperator(r ReleaseInfo) error {
 	operatorChecks := []string{
 		"install/kubernetes/operator/profiles/default.yaml",
@@ -352,19 +299,6 @@ func TestManifest(r ReleaseInfo) error {
 	}
 	if r.manifest.Directory != "" {
 		return fmt.Errorf("expected manifest directory to be hidden, got %v", r.manifest.Directory)
-	}
-	return nil
-}
-
-func TestDemo(r ReleaseInfo) error {
-	d, err := ioutil.ReadFile(filepath.Join(r.archive, "install/kubernetes/istio-demo.yaml"))
-	if err != nil {
-		return err
-	}
-	var parsed interface{}
-	// Just validate the demo is valid yaml at least
-	if err := yaml.Unmarshal(d, &parsed); err != nil {
-		return err
 	}
 	return nil
 }
