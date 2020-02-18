@@ -88,7 +88,7 @@ func CheckRelease(release string) ([]string, []error) {
 	for name, check := range checks {
 		err := check(r)
 		if err != nil {
-			errors = append(errors, fmt.Errorf("check %v failed: %v", name, err))
+			errors = append(errors, fmt.Errorf("check  %v failed: %v", name, err))
 		} else {
 			success = append(success, name)
 		}
