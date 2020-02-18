@@ -30,10 +30,6 @@ func Archive(manifest model.Manifest) error {
 	if err := util.RunMake(manifest, "istio", nil, "istioctl-all", "istioctl.completion"); err != nil {
 		return fmt.Errorf("failed to make istioctl: %v", err)
 	}
-	// Generate the demo rendered yaml file
-	if err := util.RunMake(manifest, "istio", nil, "istio-demo.yaml"); err != nil {
-		return fmt.Errorf("failed to make istio-demo.yaml: %v", err)
-	}
 
 	// We build archives for each arch. These contain the same thing except arch specific istioctl
 	for _, arch := range []string{"linux", "osx", "win"} {
@@ -61,14 +57,6 @@ func Archive(manifest model.Manifest) error {
 		// TODO - clean this up. We probably include files we don't want and exclude files we do want.
 		includePatterns := []string{"*.yaml", "*.md", "cleanup.sh", "*.txt", "*.pem", "*.conf", "*.tpl", "*.json"}
 		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "samples"), path.Join(out, "samples"), includePatterns); err != nil {
-			return err
-		}
-		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "install"), path.Join(out, "install"), includePatterns); err != nil {
-			return err
-		}
-
-		cniSource := path.Join(manifest.RepoDir("cni"), "deployments/kubernetes/install/helm/istio-cni")
-		if err := util.CopyDirFiltered(cniSource, path.Join(out, "install/kubernetes/helm"), includePatterns); err != nil {
 			return err
 		}
 
