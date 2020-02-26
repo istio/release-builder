@@ -1,9 +1,55 @@
-version: 1.3.0
+# Version specifies which version is being built
+# This is use for `--version`, metrics, and determining proxy capabilities.
+# Note that since this determines proxy capabilities, it is desirable to follow Istio semver
+version: 1.5.6
+
+# Some of the artifacts have a docker hub built in - currently this is the operator and Helm charts
+# The specified docker hub will be used there. Note - this does not effect where the images are published,
+# but if the images are not later published to this hub the charts will not pull a valid image
 docker: docker.io/istio
+
+# Directory specifies the working directory to build in
+directory: /tmp/istio-release
+
+# Dependencies specifies dependencies of the build
+# Note - only istio and cni
+# Other dependencies are only required to grab licenses and publish tags to Github.
+# Fields:
+#   localpath: rather than pull from git, copy a local git repository
+#
+#   git: specifies the git source to pull from
+#     branch: branch to pull from git
+#     sha: sha to pull from git
+#     auto: rather than a static branch/sha, determine the sha to use from istio/istio.
+#           possible values are `deps` to check istio.deps, and `modules` to check go.mod
 dependencies:
-- org: istio
-  repo: istio
-  branch: master
-- org: istio
-  repo: cni
-  branch: master
+  istio:
+    git: https://github.com/istio/istio
+    branch: master
+  cni:
+    git: https://github.com/istio/cni
+    auto: deps
+
+# Extra dependencies, just for publish
+  api:
+    git: https://github.com/istio/api
+    auto: modules
+  client-go:
+    git: https://github.com/istio/client-go
+    branch: master
+    goversionenabled: true
+  gogo-genproto:
+    git: https://github.com/istio/gogo-genproto
+    branch: master
+  pkg:
+    git: https://github.com/istio/pkg
+    auto: modules
+  proxy:
+    git: https://github.com/istio/proxy
+    auto: deps
+  test-infra:
+    git: https://github.com/istio/test-infra
+    branch: master
+  tools:
+    git: https://github.com/istio/tools
+    branch: release-1.5
