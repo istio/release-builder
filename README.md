@@ -73,12 +73,34 @@ All of these steps can be done in isolation. For example, a daily build will fir
 ### Credentials
 
 The following credentials are needed
+
 * Github token: as environment variable `GITHUB_TOKEN` or `--githubtoken file`.
 * Docker credentials (TODO - how to set these).
 * GCP credentials for GCS (TODO - how to set these).
 
-## Running a build
+## Running a build locally
 
-To ensure a consistent environment, the build should run in a docker container, `gcr.io/istio-testing/build-tools`.
+To build locally and ensure a consistent environment, you need to have Docker installed and run the build in a docker container using a
+`gcr.io/istio-testing/build-tools` image. The exact config used, including the specific docker tag, for Istio builds can be found at
+<https://github.com/istio/test-infra/blob/master/prow/config/jobs/release-builder.yaml>. For example, the specified image might be
+`gcr.io/istio-testing/build-tools:master-2020-02-14T13-09-14`.
 
-The exact config used, including the specific docker tag, for Istio builds can be found at <https://github.com/istio/test-infra/blob/master/prow/config/jobs/release-builder.yaml>.
+Next, create a manifest to use for the builds. A good starting point is the `example/manifest.yaml`.
+
+Using docker, create a container using the above found `build-tools` image. On the command line you specify the commands to do the build and validate which
+point at your manifest.yaml file and also the directory specified in the manifest. An example Docker command to start the container and do a build and validate is:
+`docker run -it -e BUILD_WITH_CONTAINER="0" -e TZ="`readlink "" /etc/localtime | sed -e 's/^.*zoneinfo\///'`" -v /var/run/docker.sock:/var/run/docker.sock --mount type=bind,source=$(PWD),destination="/work" --mount type=volume,source=go,destination="/go" --mount type=volume,source=gocache,destination="/gocache"  -w /work gcr.io/istio-testing/build-tools:master-2020-02-14T13-09-14 /bin/bash -c "mkdir -p /tmp/istio-release; go run main.go build --manifest example/manifest.yaml; go run main.go validate --release /tmp/istio-release/out"`
+
+When the command finishes and you should have an information message,`Release validation PASSED`, and there will be a stopped container which will contain the artifacts
+from the build. To extract the artifacts from the stopped container, use `docker ps -a` to find the name of the stopped container, and then run `docker cp` to
+copy the artifacts. For example, the command might be `docker cp happy_pare:/tmp/istio-release/out artifacts`. This will place the artifacts in the `artifacts`
+directory in your current working directory. The `artifacts` directory will contain the artifacts(subject to change):
+
+* istio-{version}-{linux/osx/win}.tar.gz _Release archive that users will download_
+* istioctl-{version}-{linux/osx/win}.tar.gz
+* manifest.yaml _Defines what dependencies were a part of the build_
+* sources.tar.gz _Bundle of all sources used in the build_
+* "charts" subdirectory _OPerator release charts_
+* "deb" subdirectory _"istio-sidecar.deb" and it's sha_
+* "docker" subdirectory _tar files for the created docker images_
+* "licenses" subdirectory _tar.gz of the license files from the specified dependency repos_
