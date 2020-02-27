@@ -159,16 +159,16 @@ func (g GenericMap) Path(path []string) (interface{}, error) {
 	return nil, nil
 }
 
-func getValues(path string) map[string]interface{} {
+func getValues(path string) (map[string]interface{}, error) {
 	values, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	var typedValues map[string]interface{}
 	if err := yaml.Unmarshal(values, &typedValues); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return typedValues
+	return typedValues, nil
 }
 
 func TestDocker(r ReleaseInfo) error {
@@ -253,7 +253,10 @@ func TestHelmVersionsOperator(r ReleaseInfo) error {
 		"install/kubernetes/operator/profiles/default.yaml",
 	}
 	for _, f := range operatorChecks {
-		values := getValues(filepath.Join(r.archive, f))
+		values, err := getValues(filepath.Join(r.archive, f))
+		if err != nil {
+			return err
+		}
 		tag, err := GenericMap{values}.Path([]string{"spec", "tag"})
 		if err != nil {
 			return fmt.Errorf("invalid path: %v", err)
@@ -278,7 +281,10 @@ func TestOperator(r ReleaseInfo) error {
 	}
 	for _, f := range operatorChecks {
 		expected := fmt.Sprintf("%s/operator:%s", r.manifest.Docker, r.manifest.Version)
-		values := getValues(filepath.Join(r.archive, f))
+		values, err := getValues(filepath.Join(r.archive, f))
+		if err != nil {
+			return err
+		}
 		image, err := GenericMap{values}.Path([]string{"spec", "template", "spec", "containers", "0", "image"})
 		if err != nil {
 			return fmt.Errorf("invalid path: %v", err)
@@ -293,6 +299,9 @@ func TestOperator(r ReleaseInfo) error {
 func TestManifest(r ReleaseInfo) error {
 	for _, repo := range []string{"api", "cni", "client-go", "istio", "pkg", "proxy"} {
 		d, f := r.manifest.Dependencies.Get()[repo]
+		if d == nil {
+			return fmt.Errorf("missing dependency: %v", repo)
+		}
 		if !f || d.Sha == "" {
 			return fmt.Errorf("got empty SHA for %v", repo)
 		}

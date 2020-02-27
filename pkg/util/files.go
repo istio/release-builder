@@ -150,8 +150,13 @@ func Clone(repo string, dep model.Dependency, dest string) error {
 			return err
 		}
 	}
+	args := []string{"clone", dep.Git, dest}
+	// As an optimization, if we are cloning a branch just shallow clone
+	if dep.Branch != "" {
+		args = append(args, "-b", dep.Branch, "--depth=1")
+	}
 	// We must be fetching from git
-	err := VerboseCommand("git", "clone", dep.Git, dest).Run()
+	err := VerboseCommand("git", args...).Run()
 	if err != nil {
 		return err
 	}
