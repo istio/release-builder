@@ -57,6 +57,7 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 		outputs[model.Helm] = struct{}{}
 		outputs[model.Debian] = struct{}{}
 		outputs[model.Archive] = struct{}{}
+		outputs[model.Grafana] = struct{}{}
 	}
 	return model.Manifest{
 		Dependencies:      in.Dependencies,
