@@ -50,6 +50,12 @@ func Build(manifest model.Manifest) error {
 		}
 	}
 
+	if _, f := manifest.BuildOutputs[model.Grafana]; f {
+		if err := Grafana(manifest); err != nil {
+			return fmt.Errorf("failed to build Grafana: %v", err)
+		}
+	}
+
 	// Bundle all sources used in the build
 	cmd := util.VerboseCommand("tar", "-czf", "out/sources.tar.gz", "sources")
 	cmd.Dir = path.Join(manifest.Directory)

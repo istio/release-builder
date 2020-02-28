@@ -27,6 +27,7 @@ const (
 	Helm
 	Debian
 	Archive
+	Grafana
 
 	// Deps will resolve by looking at the istio.deps file in istio/istio
 	Deps string = "deps"
@@ -120,6 +121,8 @@ type InputManifest struct {
 	ProxyOverride string `json:"proxyOverride"`
 	// BuildOutputs defines what components to build. This allows building only some components.
 	BuildOutputs []string `json:"outputs"`
+	// GrafanaDashboards defines a mapping of dashboard name -> ID of the dashboard on grafana.com
+	GrafanaDashboards map[string]int `json:"dashboards"`
 }
 
 // Manifest defines what is in a release
@@ -138,6 +141,9 @@ type Manifest struct {
 	ProxyOverride string `json:"-"`
 	// BuildOutputs defines what components to build. This allows building only some components.
 	BuildOutputs map[BuildOutput]struct{} `json:"-"`
+	// GrafanaDashboards defines a mapping of dashboard name -> ID of the dashboard on grafana.com
+	// Note: this tool is not yet smart enough to create dashboards that do not already exist, it can only update dashboards.
+	GrafanaDashboards map[string]int `json:"dashboards"`
 }
 
 // RepoDir is a helper to return the working directory for a repo
