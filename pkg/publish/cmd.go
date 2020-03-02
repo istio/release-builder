@@ -32,13 +32,14 @@ import (
 
 var (
 	flags = struct {
-		release     string
-		dockerhub   string
-		dockertags  []string
-		gcsbucket   string
-		gcsaliases  []string
-		github      string
-		githubtoken string
+		release      string
+		dockerhub    string
+		dockertags   []string
+		gcsbucket    string
+		gcsaliases   []string
+		github       string
+		githubtoken  string
+		grafanatoken string
 	}{}
 	publishCmd = &cobra.Command{
 		Use:          "publish",
@@ -79,6 +80,8 @@ func init() {
 		"The Github org to trigger a release, and tag, for. Example: istio.")
 	publishCmd.PersistentFlags().StringVar(&flags.githubtoken, "githubtoken", flags.githubtoken,
 		"The file containing a github token.")
+	publishCmd.PersistentFlags().StringVar(&flags.grafanatoken, "grafanatoken", flags.grafanatoken,
+		"The file containing a grafana.com API token.")
 }
 
 func GetPublishCommand() *cobra.Command {
@@ -112,9 +115,29 @@ func Publish(manifest model.Manifest) error {
 			return fmt.Errorf("failed to publish to github: %v", err)
 		}
 	}
+	if flags.grafanatoken != "" {
+		token, err := getGrafanaToken(flags.grafanatoken)
+		if err != nil {
+			return err
+		}
+
+		if err := Grafana(manifest, token); err != nil {
+			return fmt.Errorf("failed to publish to github: %v", err)
+		}
+	}
 	return nil
 }
 
+func getGrafanaToken(file string) (string, error) {
+	if file != "" {
+		b, err := ioutil.ReadFile(file)
+		if err != nil {
+			return "", fmt.Errorf("failed to read grafana token: %v", file)
+		}
+		return strings.TrimSpace(string(b)), nil
+	}
+	return os.Getenv("GRAFANA_TOKEN"), nil
+}
 func getGithubToken(file string) (string, error) {
 	if file != "" {
 		b, err := ioutil.ReadFile(file)

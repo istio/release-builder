@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -77,6 +79,7 @@ func CheckRelease(release string) ([]string, []error) {
 		"Operator":             TestOperator,
 		"Manifest":             TestManifest,
 		"Licenses":             TestLicenses,
+		"Grafana":              TestGrafana,
 		"CompletionFiles":      TestCompletionFiles,
 		"ProxyVersion":         TestProxyVersion,
 	}
@@ -308,6 +311,25 @@ func TestManifest(r ReleaseInfo) error {
 	}
 	if r.manifest.Directory != "" {
 		return fmt.Errorf("expected manifest directory to be hidden, got %v", r.manifest.Directory)
+	}
+	return nil
+}
+
+func TestGrafana(r ReleaseInfo) error {
+	created := map[string]struct{}{}
+	dir, err := ioutil.ReadDir(path.Join(r.release, "grafana"))
+	if err != nil {
+		return err
+	}
+	for _, db := range dir {
+		created[strings.TrimSuffix(db.Name(), ".json")] = struct{}{}
+	}
+	manifest := map[string]struct{}{}
+	for dashboard := range r.manifest.GrafanaDashboards {
+		manifest[dashboard] = struct{}{}
+	}
+	if !reflect.DeepEqual(created, manifest) {
+		return fmt.Errorf("dashboards out of sync, release contains %+v, manifest contains %+v", created, manifest)
 	}
 	return nil
 }

@@ -75,8 +75,9 @@ All of these steps can be done in isolation. For example, a daily build will fir
 The following credentials are needed
 
 * Github token: as environment variable `GITHUB_TOKEN` or `--githubtoken file`.
-* Docker credentials (TODO - how to set these).
-* GCP credentials for GCS (TODO - how to set these).
+* Docker credentials (if publishing to docker) (TODO - how to set these).
+* GCP credentials (if publishing to GCS) (TODO - how to set these).
+* Grafana credentials (if publishing to grafana): as environment variable `GRAFANA_TOKEN` or `--grafanatoken file`.
 
 ## Running a build locally
 

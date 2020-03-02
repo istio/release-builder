@@ -67,6 +67,15 @@ dependencies:
   tools:
     git: https://github.com/istio/tools
     branch: master
+dashboards:
+  citadel-dashboard: 11828
+  galley-dashboard: 7648
+  istio-mesh-dashboard: 7639
+  istio-performance-dashboard: 11829
+  istio-service-dashboard: 7636
+  istio-workload-dashboard: 7630
+  mixer-dashboard: 7642
+  pilot-dashboard: 7645
 EOF
 )
 
