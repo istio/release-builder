@@ -53,7 +53,7 @@ func Grafana(manifest model.Manifest) error {
 
 // externalizeDashboard converts a grafana dashboard from the "internal" representation, which is used
 // in the charts, to the "external" representation. This is the form needed to publish to grafana.com
-// This has two fields added, __input and __requires, and the datasource is not hardcoded.
+// This has two fields added, __inputs and __requires, and the datasource is not hardcoded.
 func externalizeDashboard(version, file string) error {
 	original, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -75,9 +75,9 @@ func externalizeDashboard(version, file string) error {
       "pluginName": "Prometheus"
     }
   ]`), &inputMsg); err != nil {
-		return fmt.Errorf("failed to construct __input: %v", err)
+		return fmt.Errorf("failed to construct __inputs: %v", err)
 	}
-	msg["__input"] = inputMsg
+	msg["__inputs"] = inputMsg
 
 	var requiresMesh json.RawMessage
 	if err := json.Unmarshal([]byte(`[
