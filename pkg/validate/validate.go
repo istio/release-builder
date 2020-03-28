@@ -46,7 +46,7 @@ func NewReleaseInfo(release string) ReleaseInfo {
 		panic(err)
 	}
 
-	if err := exec.Command("tar", "xvf", filepath.Join(release, fmt.Sprintf("istio-%s-linux.tar.gz", manifest.Version)), "-C", tmpDir).Run(); err != nil {
+	if err := exec.Command("tar", "xvf", filepath.Join(release, fmt.Sprintf("istio-%s-linux-amd64.tar.gz", manifest.Version)), "-C", tmpDir).Run(); err != nil {
 		log.Warnf("failed to unpackage release archive")
 	}
 	return ReleaseInfo{
@@ -113,7 +113,7 @@ func TestIstioctlArchive(r ReleaseInfo) error {
 
 func TestIstioctlStandalone(r ReleaseInfo) error {
 	// Check istioctl from stand-alone archive
-	istioctlArchivePath := filepath.Join(r.release, fmt.Sprintf("istioctl-%s-linux.tar.gz", r.manifest.Version))
+	istioctlArchivePath := filepath.Join(r.release, fmt.Sprintf("istioctl-%s-linux-amd64.tar.gz", r.manifest.Version))
 	if err := exec.Command("tar", "xvf", istioctlArchivePath, "-C", r.tmpDir).Run(); err != nil {
 		return err
 	}
