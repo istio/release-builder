@@ -79,8 +79,6 @@ ${DEPENDENCIES:-$(cat <<EOD
 EOD
 )}
 dashboards:
-  citadel-dashboard: 11828
-  galley-dashboard: 7648
   istio-mesh-dashboard: 7639
   istio-performance-dashboard: 11829
   istio-service-dashboard: 7636
