@@ -108,8 +108,8 @@ directory in your current working directory. The `artifacts` directory will cont
 
 | Syntax | Description |
 | --- | ----------- |
-| istio-{version}-{linux/osx/win}.tar.gz | _Release archive that users will download_ |
-| istioctl-{version}-{linux/osx/win}.tar.gz | |
+| istio-{version}-{linux-<arch>/osx/win}.tar.gz | _Release archive that users will download_ |
+| istioctl-{version}-{linux-<arch>/osx/win}.tar.gz | |
 | manifest.yaml | _Defines what dependencies were a part of the build_ |
 | sources.tar.gz | _Bundle of all sources used in the build_|
 | "charts" subdirectory | _Operator release charts_ |

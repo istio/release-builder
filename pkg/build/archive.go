@@ -32,7 +32,7 @@ func Archive(manifest model.Manifest) error {
 	}
 
 	// We build archives for each arch. These contain the same thing except arch specific istioctl
-	for _, arch := range []string{"linux", "osx", "win"} {
+	for _, arch := range []string{"linux-amd64", "linux-armv7", "linux-arm64", "osx", "win"} {
 		out := path.Join(manifest.Directory, "work", "archive", arch, fmt.Sprintf("istio-%s", manifest.Version))
 		if err := os.MkdirAll(out, 0750); err != nil {
 			return err
