@@ -128,7 +128,7 @@ func createStandaloneIstioctl(arch string, manifest model.Manifest, out string) 
 		}
 	} else {
 		istioctlArchive = fmt.Sprintf("istioctl-%s-%s.tar.gz", manifest.Version, arch)
-		icmd := util.VerboseCommand("tar", "-czf", istioctlArchive, fmt.Sprintf("istioctl"))
+		icmd := util.VerboseCommand("tar", "-czf", istioctlArchive, "istioctl")
 		icmd.Dir = path.Join(out, "bin")
 		if err := icmd.Run(); err != nil {
 			return fmt.Errorf("failed to tar istioctl: %v", err)
