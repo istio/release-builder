@@ -253,7 +253,7 @@ func TestProxyVersion(r ReleaseInfo) error {
 
 func TestHelmVersionsOperator(r ReleaseInfo) error {
 	operatorChecks := []string{
-		"install/kubernetes/operator/profiles/default.yaml",
+		"manifests/profiles/default.yaml",
 	}
 	for _, f := range operatorChecks {
 		values, err := getValues(filepath.Join(r.archive, f))
@@ -280,7 +280,7 @@ func TestHelmVersionsOperator(r ReleaseInfo) error {
 
 func TestOperator(r ReleaseInfo) error {
 	operatorChecks := []string{
-		"install/kubernetes/operator/deploy/operator.yaml",
+		"manifests/deploy/operator.yaml",
 	}
 	for _, f := range operatorChecks {
 		expected := fmt.Sprintf("%s/operator:%s", r.manifest.Docker, r.manifest.Version)
