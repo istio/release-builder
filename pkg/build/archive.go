@@ -60,7 +60,7 @@ func Archive(manifest model.Manifest) error {
 			return err
 		}
 
-		cmd := util.VerboseCommand("./operator/release/create_release_charts.sh", "-o", path.Join(out, "install/kubernetes/operator"))
+		cmd := util.VerboseCommand("./operator/scripts/create_release_charts.sh", "-o", path.Join(out, "install/kubernetes/operator"))
 		cmd.Dir = manifest.RepoDir("istio")
 		cmd.Env = util.StandardEnv(manifest)
 		if err := cmd.Run(); err != nil {
