@@ -26,8 +26,8 @@ import (
 // Archive creates the release archive that users will download. This includes the installation templates,
 // istioctl, and various tools.
 func Archive(manifest model.Manifest) error {
-	// First, build all variants of istioctl (linux, osx, windows)
-	if err := util.RunMake(manifest, "istio", nil, "istioctl-all", "istioctl.completion"); err != nil {
+	// First, build all variants of istioctl (linux, osx, windows). gen-charts is required for manifests compiled in to istioctl.
+	if err := util.RunMake(manifest, "istio", nil, "gen-charts", "istioctl-all", "istioctl.completion"); err != nil {
 		return fmt.Errorf("failed to make istioctl: %v", err)
 	}
 
