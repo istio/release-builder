@@ -72,7 +72,7 @@ ${DEPENDENCIES:-$(cat <<EOD
     branch: release-1.6
   test-infra:
     git: https://github.com/istio/test-infra
-    branch: release-1.6
+    branch: master
   tools:
     git: https://github.com/istio/tools
     branch: release-1.6
