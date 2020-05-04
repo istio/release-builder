@@ -55,7 +55,7 @@ func Archive(manifest model.Manifest) error {
 
 		// Set up install and samples. We filter down to only some file patterns
 		// TODO - clean this up. We probably include files we don't want and exclude files we do want.
-		includePatterns := []string{"*.yaml", "*.md", "cleanup.sh", "*.txt", "*.pem", "*.conf", "*.tpl", "*.json"}
+		includePatterns := []string{"*.yaml", "*.md", "cleanup.sh", "*.txt", "*.pem", "*.conf", "*.tpl", "*.json", "Makefile"}
 		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "samples"), path.Join(out, "samples"), includePatterns); err != nil {
 			return err
 		}
