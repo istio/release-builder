@@ -108,7 +108,7 @@ func TagRepo(manifest model.Manifest, repo string) error {
 // GetSha returns the SHA for a given reference, or error if sha is not found
 func GetSha(repo string, ref string) (string, error) {
 	buf := bytes.Buffer{}
-	cmd := exec.Command("git", "rev-parse", ref)
+	cmd := exec.Command("git", "rev-list", "-n", "1", ref)
 	cmd.Stdout = &buf
 	cmd.Dir = repo
 	if err := cmd.Run(); err != nil {
