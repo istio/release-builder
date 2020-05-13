@@ -34,6 +34,12 @@ func Docker(manifest model.Manifest) error {
 	}
 
 	for _, repo := range []string{"istio", "cni"} {
+		if repo == "istio" {
+			// Istio operator requires compiled-in charts to be generated before the image is built.
+			if err := util.RunMake(manifest, repo, env, "gen-charts"); err != nil {
+				return fmt.Errorf("failed to make istio gen-charts: %v", err)
+			}
+		}
 		if err := util.RunMake(manifest, repo, env, "docker.save"); err != nil {
 			return fmt.Errorf("failed to create %v docker archives: %v", repo, err)
 		}
