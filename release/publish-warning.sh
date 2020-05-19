@@ -45,6 +45,7 @@ Docker Hub: ${DOCKER_HUB}
 Github Org: ${GITHUB_ORG}
 Source: ${SOURCE_GCS_BUCKET}/${VERSION}
 Contents:
+$(gsutil cat "gs://${SOURCE_GCS_BUCKET}/${VERSION}/manifest.yaml")
 $(gsutil ls -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}")
 EOF
 
