@@ -44,6 +44,8 @@ func Archive(manifest model.Manifest) error {
 			"README.md",
 
 			// Setup tools. The tools/ folder contains a bunch of extra junk, so just select exactly what we want
+			"tools/certs/Makefile",
+			"tools/certs/README.md",
 			"tools/convert_RbacConfig_to_ClusterRbacConfig.sh",
 			"tools/dump_kubernetes.sh",
 		}
@@ -99,7 +101,7 @@ func Archive(manifest model.Manifest) error {
 		}
 
 		// Copy the istioctl completions files to the tools directory
-		completionFiles := []string{"istioctl.bash", "_istioctl", "certs/Makefile", "certs/README.md"}
+		completionFiles := []string{"istioctl.bash", "_istioctl"}
 		for _, file := range completionFiles {
 			if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), file), path.Join(out, "tools", file)); err != nil {
 				return err
