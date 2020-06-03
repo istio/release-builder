@@ -44,6 +44,8 @@ func Archive(manifest model.Manifest) error {
 			"README.md",
 
 			// Setup tools. The tools/ folder contains a bunch of extra junk, so just select exactly what we want
+			"tools/certs/Makefile",
+			"tools/certs/README.md",
 			"tools/convert_RbacConfig_to_ClusterRbacConfig.sh",
 			"tools/dump_kubernetes.sh",
 		}
