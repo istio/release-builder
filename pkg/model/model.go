@@ -28,6 +28,7 @@ const (
 	Debian
 	Archive
 	Grafana
+	Scanner
 
 	// Deps will resolve by looking at the istio.deps file in istio/istio
 	Deps string = "deps"
