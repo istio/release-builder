@@ -74,12 +74,14 @@ func Scanner(manifest model.Manifest) error {
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	var response Response
-	json.Unmarshal(body, &response)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return err
+	}
 	if resp.StatusCode != http.StatusOK {
 		if (resp.StatusCode) == http.StatusInternalServerError {
-			return fmt.Errorf("Scanning error (%s): %s", baseImageName, response.Progress)
+			return fmt.Errorf("scanning error (%s): %s", baseImageName, response.Progress)
 		}
-		return fmt.Errorf("Scanning error (%s): %d", baseImageName, resp.StatusCode)
+		return fmt.Errorf("scanning error (%s): %d", baseImageName, resp.StatusCode)
 	}
 	if response.Results.Status == "OK" {
 		log.Infof("Base image scan of %s was successful", baseImageName)
