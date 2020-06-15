@@ -63,13 +63,14 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 		outputs[model.Scanner] = struct{}{}
 	}
 	return model.Manifest{
-		Dependencies:      in.Dependencies,
-		Version:           in.Version,
-		Docker:            in.Docker,
-		Directory:         wd,
-		BuildOutputs:      outputs,
-		ProxyOverride:     in.ProxyOverride,
-		GrafanaDashboards: in.GrafanaDashboards,
+		Dependencies:        in.Dependencies,
+		Version:             in.Version,
+		Docker:              in.Docker,
+		Directory:           wd,
+		BuildOutputs:        outputs,
+		ProxyOverride:       in.ProxyOverride,
+		GrafanaDashboards:   in.GrafanaDashboards,
+		IgnoreVulnerability: in.IgnoreVulnerability,
 	}, nil
 }
 
