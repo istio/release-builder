@@ -1,7 +1,7 @@
 # Version specifies which version is being built
 # This is use for `--version`, metrics, and determining proxy capabilities.
 # Note that since this determines proxy capabilities, it is desirable to follow Istio semver
-version: 1.5.6
+version: 1.7.0
 
 # Some of the artifacts have a docker hub built in - currently this is the operator and Helm charts
 # The specified docker hub will be used there. Note - this does not effect where the images are published,
@@ -10,6 +10,9 @@ docker: docker.io/istio
 
 # Directory specifies the working directory to build in
 directory: /tmp/istio-release
+
+# Ignore/Continue after a base image vulnerability is found
+ignoreVulnerability: false
 
 # Dependencies specifies dependencies of the build
 # Note - only istio and cni
@@ -52,4 +55,4 @@ dependencies:
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: release-1.5
+    branch: master

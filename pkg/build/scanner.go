@@ -54,7 +54,6 @@ func Scanner(manifest model.Manifest) error {
 
 	// Call imagescanner passing in base image name. If request times out, retry the request
 	baseImageName := "istio/base:" + baseVersion
-	// baseImageName = "ericvn/base:ericvn"
 	numberRetries := 4
 	var resp *http.Response
 	for numberRetries > 0 {
