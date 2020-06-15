@@ -28,6 +28,7 @@ const (
 	Debian
 	Archive
 	Grafana
+	Scanner
 
 	// Deps will resolve by looking at the istio.deps file in istio/istio
 	Deps string = "deps"
@@ -123,6 +124,8 @@ type InputManifest struct {
 	BuildOutputs []string `json:"outputs"`
 	// GrafanaDashboards defines a mapping of dashboard name -> ID of the dashboard on grafana.com
 	GrafanaDashboards map[string]int `json:"dashboards"`
+	// Ignore/Continue after a base image vulnerability is found.
+	IgnoreVulnerability bool `json:"ignoreVulnerability"`
 }
 
 // Manifest defines what is in a release
@@ -144,6 +147,8 @@ type Manifest struct {
 	// GrafanaDashboards defines a mapping of dashboard name -> ID of the dashboard on grafana.com
 	// Note: this tool is not yet smart enough to create dashboards that do not already exist, it can only update dashboards.
 	GrafanaDashboards map[string]int `json:"dashboards"`
+	// Ignore/Continue after a base image vulnerability is found.
+	IgnoreVulnerability bool `json:"ignoreVulnerability"`
 }
 
 // RepoDir is a helper to return the working directory for a repo
