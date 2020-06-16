@@ -65,7 +65,6 @@ func (d Dependency) Ref() string {
 // Dependencies for the build
 type IstioDependencies struct {
 	Istio        *Dependency `json:"istio"`
-	Cni          *Dependency `json:"cni"`
 	Api          *Dependency `json:"api"` //nolint: golint, stylecheck
 	Proxy        *Dependency `json:"proxy"`
 	Pkg          *Dependency `json:"pkg"`
@@ -78,7 +77,6 @@ type IstioDependencies struct {
 func (i *IstioDependencies) Get() map[string]*Dependency {
 	return map[string]*Dependency{
 		"istio":         i.Istio,
-		"cni":           i.Cni,
 		"api":           i.Api,
 		"proxy":         i.Proxy,
 		"pkg":           i.Pkg,

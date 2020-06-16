@@ -33,23 +33,20 @@ func Docker(manifest model.Manifest) error {
 		env = append(env, "ISTIO_ENVOY_BASE_URL="+manifest.ProxyOverride)
 	}
 
-	for _, repo := range []string{"istio", "cni"} {
-		if repo == "istio" {
-			// Istio operator requires compiled-in charts to be generated before the image is built.
-			if err := util.RunMake(manifest, repo, env, "gen-charts"); err != nil {
-				return fmt.Errorf("failed to make istio gen-charts: %v", err)
-			}
-		}
-		if err := util.RunMake(manifest, repo, env, "docker.save"); err != nil {
-			return fmt.Errorf("failed to create %v docker archives: %v", repo, err)
-		}
-		if util.FileExists(path.Join(manifest.RepoOutDir(repo), "docker")) {
-			// Some repos output docker files to the source repo
-			if err := util.CopyFilesToDir(path.Join(manifest.RepoOutDir(repo), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
-				return fmt.Errorf("failed to package docker images: %v", err)
-			}
+	// Istio operator requires compiled-in charts to be generated before the image is built.
+	if err := util.RunMake(manifest, "istio", env, "gen-charts"); err != nil {
+		return fmt.Errorf("failed to make istio gen-charts: %v", err)
+	}
+	if err := util.RunMake(manifest, "istio", env, "docker.save"); err != nil {
+		return fmt.Errorf("failed to create %v docker archives: %v", "istio", err)
+	}
+	if util.FileExists(path.Join(manifest.RepoOutDir("istio"), "docker")) {
+		// Some repos output docker files to the source repo
+		if err := util.CopyFilesToDir(path.Join(manifest.RepoOutDir("istio"), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
+			return fmt.Errorf("failed to package docker images: %v", err)
 		}
 	}
+
 	// Others output to GoOut, so copy those as well
 	if err := util.CopyFilesToDir(path.Join(manifest.GoOutDir(), "docker"), path.Join(manifest.OutDir(), "docker")); err != nil {
 		return fmt.Errorf("failed to package docker images: %v", err)

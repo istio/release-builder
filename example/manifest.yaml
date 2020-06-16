@@ -15,7 +15,7 @@ directory: /tmp/istio-release
 ignoreVulnerability: false
 
 # Dependencies specifies dependencies of the build
-# Note - only istio and cni
+# Note - only istio
 # Other dependencies are only required to grab licenses and publish tags to Github.
 # Fields:
 #   localpath: rather than pull from git, copy a local git repository
@@ -29,9 +29,6 @@ dependencies:
   istio:
     git: https://github.com/istio/istio
     branch: master
-  cni:
-    git: https://github.com/istio/cni
-    auto: deps
 
 # Extra dependencies, just for publish
   api:

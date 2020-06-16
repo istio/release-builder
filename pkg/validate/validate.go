@@ -300,7 +300,7 @@ func TestOperator(r ReleaseInfo) error {
 }
 
 func TestManifest(r ReleaseInfo) error {
-	for _, repo := range []string{"api", "cni", "client-go", "istio", "pkg", "proxy"} {
+	for _, repo := range []string{"api", "client-go", "istio", "pkg", "proxy"} {
 		d, f := r.manifest.Dependencies.Get()[repo]
 		if d == nil {
 			return fmt.Errorf("missing dependency: %v", repo)
