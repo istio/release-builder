@@ -42,9 +42,6 @@ dependencies:
   istio:
     git: https://github.com/istio/istio
     branch: master
-  cni:
-    git: https://github.com/istio/cni
-    auto: deps
   api:
     git: https://github.com/istio/api
     auto: modules

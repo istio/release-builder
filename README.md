@@ -31,7 +31,7 @@ docker: docker.io/istio
 directory: /tmp/istio-release
 
 # Dependencies specifies dependencies of the build
-# Note - only istio and cni
+# Note - only istio
 # Other dependencies are only required to grab licenses and publish tags to Github.
 # Fields:
 #   localpath: rather than pull from git, copy a local git repository
@@ -44,10 +44,7 @@ directory: /tmp/istio-release
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: release-1.4
-  cni:
-    git: https://github.com/istio/cni
-    auto: deps
+    branch: release-1.7
 # Extra dependencies, just for publish
   api:
     git: https://github.com/istio/api
