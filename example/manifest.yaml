@@ -1,7 +1,7 @@
 # Version specifies which version is being built
 # This is use for `--version`, metrics, and determining proxy capabilities.
 # Note that since this determines proxy capabilities, it is desirable to follow Istio semver
-version: 1.7.0
+version: 1.6.0
 
 # Some of the artifacts have a docker hub built in - currently this is the operator and Helm charts
 # The specified docker hub will be used there. Note - this does not effect where the images are published,
@@ -28,7 +28,7 @@ ignoreVulnerability: false
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.6
   cni:
     git: https://github.com/istio/cni
     auto: deps
@@ -39,11 +39,11 @@ dependencies:
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.6
     goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: master
+    branch: release-1.6
   pkg:
     git: https://github.com/istio/pkg
     auto: modules
@@ -55,4 +55,4 @@ dependencies:
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.6

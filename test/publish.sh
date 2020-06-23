@@ -41,7 +41,7 @@ directory: ${WORK_DIR}
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.6
   cni:
     git: https://github.com/istio/cni
     auto: deps
@@ -56,17 +56,17 @@ dependencies:
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.6
     goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: master
+    branch: release-1.6
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.6
 dashboards:
   istio-mesh-dashboard: 7639
   istio-performance-dashboard: 11829
