@@ -48,6 +48,8 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 			outputs[model.Archive] = struct{}{}
 		case "grafana":
 			outputs[model.Grafana] = struct{}{}
+		case "scanner":
+			outputs[model.Scanner] = struct{}{}
 		default:
 			return model.Manifest{}, fmt.Errorf("unknown build output: %v", o)
 		}
@@ -58,15 +60,17 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 		outputs[model.Debian] = struct{}{}
 		outputs[model.Archive] = struct{}{}
 		outputs[model.Grafana] = struct{}{}
+		outputs[model.Scanner] = struct{}{}
 	}
 	return model.Manifest{
-		Dependencies:      in.Dependencies,
-		Version:           in.Version,
-		Docker:            in.Docker,
-		Directory:         wd,
-		BuildOutputs:      outputs,
-		ProxyOverride:     in.ProxyOverride,
-		GrafanaDashboards: in.GrafanaDashboards,
+		Dependencies:        in.Dependencies,
+		Version:             in.Version,
+		Docker:              in.Docker,
+		Directory:           wd,
+		BuildOutputs:        outputs,
+		ProxyOverride:       in.ProxyOverride,
+		GrafanaDashboards:   in.GrafanaDashboards,
+		IgnoreVulnerability: in.IgnoreVulnerability,
 	}, nil
 }
 
