@@ -27,6 +27,7 @@ const (
 	Helm
 	Debian
 	Archive
+	Scanner
 
 	// Deps will resolve by looking at the istio.deps file in istio/istio
 	Deps string = "deps"
@@ -120,6 +121,8 @@ type InputManifest struct {
 	ProxyOverride string `json:"proxyOverride"`
 	// BuildOutputs defines what components to build. This allows building only some components.
 	BuildOutputs []string `json:"outputs"`
+	// Ignore/Continue after a base image vulnerability is found.
+	IgnoreVulnerability bool `json:"ignoreVulnerability"`
 }
 
 // Manifest defines what is in a release
@@ -138,6 +141,8 @@ type Manifest struct {
 	ProxyOverride string `json:"-"`
 	// BuildOutputs defines what components to build. This allows building only some components.
 	BuildOutputs map[BuildOutput]struct{} `json:"-"`
+	// Ignore/Continue after a base image vulnerability is found.
+	IgnoreVulnerability bool `json:"ignoreVulnerability"`
 }
 
 // RepoDir is a helper to return the working directory for a repo

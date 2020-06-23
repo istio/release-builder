@@ -1,9 +1,9 @@
-version: 1.3.0
+version: 1.5.0
 docker: docker.io/istio
 dependencies:
 - org: istio
   repo: istio
-  branch: master
+  branch: release-1.5
 - org: istio
   repo: cni
-  branch: master
+  branch: release-1.5
