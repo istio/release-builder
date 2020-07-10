@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -82,6 +83,8 @@ func CheckRelease(release string) ([]string, []error) {
 		"Grafana":              TestGrafana,
 		"CompletionFiles":      TestCompletionFiles,
 		"ProxyVersion":         TestProxyVersion,
+		"Debian":               TestDebian,
+		"Rpm":                  TestRpm,
 	}
 	var errors []error
 	var success []string
@@ -366,4 +369,26 @@ func TestCompletionFiles(r ReleaseInfo) error {
 		}
 	}
 	return nil
+}
+
+func TestDebian(info ReleaseInfo) error {
+	if !fileExists(filepath.Join(info.release, "deb", "istio-sidecar.deb")) {
+		return fmt.Errorf("debian package not found")
+	}
+	return nil
+}
+
+func TestRpm(info ReleaseInfo) error {
+	if !fileExists(filepath.Join(info.release, "rpm", "istio-sidecar.rpm")) {
+		return fmt.Errorf("rpm package not found")
+	}
+	return nil
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
