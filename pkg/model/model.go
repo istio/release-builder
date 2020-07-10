@@ -26,6 +26,7 @@ const (
 	Docker BuildOutput = iota
 	Helm
 	Debian
+	Rpm
 	Archive
 	Grafana
 	Scanner
