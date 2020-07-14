@@ -24,7 +24,7 @@ import (
 
 // Rpm produces an rpm package just for the sidecar
 func Rpm(manifest model.Manifest) error {
-	if err := util.RunMake(manifest, "istio", nil, "deb/rpm"); err != nil {
+	if err := util.RunMake(manifest, "istio", nil, "rpm/fpm"); err != nil {
 		return fmt.Errorf("failed to build sidecar.rpm: %v", err)
 	}
 	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
