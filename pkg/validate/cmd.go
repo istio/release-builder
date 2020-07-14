@@ -40,11 +40,11 @@ var (
 			for _, fail := range failed {
 				log.Infof("Check failed: %v", fail)
 			}
+			log.Infof("Debug output:\n%v", info)
 			if len(failed) > 0 {
 				return fmt.Errorf("release validation FAILED")
 			}
 			log.Info("Release validation PASSED")
-			log.Infof("Debug output:\n%v", info)
 			return nil
 		},
 	}

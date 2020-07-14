@@ -100,7 +100,7 @@ func CheckRelease(release string) ([]string, string, []error) {
 	if len(errors) > 0 {
 		sb.WriteString(fmt.Sprintf("Checks failed. Release info: %+v", r))
 		sb.WriteString("Files in release: \n")
-		filepath.Walk(r.release,
+		_ = filepath.Walk(r.release,
 			func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
@@ -109,7 +109,7 @@ func CheckRelease(release string) ([]string, string, []error) {
 				return nil
 			})
 		sb.WriteString("\nFiles in archive: \n")
-		filepath.Walk(r.archive,
+		_ = filepath.Walk(r.archive,
 			func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err

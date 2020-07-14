@@ -58,6 +58,7 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 		outputs[model.Docker] = struct{}{}
 		outputs[model.Helm] = struct{}{}
 		outputs[model.Debian] = struct{}{}
+		outputs[model.Rpm] = struct{}{}
 		outputs[model.Archive] = struct{}{}
 		outputs[model.Grafana] = struct{}{}
 		outputs[model.Scanner] = struct{}{}
