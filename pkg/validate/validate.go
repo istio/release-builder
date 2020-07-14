@@ -67,9 +67,9 @@ type ReleaseInfo struct {
 	release  string
 }
 
-func CheckRelease(release string) ([]string, []error) {
+func CheckRelease(release string) ([]string, string, []error) {
 	if release == "" {
-		return nil, []error{fmt.Errorf("--release must be passed")}
+		return nil, "", []error{fmt.Errorf("--release must be passed")}
 	}
 	r := NewReleaseInfo(release)
 	checks := map[string]ValidationFunction{
@@ -96,7 +96,29 @@ func CheckRelease(release string) ([]string, []error) {
 			success = append(success, name)
 		}
 	}
-	return success, errors
+	sb := strings.Builder{}
+	if len(errors) > 0 {
+		sb.WriteString(fmt.Sprintf("Checks failed. Release info: %+v", r))
+		sb.WriteString("Files in release: \n")
+		filepath.Walk(r.release,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				sb.WriteString(fmt.Sprintf("- %s", path))
+				return nil
+			})
+		sb.WriteString("\nFiles in archive: \n")
+		filepath.Walk(r.archive,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				sb.WriteString(fmt.Sprintf("- %s", path))
+				return nil
+			})
+	}
+	return success, sb.String(), errors
 }
 
 func TestIstioctlArchive(r ReleaseInfo) error {
