@@ -54,6 +54,12 @@ func Build(manifest model.Manifest) error {
 		}
 	}
 
+	if _, f := manifest.BuildOutputs[model.Rpm]; f {
+		if err := Rpm(manifest); err != nil {
+			return fmt.Errorf("failed to build Rpm: %v", err)
+		}
+	}
+
 	if _, f := manifest.BuildOutputs[model.Archive]; f {
 		if err := Archive(manifest); err != nil {
 			return fmt.Errorf("failed to build Archive: %v", err)

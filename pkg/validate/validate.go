@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -66,9 +67,9 @@ type ReleaseInfo struct {
 	release  string
 }
 
-func CheckRelease(release string) ([]string, []error) {
+func CheckRelease(release string) ([]string, string, []error) {
 	if release == "" {
-		return nil, []error{fmt.Errorf("--release must be passed")}
+		return nil, "", []error{fmt.Errorf("--release must be passed")}
 	}
 	r := NewReleaseInfo(release)
 	checks := map[string]ValidationFunction{
@@ -82,6 +83,8 @@ func CheckRelease(release string) ([]string, []error) {
 		"Grafana":              TestGrafana,
 		"CompletionFiles":      TestCompletionFiles,
 		"ProxyVersion":         TestProxyVersion,
+		"Debian":               TestDebian,
+		"Rpm":                  TestRpm,
 	}
 	var errors []error
 	var success []string
@@ -93,7 +96,29 @@ func CheckRelease(release string) ([]string, []error) {
 			success = append(success, name)
 		}
 	}
-	return success, errors
+	sb := strings.Builder{}
+	if len(errors) > 0 {
+		sb.WriteString(fmt.Sprintf("Checks failed. Release info: %+v", r))
+		sb.WriteString("Files in release: \n")
+		_ = filepath.Walk(r.release,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				sb.WriteString(fmt.Sprintf("- %s", path))
+				return nil
+			})
+		sb.WriteString("\nFiles in archive: \n")
+		_ = filepath.Walk(r.archive,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				sb.WriteString(fmt.Sprintf("- %s", path))
+				return nil
+			})
+	}
+	return success, sb.String(), errors
 }
 
 func TestIstioctlArchive(r ReleaseInfo) error {
@@ -366,4 +391,26 @@ func TestCompletionFiles(r ReleaseInfo) error {
 		}
 	}
 	return nil
+}
+
+func TestDebian(info ReleaseInfo) error {
+	if !fileExists(filepath.Join(info.release, "deb", "istio-sidecar.deb")) {
+		return fmt.Errorf("debian package not found")
+	}
+	return nil
+}
+
+func TestRpm(info ReleaseInfo) error {
+	if !fileExists(filepath.Join(info.release, "rpm", "istio-sidecar.rpm")) {
+		return fmt.Errorf("rpm package not found")
+	}
+	return nil
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

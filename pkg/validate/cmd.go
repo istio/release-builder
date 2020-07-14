@@ -33,14 +33,14 @@ var (
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(0),
 		RunE: func(c *cobra.Command, _ []string) error {
-
-			passed, failed := CheckRelease(flags.release)
+			passed, info, failed := CheckRelease(flags.release)
 			for _, pass := range passed {
 				log.Infof("Check passed: %v", pass)
 			}
 			for _, fail := range failed {
 				log.Infof("Check failed: %v", fail)
 			}
+			log.Infof("Debug output:\n%v", info)
 			if len(failed) > 0 {
 				return fmt.Errorf("release validation FAILED")
 			}
