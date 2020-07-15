@@ -71,12 +71,6 @@ func Archive(manifest model.Manifest) error {
 		if err := sanitizeTemplate(manifest, path.Join(out, "manifests/profiles/default.yaml")); err != nil {
 			return fmt.Errorf("failed to sanitize operator charts")
 		}
-		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "operator", "deploy"), path.Join(out, "manifests/deploy")); err != nil {
-			return err
-		}
-		if err := sanitizeTemplate(manifest, path.Join(out, "manifests/deploy/operator.yaml")); err != nil {
-			return fmt.Errorf("failed to sanitize operator manifest")
-		}
 		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "operator", "samples"), path.Join(out, "samples/operator")); err != nil {
 			return err
 		}
