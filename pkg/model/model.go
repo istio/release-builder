@@ -68,28 +68,32 @@ func (d Dependency) Ref() string {
 
 // Dependencies for the build
 type IstioDependencies struct {
-	Istio        *Dependency `json:"istio"`
-	Api          *Dependency `json:"api"` //nolint: golint, stylecheck
-	Proxy        *Dependency `json:"proxy"`
-	Pkg          *Dependency `json:"pkg"`
-	ClientGo     *Dependency `json:"client-go"`
-	GogoGenproto *Dependency `json:"gogo-genproto"`
-	TestInfra    *Dependency `json:"test-infra"`
-	Tools        *Dependency `json:"tools"`
-	Envoy        *Dependency `json:"envoy"`
+	Istio          *Dependency `json:"istio"`
+	Api            *Dependency `json:"api"` //nolint: golint, stylecheck
+	Proxy          *Dependency `json:"proxy"`
+	Pkg            *Dependency `json:"pkg"`
+	ClientGo       *Dependency `json:"client-go"`
+	GogoGenproto   *Dependency `json:"gogo-genproto"`
+	TestInfra      *Dependency `json:"test-infra"`
+	Tools          *Dependency `json:"tools"`
+	Envoy          *Dependency `json:"envoy"`
+	ReleaseBuilder *Dependency `json:"release-builder"`
+	CommonFiles    *Dependency `json:"common-files"`
 }
 
 func (i *IstioDependencies) Get() map[string]*Dependency {
 	return map[string]*Dependency{
-		"istio":         i.Istio,
-		"api":           i.Api,
-		"proxy":         i.Proxy,
-		"pkg":           i.Pkg,
-		"client-go":     i.ClientGo,
-		"gogo-genproto": i.GogoGenproto,
-		"test-infra":    i.TestInfra,
-		"tools":         i.Tools,
-		"envoy":         i.Envoy,
+		"istio":           i.Istio,
+		"api":             i.Api,
+		"proxy":           i.Proxy,
+		"pkg":             i.Pkg,
+		"client-go":       i.ClientGo,
+		"gogo-genproto":   i.GogoGenproto,
+		"test-infra":      i.TestInfra,
+		"tools":           i.Tools,
+		"envoy":           i.Envoy,
+		"release-builder": i.ReleaseBuilder,
+		"common-files":    i.CommonFiles,
 	}
 }
 
