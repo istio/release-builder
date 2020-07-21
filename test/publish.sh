@@ -42,7 +42,7 @@ ignoreVulnerability: true
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.7
   api:
     git: https://github.com/istio/api
     auto: modules
@@ -54,17 +54,17 @@ dependencies:
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.7
     goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: master
+    branch: release-1.7
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.7
 dashboards:
   istio-mesh-dashboard: 7639
   istio-performance-dashboard: 11829

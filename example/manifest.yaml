@@ -28,7 +28,7 @@ ignoreVulnerability: false
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.7
 
 # Extra dependencies, just for publish
   api:
@@ -36,11 +36,11 @@ dependencies:
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.7
     goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: master
+    branch: release-1.7
   pkg:
     git: https://github.com/istio/pkg
     auto: modules
@@ -52,4 +52,4 @@ dependencies:
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.7
