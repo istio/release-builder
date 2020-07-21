@@ -31,7 +31,14 @@ func Grafana(manifest model.Manifest) error {
 		path.Join(manifest.RepoDir("istio"), "manifests/charts/istio-telemetry/grafana/dashboards"),
 		path.Join(manifest.WorkDir(), "grafana"),
 	); err != nil {
-		return err
+		// Attempt alternative directory
+		// TODO make this the only option once migration is complete
+		if err := util.CopyDir(
+			path.Join(manifest.RepoDir("istio"), "manifests/addons/dashboards"),
+			path.Join(manifest.WorkDir(), "grafana"),
+		); err != nil {
+			return err
+		}
 	}
 	dashboards, err := ioutil.ReadDir(path.Join(manifest.WorkDir(), "grafana"))
 	if err != nil {
