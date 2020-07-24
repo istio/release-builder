@@ -77,7 +77,6 @@ func CheckRelease(release string) ([]string, string, []error) {
 		"IstioctlStandalone":   TestIstioctlStandalone,
 		"TestDocker":           TestDocker,
 		"HelmVersionsOperator": TestHelmVersionsOperator,
-		"Operator":             TestOperator,
 		"Manifest":             TestManifest,
 		"Licenses":             TestLicenses,
 		"Grafana":              TestGrafana,
@@ -298,27 +297,6 @@ func TestHelmVersionsOperator(r ReleaseInfo) error {
 		}
 		if hub != r.manifest.Docker {
 			return fmt.Errorf("hub incorrect, got %v expected %v", hub, r.manifest.Docker)
-		}
-	}
-	return nil
-}
-
-func TestOperator(r ReleaseInfo) error {
-	operatorChecks := []string{
-		"manifests/deploy/operator.yaml",
-	}
-	for _, f := range operatorChecks {
-		expected := fmt.Sprintf("%s/operator:%s", r.manifest.Docker, r.manifest.Version)
-		values, err := getValues(filepath.Join(r.archive, f))
-		if err != nil {
-			return err
-		}
-		image, err := GenericMap{values}.Path([]string{"spec", "template", "spec", "containers", "0", "image"})
-		if err != nil {
-			return fmt.Errorf("invalid path: %v", err)
-		}
-		if image != expected {
-			return fmt.Errorf("operator image incorrect, got %v expected %v", image, expected)
 		}
 	}
 	return nil
