@@ -52,6 +52,9 @@ dependencies:
   proxy:
     git: https://github.com/istio/proxy
     auto: deps
+  envoy:
+    git: https://github.com/istio/envoy
+    auto: proxy_workspace
 # proxyOverride specifies an alternative URL to pull Envoy binary from
 proxyOverride: https://storage.googleapis.com/istio-build/proxy
 ```
