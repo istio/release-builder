@@ -16,8 +16,10 @@ package util
 
 import (
 	"archive/zip"
+	"bufio"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -172,6 +174,8 @@ func FetchAuto(repo string, dep *model.Dependency, dest string) error {
 		return fetchAutoDeps(repo, dep, dest)
 	} else if dep.Auto == model.Modules {
 		return fetchAutoModules(repo, dep, dest)
+	} else if dep.Auto == model.ProxyWorkspace {
+		return fetchAutoProxyWorkspace(repo, dep, dest)
 	}
 	return fmt.Errorf("unknown auto dependency: %v", dep.Auto)
 }
@@ -217,6 +221,42 @@ func fetchAutoDeps(repo string, dep *model.Dependency, dest string) error {
 	}
 	if sha == "" {
 		return fmt.Errorf("failed to automatically resolve source for %v", repo)
+	}
+	dep.Sha = sha
+	return nil
+}
+
+func fetchAutoProxyWorkspace(repo string, dep *model.Dependency, dest string) error {
+	wsFile, err := os.Open(path.Join(dest, "../proxy/WORKSPACE"))
+	if err != nil {
+		return err
+	}
+	defer wsFile.Close()
+
+	// Scan proxy bazel workspace file and look for the line that sets ENVOY_SHA.
+	var sha string
+	scanner := bufio.NewScanner(wsFile)
+	envoySHAEnv := "ENVOY_SHA = "
+	for scanner.Scan() {
+		l := scanner.Text()
+		if !strings.Contains(l, envoySHAEnv) {
+			continue
+		}
+		pos := strings.LastIndex(l, envoySHAEnv)
+		adjustedPos := pos + len(envoySHAEnv)
+		if adjustedPos >= len(l) {
+			return fmt.Errorf("ENVOY_SHA is not correctly set in proxy workspace file: %v", l)
+		}
+		sha = l[adjustedPos:]
+		break
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("fail to scan proxy workspace file: %v", err)
+	}
+
+	if sha == "" {
+		return errors.New("failed to automatically resolve source for envoy")
 	}
 	dep.Sha = sha
 	return nil
