@@ -75,7 +75,7 @@ ${DEPENDENCIES:-$(cat <<EOD
     branch: master
   envoy:
     git: https://github.com/istio/envoy
-    branch: proxy_workspace
+    auto: proxy_workspace
 EOD
 )}
 dashboards:

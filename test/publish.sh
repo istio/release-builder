@@ -67,7 +67,7 @@ dependencies:
     branch: master
   envoy:
     git: https://github.com/istio/envoy
-    branch: proxy_workspace
+    auto: proxy_workspace
 dashboards:
   istio-mesh-dashboard: 7639
   istio-performance-dashboard: 11829

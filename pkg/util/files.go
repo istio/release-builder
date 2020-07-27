@@ -175,7 +175,7 @@ func FetchAuto(repo string, dep *model.Dependency, dest string) error {
 	} else if dep.Auto == model.Modules {
 		return fetchAutoModules(repo, dep, dest)
 	} else if dep.Auto == model.ProxyWorkspace {
-		return fetchAutoProxyWorkspace(repo, dep, dest)
+		return fetchAutoProxyWorkspace(dep, dest)
 	}
 	return fmt.Errorf("unknown auto dependency: %v", dep.Auto)
 }
@@ -226,7 +226,7 @@ func fetchAutoDeps(repo string, dep *model.Dependency, dest string) error {
 	return nil
 }
 
-func fetchAutoProxyWorkspace(repo string, dep *model.Dependency, dest string) error {
+func fetchAutoProxyWorkspace(dep *model.Dependency, dest string) error {
 	wsFile, err := os.Open(path.Join(dest, "../proxy/WORKSPACE"))
 	if err != nil {
 		return err
