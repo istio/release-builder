@@ -236,7 +236,7 @@ func fetchAutoProxyWorkspace(dep *model.Dependency, dest string) error {
 	// Scan proxy bazel workspace file and look for the line that sets ENVOY_SHA.
 	var sha string
 	scanner := bufio.NewScanner(wsFile)
-	envoySHAEnv := "ENVOY_SHA = "
+	envoySHAEnv := "ENVOY_SHA = \""
 	for scanner.Scan() {
 		l := scanner.Text()
 		if !strings.Contains(l, envoySHAEnv) {
@@ -247,7 +247,8 @@ func fetchAutoProxyWorkspace(dep *model.Dependency, dest string) error {
 		if adjustedPos >= len(l) {
 			return fmt.Errorf("ENVOY_SHA is not correctly set in proxy workspace file: %v", l)
 		}
-		sha = l[adjustedPos:]
+		// Git commit SHA length is always 40 char.
+		sha = l[adjustedPos : adjustedPos+40]
 		break
 	}
 

@@ -66,7 +66,7 @@ dependencies:
     git: https://github.com/istio/tools
     branch: master
   envoy:
-    git: https://github.com/istio/envoy
+    git: https://github.com/envoyproxy/envoy-wasm
     auto: proxy_workspace
 dashboards:
   istio-mesh-dashboard: 7639
