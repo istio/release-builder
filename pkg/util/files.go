@@ -16,7 +16,6 @@ package util
 
 import (
 	"archive/zip"
-	"bufio"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -27,6 +26,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/rogpeppe/go-internal/modfile"
@@ -227,33 +227,15 @@ func fetchAutoDeps(repo string, dep *model.Dependency, dest string) error {
 }
 
 func fetchAutoProxyWorkspace(dep *model.Dependency, dest string) error {
-	wsFile, err := os.Open(path.Join(dest, "../proxy/WORKSPACE"))
+	wsFile, err := ioutil.ReadFile(path.Join(dest, "../proxy/WORKSPACE"))
 	if err != nil {
 		return err
 	}
-	defer wsFile.Close()
-
-	// Scan proxy bazel workspace file and look for the line that sets ENVOY_SHA.
+	// ENVOY_SHA is declared in proxy workspace file.
+	esReg := regexp.MustCompile("ENVOY_SHA = \"([a-z0-9]{40})\"")
 	var sha string
-	scanner := bufio.NewScanner(wsFile)
-	envoySHAEnv := "ENVOY_SHA = \""
-	for scanner.Scan() {
-		l := scanner.Text()
-		if !strings.Contains(l, envoySHAEnv) {
-			continue
-		}
-		pos := strings.LastIndex(l, envoySHAEnv)
-		adjustedPos := pos + len(envoySHAEnv)
-		if adjustedPos >= len(l) {
-			return fmt.Errorf("ENVOY_SHA is not correctly set in proxy workspace file: %v", l)
-		}
-		// Git commit SHA length is always 40 char.
-		sha = l[adjustedPos : adjustedPos+40]
-		break
-	}
-
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("fail to scan proxy workspace file: %v", err)
+	if found := esReg.FindStringSubmatch(string(wsFile)); len(found) == 2 {
+		sha = found[1]
 	}
 
 	if sha == "" {
