@@ -68,6 +68,9 @@ dependencies:
   tools:
     git: https://github.com/istio/tools
     branch: release-1.6
+  envoy:
+    git: https://github.com/istio/envoy
+    auto: proxy_workspace
 dashboards:
   istio-mesh-dashboard: 7639
   istio-performance-dashboard: 11829

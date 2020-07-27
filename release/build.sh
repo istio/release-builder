@@ -76,6 +76,9 @@ ${DEPENDENCIES:-$(cat <<EOD
   tools:
     git: https://github.com/istio/tools
     branch: release-1.6
+  envoy:
+    git: https://github.com/istio/envoy
+    auto: proxy_workspace
 EOD
 )}
 dashboards:

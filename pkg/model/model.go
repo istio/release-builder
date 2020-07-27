@@ -34,6 +34,9 @@ const (
 	Deps string = "deps"
 	// Modules will resolve by looking at the go.mod file in istio/istio
 	Modules string = "modules"
+	// ProxyWorkspace will resolve by looking at the WORKSPACE file in istio/proxy.
+	// This should only be used to resolve Envoy dep SHA.
+	ProxyWorkspace string = "proxy_workspace"
 )
 
 // Dependency defines a git dependency for the build
@@ -73,6 +76,7 @@ type IstioDependencies struct {
 	GogoGenproto *Dependency `json:"gogo-genproto"`
 	TestInfra    *Dependency `json:"test-infra"`
 	Tools        *Dependency `json:"tools"`
+	Envoy        *Dependency `json:"envoy"`
 }
 
 func (i *IstioDependencies) Get() map[string]*Dependency {
@@ -86,6 +90,7 @@ func (i *IstioDependencies) Get() map[string]*Dependency {
 		"gogo-genproto": i.GogoGenproto,
 		"test-infra":    i.TestInfra,
 		"tools":         i.Tools,
+		"envoy":         i.Envoy,
 	}
 }
 
