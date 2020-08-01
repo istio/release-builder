@@ -92,7 +92,7 @@ func Build(manifest model.Manifest) error {
 
 // writeLicense copies the complete list of licenses for all dependant repos
 func writeLicense(manifest model.Manifest) error {
-	if err := os.Mkdir(filepath.Join(manifest.OutDir(), "licenses"), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Join(manifest.OutDir(), "licenses"), 0750); err != nil {
 		return fmt.Errorf("failed to create license dir: %v", err)
 	}
 	for repo := range manifest.Dependencies.Get() {
