@@ -34,6 +34,7 @@ func StandardEnv(manifest model.Manifest) []string {
 		"ISTIO_VERSION="+manifest.Version,
 		"HUB="+manifest.Docker,
 		"BUILD_WITH_CONTAINER=0", // Build should already run in container, having multiple layers of docker causes issues
+		"IGNORE_DIRTY_TREE=1",
 	)
 	return env
 }
