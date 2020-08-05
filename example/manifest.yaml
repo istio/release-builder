@@ -1,7 +1,7 @@
 # Version specifies which version is being built
 # This is use for `--version`, metrics, and determining proxy capabilities.
 # Note that since this determines proxy capabilities, it is desirable to follow Istio semver
-version: 1.7.0
+version: 1.8.0
 
 # Some of the artifacts have a docker hub built in - currently this is the operator and Helm charts
 # The specified docker hub will be used there. Note - this does not effect where the images are published,
@@ -54,5 +54,5 @@ dependencies:
     git: https://github.com/istio/tools
     branch: master
   envoy:
-    git: https://github.com/istio/envoy
+    git: https://github.com/envoyproxy/envoy-wasm
     auto: proxy_workspace
