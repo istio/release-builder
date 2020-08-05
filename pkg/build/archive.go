@@ -62,12 +62,20 @@ func Archive(manifest model.Manifest) error {
 			return err
 		}
 
-		cmd := util.VerboseCommand("./operator/scripts/create_release_charts.sh", "-o", path.Join(out, "manifests"))
-		cmd.Dir = manifest.RepoDir("istio")
-		cmd.Env = util.StandardEnv(manifest)
-		if err := cmd.Run(); err != nil {
+		manifestsDir := path.Join(out, "manifests")
+		if err := os.MkdirAll(manifestsDir, 0755); err != nil {
 			return err
 		}
+		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "charts"), manifestsDir); err != nil {
+			return err
+		}
+		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "examples"), manifestsDir); err != nil {
+			return err
+		}
+		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "profiles"), manifestsDir); err != nil {
+			return err
+		}
+
 		if err := sanitizeTemplate(manifest, path.Join(out, "manifests/profiles/default.yaml")); err != nil {
 			return fmt.Errorf("failed to sanitize operator charts")
 		}
