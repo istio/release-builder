@@ -18,6 +18,7 @@ import (
 	"archive/zip"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,6 +26,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/rogpeppe/go-internal/modfile"
@@ -172,6 +174,8 @@ func FetchAuto(repo string, dep *model.Dependency, dest string) error {
 		return fetchAutoDeps(repo, dep, dest)
 	} else if dep.Auto == model.Modules {
 		return fetchAutoModules(repo, dep, dest)
+	} else if dep.Auto == model.ProxyWorkspace {
+		return fetchAutoProxyWorkspace(dep, dest)
 	}
 	return fmt.Errorf("unknown auto dependency: %v", dep.Auto)
 }
@@ -217,6 +221,25 @@ func fetchAutoDeps(repo string, dep *model.Dependency, dest string) error {
 	}
 	if sha == "" {
 		return fmt.Errorf("failed to automatically resolve source for %v", repo)
+	}
+	dep.Sha = sha
+	return nil
+}
+
+func fetchAutoProxyWorkspace(dep *model.Dependency, dest string) error {
+	wsFile, err := ioutil.ReadFile(path.Join(dest, "../proxy/WORKSPACE"))
+	if err != nil {
+		return err
+	}
+	// ENVOY_SHA is declared in proxy workspace file.
+	esReg := regexp.MustCompile("ENVOY_SHA = \"([a-z0-9]{40})\"")
+	var sha string
+	if found := esReg.FindStringSubmatch(string(wsFile)); len(found) == 2 {
+		sha = found[1]
+	}
+
+	if sha == "" {
+		return errors.New("failed to automatically resolve source for envoy")
 	}
 	dep.Sha = sha
 	return nil
