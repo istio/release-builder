@@ -100,7 +100,7 @@ func (i IstioDependencies) MarshalJSON() ([]byte, error) {
 		if dep == nil {
 			continue
 		}
-		deps[repo] = Dependency{Sha: dep.Sha}
+		deps[repo] = Dependency{Sha: dep.Sha, GoVersionEnabled: dep.GoVersionEnabled}
 	}
 	return json.Marshal(deps)
 }
