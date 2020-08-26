@@ -4,7 +4,7 @@ This folder contains the scripts to trigger official Istio builds. The build and
 
 ## Build
 
-First, a build of the release is created. This is done by modifying the [`trigger-build`](./trigger-build) file and submitting a PR. 
+First, a build of the release is created. This is done by modifying the [`trigger-build`](./trigger-build) file and submitting a PR.
 
 In CI, Prow will check if the `trigger-build` file has been changed, and if it has it will create a build in the postsubmit.
 
