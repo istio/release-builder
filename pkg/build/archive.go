@@ -44,8 +44,6 @@ func Archive(manifest model.Manifest) error {
 			"README.md",
 
 			// Setup tools. The tools/ folder contains a bunch of extra junk, so just select exactly what we want
-			"tools/certs/Makefile",
-			"tools/certs/README.md",
 			"tools/dump_kubernetes.sh",
 		}
 		for _, file := range directCopies {
@@ -54,9 +52,15 @@ func Archive(manifest model.Manifest) error {
 			}
 		}
 
-		// Set up install and samples. We filter down to only some file patterns
+		// Set up tools/certs. We filter down to only some file patterns
+		includePatterns := []string{"README.md", "Makefile*"}
+		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "tools", "certs"), path.Join(out, "tools", "certs"), includePatterns); err != nil {
+			return err
+		}
+
+		// Set up samples. We filter down to only some file patterns
 		// TODO - clean this up. We probably include files we don't want and exclude files we do want.
-		includePatterns := []string{"*.yaml", "*.md", "cleanup.sh", "*.txt", "*.pem", "*.conf", "*.tpl", "*.json", "Makefile"}
+		includePatterns = []string{"*.yaml", "*.md", "cleanup.sh", "*.txt", "*.pem", "*.conf", "*.tpl", "*.json", "Makefile"}
 		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "samples"), path.Join(out, "samples"), includePatterns); err != nil {
 			return err
 		}
