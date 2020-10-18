@@ -90,7 +90,7 @@ ${DEPENDENCIES:-$(cat <<EOD
     branch: ${BASE_BRANCH}
   test-infra:
     git: https://github.com/${REPO_ORG}/test-infra
-    branch: ${BASE_BRANCH}
+    branch: master
   tools:
     git: https://github.com/${REPO_ORG}/tools
     branch: ${BASE_BRANCH}
