@@ -33,9 +33,8 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 	if output.Len() == 0 {
 		log.Infof("no changes found to commit")
 		return false, nil
-	} else {
-		log.Infof("changes found:\n%s", &output)
 	}
+	log.Infof("changes found:\n%s", &output)
 
 	if !dryrun {
 		cmd = VerboseCommand("git", "checkout", "-b", branch)
