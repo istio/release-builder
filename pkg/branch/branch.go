@@ -41,7 +41,7 @@ func Branch(manifest model.Manifest, step int, dryrun bool) error {
 	switch step {
 	case 1:
 		if err := UpdateDependencies(manifest, dryrun); err != nil {
-			return fmt.Errorf("failed to create branches: %v", err)
+			return fmt.Errorf("failed to update dependencies: %v", err)
 		}
 	case 2:
 		if err := CreateBranches(manifest, release, dryrun); err != nil {
@@ -51,21 +51,24 @@ func Branch(manifest model.Manifest, step int, dryrun bool) error {
 		// Can't do SetupProw locally as I don't have creds. Need to do manually for now.
 		// Should be OK once this is running in release-builder jobs
 		if err := SetupProw(manifest, dryrun); err != nil {
-			return fmt.Errorf("failed to create branches: %v", err)
+			return fmt.Errorf("failed to setup prow: %v", err)
 		}
 	case 4:
 		if err := CreateToolImages(manifest, release, dryrun); err != nil {
-			return fmt.Errorf("failed to create branches: %v", err)
+			return fmt.Errorf("failed to create  tools images: %v", err)
 		}
 		if err := UpdateCommonFiles(manifest, release, dryrun); err != nil {
-			return fmt.Errorf("failed to create branches: %v", err)
+			return fmt.Errorf("failed to update common-files specification: %v", err)
 		}
 		if err := UpdateCodeOwners(manifest, release, dryrun); err != nil {
-			return fmt.Errorf("failed to create branches: %v", err)
+			return fmt.Errorf("failed to update CODEOWNERS: %v", err)
+		}
+		if err := StopPublishingLatest(manifest, release, dryrun); err != nil {
+			return fmt.Errorf("failed to stop publishing latest: %v", err)
 		}
 	case 5:
 		if err := UpdateCommonFilesCommon(manifest, release, dryrun); err != nil {
-			return fmt.Errorf("failed to create branches: %v", err)
+			return fmt.Errorf("failed to update common-files: %v", err)
 		}
 	}
 
