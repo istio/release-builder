@@ -75,7 +75,8 @@ func Branch(manifest model.Manifest, step int, dryrun bool) error {
 		}
 	}
 
-	// Determine if there are any changes in the repos and create PRs if dryun=false
+	// Determine if there are any changes in the repos and create PRs.
+	// CreatePR() will use dryrun to determine if PRs are created
 	for repo, dep := range manifest.Dependencies.Get() {
 		if dep == nil {
 			// Missing a dependency is not always a failure; many are optional dependencies just for
