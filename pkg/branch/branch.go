@@ -66,6 +66,9 @@ func Branch(manifest model.Manifest, step int, dryrun bool) error {
 		if err := StopPublishingLatest(manifest, release, dryrun); err != nil {
 			return fmt.Errorf("failed to stop publishing latest: %v", err)
 		}
+		if err := IstioReleaseBuilderUpdates(manifest, release, dryrun); err != nil {
+			return fmt.Errorf("failed to update common-files: %v", err)
+		}
 	case 5:
 		if err := UpdateCommonFilesCommon(manifest, release, dryrun); err != nil {
 			return fmt.Errorf("failed to update common-files: %v", err)
