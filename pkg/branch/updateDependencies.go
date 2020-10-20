@@ -40,6 +40,9 @@ func UpdateDependencies(manifest model.Manifest, dryrun bool) error {
 		return fmt.Errorf("failed to update dependencies during update_deps: %v", err)
 	}
 
+	// TODO - Fix to use value from MAKEFILE.
+	env = []string{"VERSION=1.8-dev"}
+	cmd.Env = append(os.Environ(), env...)
 	if err := util.RunMake(manifest, repo, env, "gen"); err != nil {
 		return fmt.Errorf("failed to update dependencies in make: %v", err)
 	}

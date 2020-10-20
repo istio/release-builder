@@ -74,7 +74,7 @@ func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun
 
 	if changes && !dryrun {
 		cmd := VerboseCommand("gh", "pr", "create", "--repo", manifest.Dependencies.Get()[repo].Git,
-			"--fill", "--head", branch, "--base", manifest.Dependencies.Get()[repo].Branch)
+			"--fill", "--head", branch, "--base", manifest.Dependencies.Get()[repo].Branch, "--label", "release-notes-none")
 		cmd.Dir = manifest.RepoDir(repo)
 		if err := cmd.Run(); err != nil {
 			return err
