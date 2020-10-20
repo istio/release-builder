@@ -15,8 +15,11 @@
 package branch
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -40,12 +43,27 @@ func UpdateDependencies(manifest model.Manifest, dryrun bool) error {
 		return fmt.Errorf("failed to update dependencies during update_deps: %v", err)
 	}
 
-	// TODO - Fix to use value from MAKEFILE.
-	env = []string{"VERSION=1.8-dev"}
-	cmd.Env = append(os.Environ(), env...)
+	var out bytes.Buffer
+	grepCmd := exec.Command("grep", "VERSION", "Makefile.core.mk")
+	grepCmd.Stdout = &out
+	grepCmd.Dir = manifest.RepoDir(repo)
+	err := grepCmd.Run()
+	if err != nil {
+		return fmt.Errorf("grep error: %v", err)
+	}
+	baseVersion := strings.Split(out.String(), " ")[2] // Assumes line of the form BASE_VERSION ?+ baseVersion
+
+	env = []string{"VERSION=" + baseVersion}
 	if err := util.RunMake(manifest, repo, env, "gen"); err != nil {
 		return fmt.Errorf("failed to update dependencies in make: %v", err)
 	}
+
+	cmd = util.VerboseCommand("git", "checkout", "HEAD", "common")
+	cmd.Dir = manifest.RepoDir(repo)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to update dependencies during update_deps: %v", err)
+	}
+
 	log.Infof("*** istio.istio dependencies in the master branch updated.")
 	return nil
 }
