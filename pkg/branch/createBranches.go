@@ -47,7 +47,7 @@ func CreateBranches(manifest model.Manifest, release string, dryrun bool) error 
 			cmd = util.VerboseCommand("git", "push", "--set-upstream", "origin", "release-"+release)
 			cmd.Dir = manifest.RepoDir(repo)
 			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("failed to push branch to repo: %v", err)
+				log.Warnf("failed to push branch to repo: %v. Ignoring as it may already exist.", err)
 			}
 		}
 	}
