@@ -19,24 +19,6 @@ WD=$(cd "$WD"; pwd)
 
 set -eux
 
-# gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
-
-# # Temporary hack to get around some gcloud credential issues
-# mkdir ~/.docker
-# cp "${DOCKER_CONFIG}/config.json" ~/.docker/
-# export DOCKER_CONFIG=~/.docker
-# gcloud auth configure-docker -q
-
-# PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
-# GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
-
-# if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
-#   PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
-# fi
-
-# We need to set the docker in the manifest so it can be used as HUB in
-# the release builder standard environment. HUB is required to be set for
-# calling `make`.
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 
 REPO_ORG=${REPO_ORG:-istio}

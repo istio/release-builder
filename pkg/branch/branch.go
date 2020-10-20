@@ -50,7 +50,7 @@ func Branch(manifest model.Manifest, step int, dryrun bool) error {
 	case 3:
 		// Can't do SetupProw locally as I don't have creds. Need to do manually for now.
 		// Should be OK once this is running in release-builder jobs
-		if err := SetupProw(manifest, dryrun); err != nil {
+		if err := SetupProw(manifest, release, dryrun); err != nil {
 			return fmt.Errorf("failed to setup prow: %v", err)
 		}
 	case 4:

@@ -22,14 +22,13 @@ import (
 	"istio.io/release-builder/pkg/util"
 )
 
-// UpdateCommonFiles goes to each repo and runs the command to update the common files.
-// A prereq for this is that the common-files relase branch has been updated with a
-// new UPDATE_BRANCH and image in it's files.
-func SetupProw(manifest model.Manifest, dryrun bool) error {
+// SetupProw goes to the test-infra repo and runs the command to generate the
+// config files for the new release.
+func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating prow config for new branches.")
 	repo := "test-infra"
 
-	cmd := util.VerboseCommand("go run generate.go branch 1.8")
+	cmd := util.VerboseCommand("go", "run", "generate.go", "branch", release)
 	cmd.Dir = manifest.RepoDir(repo) + "prow/config/cmd"
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)

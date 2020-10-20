@@ -17,6 +17,7 @@ package branch
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -42,7 +43,7 @@ func UpdateCodeOwners(manifest model.Manifest, release string, dryrun bool) erro
 
 		log.Infof("***Updating CODEOWNERS %s from directory: %s", repo, manifest.RepoDir(repo))
 
-		cmd := util.VerboseCommand("echo", "* @istio/release-managers-1-8")
+		cmd := util.VerboseCommand("echo", "* @istio/release-managers-"+strings.ReplaceAll(release, ".", "-"))
 		cmd.Dir = manifest.RepoDir(repo)
 		outFile, err := os.Create(cmd.Dir + "/CODEOWNERS")
 		if err != nil {
