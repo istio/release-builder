@@ -16,6 +16,7 @@ package util
 
 import (
 	"bytes"
+	"os/exec"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -73,8 +74,14 @@ func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun
 	}
 
 	if changes && !dryrun {
-		cmd := VerboseCommand("gh", "pr", "create", "--repo", manifest.Dependencies.Get()[repo].Git,
-			"--fill", "--head", branch, "--base", manifest.Dependencies.Get()[repo].Branch, "--label", "release-notes-none")
+		var cmd *exec.Cmd
+		if repo != "envoy" {
+			cmd = VerboseCommand("gh", "pr", "create", "--repo", manifest.Dependencies.Get()[repo].Git,
+				"--fill", "--head", branch, "--base", manifest.Dependencies.Get()[repo].Branch, "--label", "release-notes-none")
+		} else {
+			cmd = VerboseCommand("gh", "pr", "create", "--repo", manifest.Dependencies.Get()[repo].Git,
+				"--fill", "--head", branch, "--base", manifest.Dependencies.Get()[repo].Branch)
+		}
 		cmd.Dir = manifest.RepoDir(repo)
 		if err := cmd.Run(); err != nil {
 			return err

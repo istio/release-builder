@@ -15,8 +15,6 @@
 package branch
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 
 	"istio.io/pkg/log"
@@ -53,21 +51,27 @@ func UpdateCommonFilesCommon(manifest model.Manifest, release string, dryrun boo
 		}
 
 		// Find tag for new build image
-		cmd = util.VerboseCommand("docker", "image", "ls", "gcr.io/istio-testing/build-tools", "--format", "{{.Tag}}")
-		cmd.Stdout = nil
-		pipe, _ := cmd.StdoutPipe()
-		defer pipe.Close()
-		grepCmd := util.VerboseCommand("grep", release)
-		grepCmd.Stdin = pipe
-		grepCmd.Stdout = nil
-		_ = cmd.Start()
-		var tagBytes []byte
-		var err error
-		if tagBytes, err = grepCmd.Output(); err != nil {
-			return fmt.Errorf("failed to grep image name: %v", err)
-		}
-		// Set tag to the first line of the output
-		tag, _, _ := (bufio.NewReader(bytes.NewReader(tagBytes))).ReadLine()
+		// TODO this code only finds local images so it needs to be pulled locally.
+		// Update to get list of images using
+		// curl -sL https://gcr.io/v2/istio-testing/build-tools/tags/list | jq and
+		// getting the latest image....
+		// cmd = util.VerboseCommand("docker", "image", "ls", "gcr.io/istio-testing/build-tools", "--format", "{{.Tag}}")
+		// cmd.Stdout = nil
+		// pipe, _ := cmd.StdoutPipe()
+		// defer pipe.Close()
+		// grepCmd := util.VerboseCommand("grep", release)
+		// grepCmd.Stdin = pipe
+		// grepCmd.Stdout = nil
+		// _ = cmd.Start()
+		// var tagBytes []byte
+		// var err error
+		// if tagBytes, err = grepCmd.Output(); err != nil {
+		// 	return fmt.Errorf("failed to grep image name: %v", err)
+		// }
+		// // Set tag to the first line of the output
+		// tag, _, _ := (bufio.NewReader(bytes.NewReader(tagBytes))).ReadLine()
+
+		tag := "release-1.8-2020-10-21T02-26-15"
 
 		sedString = "s/IMAGE_VERSION=.*/IMAGE_VERSION=" + string(tag) + "/"
 		cmd = util.VerboseCommand("sed", "-i", sedString, "files/common/scripts/setup_env.sh")
