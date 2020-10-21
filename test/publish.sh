@@ -42,7 +42,7 @@ ignoreVulnerability: true
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.8
   api:
     git: https://github.com/istio/api
     auto: modules
@@ -54,17 +54,17 @@ dependencies:
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.8
     goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: master
+    branch: release-1.8
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.8
   envoy:
     git: https://github.com/envoyproxy/envoy-wasm
     auto: proxy_workspace
