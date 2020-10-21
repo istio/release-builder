@@ -73,10 +73,6 @@ func Branch(manifest model.Manifest, step int, dryrun bool) error {
 		if err := UpdateCommonFilesCommon(manifest, release, dryrun); err != nil {
 			return fmt.Errorf("failed to update common-files: %v", err)
 		}
-	case 6:
-		if err := FixUpdates(manifest, release, dryrun); err != nil {
-			return fmt.Errorf("failed to update common-files: %v", err)
-		}
 	}
 
 	// Determine if there are any changes in the repos and create PRs.

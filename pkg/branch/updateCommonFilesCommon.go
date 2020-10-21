@@ -15,6 +15,8 @@
 package branch
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 
 	"istio.io/pkg/log"
@@ -29,57 +31,38 @@ import (
 // new UPDATE_BRANCH and image in it's files.
 func UpdateCommonFilesCommon(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating common-files")
-	for repo, dep := range manifest.Dependencies.Get() {
-		if dep == nil {
-			// Missing a dependency is not always a failure; many are optional dependencies just for
-			// tagging.
-			log.Infof("skipping missing dependency: %v", repo)
-			continue
-		}
-		// Skip particular repos
-		if repo != "common-files" {
-			log.Infof("Skipping repo: %v", repo)
-			continue
-		}
+	repo := "common-files"
 
-		log.Infof("***Updating the common-files for %s from directory: %s", repo, manifest.RepoDir(repo))
-		sedString := "s/UPDATE_BRANCH ?=.*/UPDATE_BRANCH ?= \"release-" + release + "\"/"
-		cmd := util.VerboseCommand("sed", "-i", sedString, "files/common/Makefile.common.mk")
-		cmd.Dir = manifest.RepoDir(repo)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to run command: %v", err)
-		}
-
-		// Find tag for new build image
-		// TODO this code only finds local images so it needs to be pulled locally.
-		// Update to get list of images using
-		// curl -sL https://gcr.io/v2/istio-testing/build-tools/tags/list | jq and
-		// getting the latest image....
-		// cmd = util.VerboseCommand("docker", "image", "ls", "gcr.io/istio-testing/build-tools", "--format", "{{.Tag}}")
-		// cmd.Stdout = nil
-		// pipe, _ := cmd.StdoutPipe()
-		// defer pipe.Close()
-		// grepCmd := util.VerboseCommand("grep", release)
-		// grepCmd.Stdin = pipe
-		// grepCmd.Stdout = nil
-		// _ = cmd.Start()
-		// var tagBytes []byte
-		// var err error
-		// if tagBytes, err = grepCmd.Output(); err != nil {
-		// 	return fmt.Errorf("failed to grep image name: %v", err)
-		// }
-		// // Set tag to the first line of the output
-		// tag, _, _ := (bufio.NewReader(bytes.NewReader(tagBytes))).ReadLine()
-
-		tag := "release-1.8-2020-10-21T02-26-15"
-
-		sedString = "s/IMAGE_VERSION=.*/IMAGE_VERSION=" + string(tag) + "/"
-		cmd = util.VerboseCommand("sed", "-i", sedString, "files/common/scripts/setup_env.sh")
-		cmd.Dir = manifest.RepoDir(repo)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to run command: %v", err)
-		}
+	log.Infof("***Updating the common-files for %s from directory: %s", repo, manifest.RepoDir(repo))
+	sedString := "s/UPDATE_BRANCH ?=.*/UPDATE_BRANCH ?= \"release-" + release + "\"/"
+	cmd := util.VerboseCommand("sed", "-i", sedString, "files/common/Makefile.common.mk")
+	cmd.Dir = manifest.RepoDir(repo)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run command: %v", err)
 	}
+
+	// In this command string we get the list of tags for the build-tools image,
+	// awk those containing release-<release> and not latest, and then sort in reverse
+	// order to get newest at the top. Tag is the first line.
+	cmdString := "curl -sL https://gcr.io/v2/istio-testing/build-tools/tags/list | jq '.\"manifest\"[][\"tag\"]' | " +
+		" awk '/release-" + release + "/ && !/latest/' | sort -r | sed  -e s/[[:space:]]*\\\"// -e s/\\\".*//"
+	cmd = util.VerboseCommand("bash", "-c", cmdString)
+	cmd.Stdout = nil
+	cmd.Dir = manifest.RepoDir(repo)
+	var tagBytes []byte
+	var err error
+	if tagBytes, err = cmd.Output(); err != nil {
+		return fmt.Errorf("failed to run command: %v", err)
+	}
+	tag, _, _ := (bufio.NewReader(bytes.NewReader(tagBytes))).ReadLine()
+
+	sedString = "s/IMAGE_VERSION=.*/IMAGE_VERSION=" + string(tag) + "/"
+	cmd = util.VerboseCommand("sed", "-i", sedString, "files/common/scripts/setup_env.sh")
+	cmd.Dir = manifest.RepoDir(repo)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run command: %v", err)
+	}
+
 	log.Infof("*** common-files updated")
 	return nil
 }
