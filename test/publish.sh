@@ -69,6 +69,7 @@ dependencies:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
 dashboards:
+  istio-extension-dashboard: 13277
   istio-mesh-dashboard: 7639
   istio-performance-dashboard: 11829
   istio-service-dashboard: 7636
