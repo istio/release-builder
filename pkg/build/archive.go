@@ -53,7 +53,7 @@ func Archive(manifest model.Manifest) error {
 		}
 
 		// Set up tools/certs. We filter down to only some file patterns
-		includePatterns := []string{"README.md", "Makefile*"}
+		includePatterns := []string{"README.md", "Makefile*", "common.mk"}
 		if err := util.CopyDirFiltered(path.Join(manifest.RepoDir("istio"), "tools", "certs"), path.Join(out, "tools", "certs"), includePatterns); err != nil {
 			return err
 		}
