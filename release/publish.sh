@@ -48,3 +48,9 @@ go run main.go publish --release "${WORK_DIR}" \
     --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \
     --grafanatoken "${GRAFANA_TOKEN_FILE}"
+
+# Also push images to a GCR repo, in case of dockerhub rate limiting issues for
+# large clusters (see https://docs.docker.com/docker-hub/download-rate-limit/).
+go run main.go publish --release "${WORK_DIR}" \
+    --dockerhub "gcr.io/istio-release" \
+    --dockertags "${VERSION}"
