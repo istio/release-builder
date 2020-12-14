@@ -16,6 +16,7 @@ package build
 
 import (
 	"fmt"
+	"os"
 	"path"
 
 	"istio.io/release-builder/pkg/model"
@@ -27,8 +28,16 @@ func Rpm(manifest model.Manifest) error {
 	if err := util.RunMake(manifest, "istio", nil, "rpm/fpm"); err != nil {
 		return fmt.Errorf("failed to build sidecar.rpm: %v", err)
 	}
-	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
-		return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
+	if util.FileExists(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.rpm")) {
+		if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
+			return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
+		}
+	} else if util.FileExists(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.rpm")) {
+		if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
+			return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
+		}
+	} else {
+		return fmt.Errorf("failed to package istio-sidecar.rpm: file not located after make")
 	}
 	if err := util.CreateSha(path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
 		return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)

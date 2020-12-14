@@ -27,7 +27,10 @@ import (
 // istioctl, and various tools.
 func Archive(manifest model.Manifest) error {
 	// First, build all variants of istioctl (linux, osx, windows). gen-charts is required for manifests compiled in to istioctl.
-	if err := util.RunMake(manifest, "istio", nil, "gen-charts", "istioctl-all", "istioctl.completion"); err != nil {
+	// Generate the binaries in a specific directory which is used later to copy from.
+	// Oould use RepoOutDIr, but then needs to remomve the "/release" from the end.
+	env := []string{"TARGET_OUT=" + manifest.RepoDir("istio") + "/out/linux_amd64"}
+	if err := util.RunMake(manifest, "istio", env, "gen-charts", "istioctl-all", "istioctl.completion"); err != nil {
 		return fmt.Errorf("failed to make istioctl: %v", err)
 	}
 
