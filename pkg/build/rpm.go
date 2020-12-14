@@ -33,7 +33,8 @@ func Rpm(manifest model.Manifest) error {
 			return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
 		}
 	} else if util.FileExists(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.rpm")) {
-		if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
+		if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.rpm"),
+			path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
 			return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
 		}
 	} else {

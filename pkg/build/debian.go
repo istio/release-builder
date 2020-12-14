@@ -33,7 +33,8 @@ func Debian(manifest model.Manifest) error {
 			return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 		}
 	} else if util.FileExists(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.deb")) {
-		if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.deb"), path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
+		if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.deb"),
+			path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
 			return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 		}
 	} else {
