@@ -16,7 +16,6 @@ package build
 
 import (
 	"fmt"
-	"os"
 	"path"
 
 	"istio.io/release-builder/pkg/model"
@@ -28,19 +27,9 @@ func Debian(manifest model.Manifest) error {
 	if err := util.RunMake(manifest, "istio", nil, "deb/fpm"); err != nil {
 		return fmt.Errorf("failed to build sidecar.deb: %v", err)
 	}
-	if util.FileExists(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.deb")) {
-		if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.deb"), path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
-			return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
-		}
-	} else if util.FileExists(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.deb")) {
-		if err := util.CopyFile(path.Join(os.Getenv("TARGET_OUT_LINUX"), "release", "istio-sidecar.deb"),
-			path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
-			return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
-		}
-	} else {
-		return fmt.Errorf("failed to package istio-sidecar.deb: file not located after make")
+	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.deb"), path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
+		return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 	}
-
 	if err := util.CreateSha(path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
 		return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 	}

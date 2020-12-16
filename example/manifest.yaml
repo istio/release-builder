@@ -1,7 +1,7 @@
 # Version specifies which version is being built
 # This is use for `--version`, metrics, and determining proxy capabilities.
 # Note that since this determines proxy capabilities, it is desirable to follow Istio semver
-version: 1.8.0
+version: 1.8.0-test
 
 # Some of the artifacts have a docker hub built in - currently this is the operator and Helm charts
 # The specified docker hub will be used there. Note - this does not effect where the images are published,
@@ -12,7 +12,7 @@ docker: docker.io/istio
 directory: /tmp/istio-release
 
 # Ignore/Continue after a base image vulnerability is found
-ignoreVulnerability: false
+ignoreVulnerability: true
 
 # Dependencies specifies dependencies of the build
 # Note - only istio
@@ -29,10 +29,14 @@ dependencies:
   istio:
     git: https://github.com/istio/istio
     branch: master
-
-# Extra dependencies, just for publish
   api:
     git: https://github.com/istio/api
+    auto: modules
+  proxy:
+    git: https://github.com/istio/proxy
+    auto: deps
+  pkg:
+    git: https://github.com/istio/pkg
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
@@ -41,12 +45,6 @@ dependencies:
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
     branch: master
-  pkg:
-    git: https://github.com/istio/pkg
-    auto: modules
-  proxy:
-    git: https://github.com/istio/proxy
-    auto: deps
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
@@ -56,3 +54,10 @@ dependencies:
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
+dashboards:
+  istio-extension-dashboard: 13277
+  istio-mesh-dashboard: 7639
+  istio-performance-dashboard: 11829
+  istio-service-dashboard: 7636
+  istio-workload-dashboard: 7630
+  pilot-dashboard: 7645

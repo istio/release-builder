@@ -26,6 +26,16 @@ import (
 )
 
 func StandardEnv(manifest model.Manifest) []string {
+	// Unset those environment variables that are set in a container which causes `make xyz` artifacts
+	// to build in the container directories. release-builder code expects all artifacts to be created
+	// in the manifest specified directory.
+	os.Unsetenv("TARGET_OUT")
+	os.Unsetenv("TARGET_OUT_LINUX")
+	os.Unsetenv("CONTAINER_TARGET_OUT")
+	os.Unsetenv("CONTAINER_TARGET_OUT_LINUX")
+	os.Unsetenv("TARGET_OS")
+	os.Unsetenv("TARGET_ARCH")
+
 	env := os.Environ()
 	env = append(env,
 		"GOPATH="+manifest.WorkDir(),
