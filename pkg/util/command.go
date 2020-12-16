@@ -38,10 +38,28 @@ func StandardEnv(manifest model.Manifest) []string {
 	return env
 }
 
+func removeEnvKey(s []string, key string) []string {
+	for i, v := range s {
+		if strings.HasPrefix(v, key+"=") {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
+}
+
 // RunMake runs a make command for the repo, with standard environment variables set
 func RunMake(manifest model.Manifest, repo string, env []string, c ...string) error {
 	cmd := VerboseCommand("make", c...)
 	cmd.Env = StandardEnv(manifest)
+	// Unset the environment variables that are set in a container which cause `make` artifacts
+	// to build in the container directories. release-builder expects all `make` artifacts to be
+	// created in the manifest specified directory.
+	cmd.Env = removeEnvKey(cmd.Env, "TARGET_OUT")
+	cmd.Env = removeEnvKey(cmd.Env, "TARGET_OUT_LINUX")
+	cmd.Env = removeEnvKey(cmd.Env, "CONTAINER_TARGET_OUT")
+	cmd.Env = removeEnvKey(cmd.Env, "CONTAINER_TARGET_OUT_LINUX")
+	cmd.Env = removeEnvKey(cmd.Env, "TARGET_OS")
+	cmd.Env = removeEnvKey(cmd.Env, "TARGET_ARCH")
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
