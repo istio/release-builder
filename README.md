@@ -84,15 +84,18 @@ The following credentials are needed
 To build locally and ensure a consistent environment, you need to have Docker installed and run the build in a docker container using a
 `gcr.io/istio-testing/build-tools` image. The exact config used, including the specific docker tag, for Istio builds can be found at
 <https://github.com/istio/test-infra/blob/master/prow/config/jobs/release-builder.yaml>. For example, the specified image might be
-`gcr.io/istio-testing/build-tools:master-2020-08-31T18-26-34`.
+`gcr.io/istio-testing/build-tools:master-2020-11-12T22-29-05`. In this case, one could set IMAGE_VERSION=master-2020-11-12T22-29-05.
 
 Next, create a manifest to use for the builds. A good starting point is the `example/manifest.yaml`.
 
-Using docker, create a container using the above found `build-tools` image. On the command line you specify the commands to do the build and validate which
-point at your manifest.yaml file and also the directory specified in the manifest.
+Create a build container and get to its command line using `make shell` or if you want a specific build image from above
+`IMAGE_VERSION=xyz make shell`. The current path in the container is `/work` which will map to the release-builder root directory.
+
+On the command line you specify the commands to do the build using your manifest and then validate the build
+specifying the directory specified in the manifest (ex: /tmp/istio-release) appending `/out`.
 
 ```bash
-./common/scripts/run.sh /bin/bash -c "mkdir -p /tmp/istio-release; go run main.go build --manifest example/manifest.yaml; go run main.go validate --release /tmp/istio-release/out"
+mkdir -p /tmp/istio-release; go run main.go build --manifest example/manifest.yaml; go run main.go validate --release /tmp/istio-release/out
 ```
 
 When the command finishes and you should have an information message:
@@ -101,8 +104,7 @@ When the command finishes and you should have an information message:
 Release validation PASSED
 ```
 
-and there will be a stopped container which will contain the artifacts
-from the build. To extract the artifacts from the stopped container, use `docker ps -a` to find the name of the stopped container, and then run `docker cp` to
+To extract the artifacts from the container, use `docker ps -a` to find the name of the build container, and then run `docker cp` to
 copy the artifacts. For example, the command might be `docker cp happy_pare:/tmp/istio-release/out artifacts`. This will place the artifacts in the `artifacts`
 directory in your current working directory. The `artifacts` directory will contain the artifacts(subject to change):
 
