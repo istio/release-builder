@@ -54,12 +54,12 @@ func RunMake(manifest model.Manifest, repo string, env []string, c ...string) er
 	// Unset the environment variables that are set in a container which cause `make` artifacts
 	// to build in the container directories. release-builder expects all `make` artifacts to be
 	// created in the manifest specified directory.
-	removeEnvKey(cmd.Env, "TARGET_OUT")
-	removeEnvKey(cmd.Env, "TARGET_OUT_LINUX")
-	removeEnvKey(cmd.Env, "CONTAINER_TARGET_OUT")
-	removeEnvKey(cmd.Env, "CONTAINER_TARGET_OUT_LINUX")
-	removeEnvKey(cmd.Env, "TARGET_OS")
-	removeEnvKey(cmd.Env, "TARGET_ARCH")
+	cmd.Env = removeEnvKey(cmd.Env, "TARGET_OUT")
+	cmd.Env = removeEnvKey(cmd.Env, "TARGET_OUT_LINUX")
+	cmd.Env = removeEnvKey(cmd.Env, "CONTAINER_TARGET_OUT")
+	cmd.Env = removeEnvKey(cmd.Env, "CONTAINER_TARGET_OUT_LINUX")
+	cmd.Env = removeEnvKey(cmd.Env, "TARGET_OS")
+	cmd.Env = removeEnvKey(cmd.Env, "TARGET_ARCH")
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
