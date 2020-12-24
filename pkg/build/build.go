@@ -48,6 +48,10 @@ func Build(manifest model.Manifest) error {
 		}
 	}
 
+	if err := SanitizeAllCharts(manifest); err != nil {
+		return fmt.Errorf("failed to sanitize charts")
+	}
+
 	if _, f := manifest.BuildOutputs[model.Debian]; f {
 		if err := Debian(manifest); err != nil {
 			return fmt.Errorf("failed to build Debian: %v", err)
