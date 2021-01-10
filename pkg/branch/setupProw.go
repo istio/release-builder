@@ -29,7 +29,7 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	repo := "test-infra"
 
 	cmd := util.VerboseCommand("go", "run", "generate.go", "branch", release)
-	cmd.Dir = manifest.RepoDir(repo) + "prow/config/cmd"
+	cmd.Dir = manifest.RepoDir(repo) + "/prow/config/cmd"
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
 	}
