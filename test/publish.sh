@@ -61,7 +61,7 @@ dependencies:
     branch: release-1.9
   test-infra:
     git: https://github.com/istio/test-infra
-    branch: release-1.9
+    branch: master
   tools:
     git: https://github.com/istio/tools
     branch: release-1.9
