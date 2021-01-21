@@ -293,17 +293,17 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		}
 		tag, err := GenericMap{values}.Path([]string{"global", "tag"})
 		if err != nil {
-			return fmt.Errorf("invalid path: %v", err)
+			return fmt.Errorf("invalid path: %v: %v", f, err)
 		}
 		if tag != r.manifest.Version {
-			return fmt.Errorf("archive tag incorrect, got %v expected %v", tag, r.manifest.Version)
+			return fmt.Errorf("archive tag incorrect: %v: got %v expected %v", f, tag, r.manifest.Version)
 		}
 		hub, err := GenericMap{values}.Path([]string{"global", "hub"})
 		if err != nil {
-			return fmt.Errorf("invalid path: %v", err)
+			return fmt.Errorf("invalid path: %v: %v", f,err)
 		}
 		if hub != r.manifest.Docker {
-			return fmt.Errorf("hub incorrect, got %v expected %v", hub, r.manifest.Docker)
+			return fmt.Errorf("hub incorrect: %v: got %v expected %v", f, hub, r.manifest.Docker)
 		}
 	}
 	return nil
