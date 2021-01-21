@@ -113,7 +113,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 	cv := chart["version"].(string)
 	if err := filepath.Walk(s, func(p string, info os.FileInfo, err error) error {
 		fname := path.Base(p)
-		if fname == "Chart.yaml" {
+		if fname == "Chart.yaml" || fname == "values.yaml" {
 			read, err := ioutil.ReadFile(p)
 			if err != nil {
 				return err
