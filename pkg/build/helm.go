@@ -110,7 +110,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 	}
 
 	// Getting the current version is a bit of a hack, we should have a more explicit way to handle this
-	cv := chart["appVersion"].(string)
+	cv := chart["version"].(string)
 	if err := filepath.Walk(s, func(p string, info os.FileInfo, err error) error {
 		fname := path.Base(p)
 		if fname == "Chart.yaml" {
@@ -120,7 +120,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 			}
 			contents := string(read)
 			// These fields contain the version, we swap out the placeholder with the correct version
-			for _, replacement := range []string{"appVersion", "version"} {
+			for _, replacement := range []string{"version"} {
 				before := fmt.Sprintf("%s: %s", replacement, cv)
 				after := fmt.Sprintf("%s: %s", replacement, manifest.Version)
 				contents = strings.ReplaceAll(contents, before, after)
