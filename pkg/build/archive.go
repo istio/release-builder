@@ -72,9 +72,6 @@ func Archive(manifest model.Manifest) error {
 		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "charts"), manifestsDir); err != nil {
 			return err
 		}
-		if err := sanitizeHelmCharts(manifest, out); err != nil {
-			return err
-		}
 		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "examples"), manifestsDir); err != nil {
 			return err
 		}
@@ -123,30 +120,6 @@ func Archive(manifest model.Manifest) error {
 		if err := createStandaloneIstioctl(arch, manifest, out); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-// sanitizeHelmCharts changes the hub and tag for all helm charts in archive, except
-// the operator
-func sanitizeHelmCharts(manifest model.Manifest, out string) error {
-	if err := sanitizeTemplate(manifest, path.Join(out, "manifests/charts/istiod-remote/values.yaml")); err != nil {
-		return fmt.Errorf("failed to sanitize istiod-remote chart")
-	}
-	if err := sanitizeTemplate(manifest, path.Join(out, "manifests/charts/istio-cni/values.yaml")); err != nil {
-		return fmt.Errorf("failed to sanitize istio-cni chart")
-	}
-	if err := sanitizeTemplate(manifest, path.Join(out, "manifests/charts/gateways/istio-ingress/values.yaml")); err != nil {
-		return fmt.Errorf("failed to sanitize ingress gateway chart")
-	}
-	if err := sanitizeTemplate(manifest, path.Join(out, "manifests/charts/gateways/istio-egress/values.yaml")); err != nil {
-		return fmt.Errorf("failed to sanitize egress gateway chart")
-	}
-	if err := sanitizeTemplate(manifest, path.Join(out, "manifests/charts/istio-control/istio-discovery/values.yaml")); err != nil {
-		return fmt.Errorf("failed to sanitize istio-discovery chart")
-	}
-	if err := sanitizeTemplate(manifest, path.Join(out, "manifests/charts/base/values.yaml")); err != nil {
-		return fmt.Errorf("failed to sanitize base chart")
 	}
 	return nil
 }
