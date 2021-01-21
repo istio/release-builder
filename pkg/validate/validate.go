@@ -312,7 +312,7 @@ func validateHubTag(r ReleaseInfo, file string, paths string) error {
 	}
 	hubPath := []string{paths, "hub"}
 	if paths == "" {
-		tagPath = []string{"hub"}
+		hubPath = []string{"hub"}
 	}
 	hub, err := GenericMap{values}.Path(hubPath)
 	if err != nil {
