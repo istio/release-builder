@@ -299,7 +299,7 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		}
 		hub, err := GenericMap{values}.Path([]string{"global", "hub"})
 		if err != nil {
-			return fmt.Errorf("invalid path: %v: %v", f,err)
+			return fmt.Errorf("invalid path: %v: %v", f, err)
 		}
 		if hub != r.manifest.Docker {
 			return fmt.Errorf("hub incorrect: %v: got %v expected %v", f, hub, r.manifest.Docker)
