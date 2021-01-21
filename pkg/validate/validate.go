@@ -299,14 +299,22 @@ func validateHubTag(r ReleaseInfo, file string, paths string) error {
 	if err != nil {
 		return err
 	}
-	tag, err := GenericMap{values}.Path([]string{paths, "tag"})
+	tagPath := []string{paths, "tag"}
+	if paths == "" {
+		tagPath = []string{"tag"}
+	}
+	tag, err := GenericMap{values}.Path(tagPath)
 	if err != nil {
 		return fmt.Errorf("invalid path (%v): %v", file, err)
 	}
 	if tag != r.manifest.Version {
 		return fmt.Errorf("archive tag incorrect (%v): got %v expected %v", file, tag, r.manifest.Version)
 	}
-	hub, err := GenericMap{values}.Path([]string{paths, "hub"})
+	hubPath := []string{paths, "hub"}
+	if paths == "" {
+		tagPath = []string{"hub"}
+	}
+	hub, err := GenericMap{values}.Path(hubPath)
 	if err != nil {
 		return fmt.Errorf("invalid path (%v): %v", file, err)
 	}
