@@ -77,7 +77,8 @@ func CheckRelease(release string) ([]string, string, []error) {
 		"IstioctlStandalone":   TestIstioctlStandalone,
 		"TestDocker":           TestDocker,
 		"HelmVersionsIstio":    TestHelmVersionsIstio,
-		"HelmVersionsOperator": TestHelmVersionsOperator,
+		"OperatorProfiles":     TestOperatorProfiles,
+		"HelmOperatorManifest": TestHelmOperatorManifest,
 		"Manifest":             TestManifest,
 		"Licenses":             TestLicenses,
 		"Grafana":              TestGrafana,
@@ -277,37 +278,50 @@ func TestProxyVersion(r ReleaseInfo) error {
 }
 
 func TestHelmVersionsIstio(r ReleaseInfo) error {
-	checks := []string{
+	manifestValues := []string{
 		"manifests/charts/gateways/istio-egress/values.yaml",
 		"manifests/charts/gateways/istio-ingress/values.yaml",
 		"manifests/charts/istio-cni/values.yaml",
 		"manifests/charts/istio-control/istio-discovery/values.yaml",
 		"manifests/charts/istiod-remote/values.yaml",
 	}
-	for _, f := range checks {
-		values, err := getValues(filepath.Join(r.archive, f))
+	for _, file := range manifestValues {
+		err := validateHubTag(r, file, "global")
 		if err != nil {
 			return err
-		}
-		tag, err := GenericMap{values}.Path([]string{"global", "tag"})
-		if err != nil {
-			return fmt.Errorf("invalid path: %v: %v", f, err)
-		}
-		if tag != r.manifest.Version {
-			return fmt.Errorf("archive tag incorrect: %v: got %v expected %v", f, tag, r.manifest.Version)
-		}
-		hub, err := GenericMap{values}.Path([]string{"global", "hub"})
-		if err != nil {
-			return fmt.Errorf("invalid path: %v: %v", f, err)
-		}
-		if hub != r.manifest.Docker {
-			return fmt.Errorf("hub incorrect: %v: got %v expected %v", f, hub, r.manifest.Docker)
 		}
 	}
 	return nil
 }
 
-func TestHelmVersionsOperator(r ReleaseInfo) error {
+func validateHubTag(r ReleaseInfo, file string, paths string) error {
+	values, err := getValues(filepath.Join(r.archive, file))
+	if err != nil {
+		return err
+	}
+	tag, err := GenericMap{values}.Path([]string{paths, "tag"})
+	if err != nil {
+		return fmt.Errorf("invalid path (%v): %v", file, err)
+	}
+	if tag != r.manifest.Version {
+		return fmt.Errorf("archive tag incorrect (%v): got %v expected %v", file, tag, r.manifest.Version)
+	}
+	hub, err := GenericMap{values}.Path([]string{paths, "hub"})
+	if err != nil {
+		return fmt.Errorf("invalid path (%v): %v", file, err)
+	}
+	if hub != r.manifest.Docker {
+		return fmt.Errorf("hub incorrect (%v) : got %v expected %v", file, hub, r.manifest.Docker)
+	}
+	return nil
+}
+
+func TestHelmOperatorManifest(r ReleaseInfo) error {
+	operatorManifestValues := "manifests/charts/istio-operator/values.yaml"
+	return validateHubTag(r, operatorManifestValues, "")
+}
+
+func TestOperatorProfiles(r ReleaseInfo) error {
 	operatorChecks := []string{
 		"manifests/profiles/default.yaml",
 	}
