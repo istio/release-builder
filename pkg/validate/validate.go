@@ -278,7 +278,6 @@ func TestProxyVersion(r ReleaseInfo) error {
 
 func TestHelmVersionsIstio(r ReleaseInfo) error {
 	checks := []string{
-		"manifests/charts/base/values.yaml",
 		"manifests/charts/gateways/istio-egress/values.yaml",
 		"manifests/charts/gateways/istio-ingress/values.yaml",
 		"manifests/charts/istio-cni/values.yaml",
