@@ -124,8 +124,8 @@ directory in your current working directory. The `artifacts` directory will cont
 
 | Syntax | Description |
 | --- | ----------- |
-| istio-{version}-{linux-<arch>/osx/win}.tar.gz | _Release archive that users will download_ |
-| istioctl-{version}-{linux-<arch>/osx/win}.tar.gz | |
+| istio-{version}-{linux-\<arch>/osx/win}.tar.gz | _Release archive that users will download_ |
+| istioctl-{version}-{linux-\<arch>/osx/win}.tar.gz | |
 | manifest.yaml | _Defines what dependencies were a part of the build_ |
 | sources.tar.gz | _Bundle of all sources used in the build_|
 | "charts" subdirectory | _Operator release charts_ |
@@ -148,7 +148,7 @@ If you don’t, the initial cloning of the code will fail.
     container can communincate with Docker on the host.
 
 1. As a test which can be run long before the branch cut to verify that this works locally,
-    run ` REPO_ORG=<your org name (ex. ericvn)> STEP=1 ./release/branch.sh`.
+    run `REPO_ORG=<your org name (ex. ericvn)> STEP=1 ./release/branch.sh`.
 
     STEP=1 is `make update_dependencies` and a `make gen` for reference. You will see a git clone of the various
     repos to a tmp directory.  Then a message
@@ -161,9 +161,9 @@ If you don’t, the initial cloning of the code will fail.
     changes found for each repo. And you should see something similar to:
 
     ```text
-    2021-01-10T18:18:06.589542Z	info	*** Checking repo istio
-    2021-01-10T18:18:06.589574Z	info	Running command: git status --porcelain
-    2021-01-10T18:18:06.861929Z	info	changes found:
+    2021-01-10T18:18:06.589542Z info  *** Checking repo istio
+    2021-01-10T18:18:06.589574Z info  Running command: git status --porcelain
+    2021-01-10T18:18:06.861929Z info  changes found:
     M go.mod
     M go.sum
     M istio.deps
