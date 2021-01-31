@@ -73,7 +73,7 @@ var (
 
 func init() {
 	branchCmd.PersistentFlags().StringVar(&flags.manifest, "manifest", flags.manifest,
-		"The manifest use to get the repos for the branch cut.")
+		"The manifest used to get the repos for the branch cut.")
 	branchCmd.PersistentFlags().BoolVar(&flags.dryrun, "dryrun", flags.dryrun,
 		"Do not run any github commands.")
 	branchCmd.PersistentFlags().IntVar(&flags.step, "step", flags.step,

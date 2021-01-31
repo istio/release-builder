@@ -27,7 +27,7 @@ import (
 // UpdateCommonFilesCommon update the common-files repo for the new release.
 // It will search for the latest build-tools image, and place it in IMAGE_VERSION
 // as well as update the UPDATE_BRANCH.
-// A prereq for this is that the common-files relase branch has been updated with a
+// A prereq for this is that the common-files release branch has been updated with a
 // new UPDATE_BRANCH and image in it's files.
 func UpdateCommonFilesCommon(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating common-files")

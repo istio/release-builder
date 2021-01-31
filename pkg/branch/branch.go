@@ -55,7 +55,7 @@ func Branch(manifest model.Manifest, step int, dryrun bool) error {
 		}
 	case 4:
 		if err := CreateToolImages(manifest, release, dryrun); err != nil {
-			return fmt.Errorf("failed to create  tools images: %v", err)
+			return fmt.Errorf("failed to create tools images: %v", err)
 		}
 		if err := UpdateCommonFiles(manifest, release, dryrun); err != nil {
 			return fmt.Errorf("failed to update common-files specification: %v", err)

@@ -23,7 +23,7 @@ import (
 )
 
 // UpdateCommonFiles goes to each repo and runs the command to update the common files.
-// A prereq for this is that the common-files relase branch has been updated with a
+// A prereq for this is that the common-files release branch has been updated with a
 // new UPDATE_BRANCH and image in it's files.
 func UpdateCommonFiles(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating common-files UPDATE_BRANCH")

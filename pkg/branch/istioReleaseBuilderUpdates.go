@@ -29,7 +29,6 @@ func IstioReleaseBuilderUpdates(manifest model.Manifest, release string, dryrun 
 	repo := "release-builder"
 
 	sedString := "$!N;/test-infra/! s/\\(.*\\n\\)\\(.*branch: \\)master/\\1\\2release-" + release + "/;P;D"
-	//	sed '$!N;/test-infra/! s/\(.*\n\)\(.*branch: \)master/\1\2release-1.8/;P;D' test/publish.sh
 	cmd := util.VerboseCommand("sed", "-i", sedString, "example/manifest.yaml",
 		"release/build.sh", "test/publish.sh")
 	cmd.Dir = manifest.RepoDir(repo)
