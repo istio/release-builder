@@ -1,0 +1,50 @@
+# Version specifies which version is being being branched
+# The new branch will be of the form release-${version}
+version: 1.8
+
+# We need to set the docker in the manifest so it can be used as HUB in
+# the release builder standard environment. HUB is required to be set for
+# calling `make`.
+docker: docker.io/istio
+
+# Directory specifies the working directory to build in
+directory: /tmp/istio-release
+
+# Dependencies specifies dependencies of the branch
+# The list contains all repos that requires changes across the steps.
+# The example has `master` branch, but this only works for steps
+# 1 and 2. Later steps use the new release branch.
+dependencies:
+  istio:
+    git: https://github.com/istio/istio
+    branch: master
+  api:
+    git: https://github.com/istio/api
+    branch: master
+  client-go:
+    git: https://github.com/istio/client-go
+    branch: master
+  common-files:
+    git: https://github.com/istio/common-files
+    branch: master
+  envoy:
+    git: https://github.com/istio/envoy
+    branch: master
+  gogo-genproto:
+    git: https://github.com/istio/gogo-genproto
+    branch: master
+  pkg:
+    git: https://github.com/istio/pkg
+    branch: master
+  proxy:
+    git: https://github.com/istio/proxy
+    branch: master
+  release-builder:
+    git: https://github.com/istio/release-builder
+    branch: master
+  test-infra:
+    git: https://github.com/istio/test-infra
+    branch: master
+  tools:
+    git: https://github.com/istio/tools
+    branch: master

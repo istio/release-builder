@@ -18,3 +18,6 @@ In CI, Prow will check if the `trigger-publish` file has been changed, and if it
 
 **WARNING**: Any change to this file will trigger a publish, including comments or reverts.
 
+## Branch
+
+The release branching is controlled by the the [`trigger-branch`](./trigger-branch) file. Currently the release branch code is not automated, but should be easy to add if desired. Prow could check if the `trigger-branch` file has been changed and then run the `branch.sh` script.
