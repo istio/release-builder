@@ -46,7 +46,7 @@ MANIFEST=$(cat <<EOF
 version: ${VERSION}
 docker: ${DOCKER_HUB}
 directory: ${WORK_DIR}
-ignoreVulnerability: true
+ignoreVulnerability: false
 dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
