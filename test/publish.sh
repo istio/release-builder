@@ -66,7 +66,7 @@ dependencies:
     git: https://github.com/istio/tools
     branch: release-1.9
   envoy:
-    git: https://github.com/envoyproxy/envoy
+    git: https://github.com/istio/envoy
     auto: proxy_workspace
 dashboards:
   istio-extension-dashboard: 13277
