@@ -20,9 +20,8 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	"istio.io/release-builder/pkg/model"
-
 	"istio.io/pkg/log"
+	"istio.io/release-builder/pkg/model"
 )
 
 func StandardEnv(manifest model.Manifest) []string {

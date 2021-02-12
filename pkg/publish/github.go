@@ -23,13 +23,13 @@ import (
 	"regexp"
 	"strings"
 
-	"istio.io/pkg/log"
-	"istio.io/release-builder/pkg/model"
-	"istio.io/release-builder/pkg/util"
-
 	semver "github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v28/github"
 	"golang.org/x/oauth2"
+
+	"istio.io/pkg/log"
+	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 var ptrue = true
@@ -144,7 +144,6 @@ func GithubTag(client *github.Client, org string, repo string, version string, g
 			SHA:  &sha,
 		},
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to create tag: %v", err)
 	}

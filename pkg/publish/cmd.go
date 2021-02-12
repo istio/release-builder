@@ -23,11 +23,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
-
-	"istio.io/pkg/log"
 )
 
 var (
@@ -138,6 +137,7 @@ func getGrafanaToken(file string) (string, error) {
 	}
 	return os.Getenv("GRAFANA_TOKEN"), nil
 }
+
 func getGithubToken(file string) (string, error) {
 	if file != "" {
 		b, err := ioutil.ReadFile(file)

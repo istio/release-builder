@@ -19,8 +19,10 @@ import (
 	"path"
 )
 
-type BuildOutput int
-type AutoDependency string
+type (
+	BuildOutput    int
+	AutoDependency string
+)
 
 const (
 	Docker BuildOutput = iota

@@ -19,9 +19,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"istio.io/release-builder/pkg"
-
 	"istio.io/pkg/log"
+	"istio.io/release-builder/pkg"
 )
 
 var (

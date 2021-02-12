@@ -18,10 +18,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"istio.io/release-builder/pkg/branch"
-	"istio.io/release-builder/pkg/validate"
-
 	"istio.io/release-builder/pkg/build"
 	"istio.io/release-builder/pkg/publish"
+	"istio.io/release-builder/pkg/validate"
 )
 
 // GetRootCmd returns the root of the cobra command-tree.

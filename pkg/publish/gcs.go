@@ -71,7 +71,6 @@ func GcsArchive(manifest model.Manifest, bucket string, aliases []string) error 
 		}
 		log.Infof("Wrote %v to gs://%s/%s", p, bucketName, objName)
 		return nil
-
 	}); err != nil {
 		return fmt.Errorf("failed to walk directory: %v", err)
 	}
