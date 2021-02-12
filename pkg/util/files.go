@@ -31,9 +31,8 @@ import (
 
 	"github.com/rogpeppe/go-internal/modfile"
 
-	"istio.io/release-builder/pkg/model"
-
 	"istio.io/pkg/log"
+	"istio.io/release-builder/pkg/model"
 )
 
 // VerboseCommand runs a command, outputing stderr and stdout

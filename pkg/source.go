@@ -22,10 +22,9 @@ import (
 	"path"
 	"strings"
 
+	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
-
-	"istio.io/pkg/log"
 )
 
 // Sources will copy all dependencies require, pulling from Github if required, and set up the working tree.

@@ -13,7 +13,7 @@ install:
 test:
 	go test -race ./...
 
-gen: mirror-licenses tidy-go
+gen: mirror-licenses format
 
 gen-check: gen check-clean-repo
 

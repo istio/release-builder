@@ -24,7 +24,6 @@ import (
 	"github.com/ghodss/yaml"
 
 	"istio.io/pkg/log"
-
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
