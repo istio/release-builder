@@ -42,9 +42,6 @@ func Archive(manifest model.Manifest) error {
 		directCopies := []string{
 			"LICENSE",
 			"README.md",
-
-			// Setup tools. The tools/ folder contains a bunch of extra junk, so just select exactly what we want
-			"tools/dump_kubernetes.sh",
 		}
 		for _, file := range directCopies {
 			if err := util.CopyFile(path.Join(manifest.RepoDir("istio"), file), path.Join(out, file)); err != nil {
