@@ -32,9 +32,9 @@ func Archive(manifest model.Manifest) error {
 	}
 
 	// We build archives for each arch. These contain the same thing except arch specific istioctl
-	for _, arch := range []string{"linux-amd64", "linux-armv7", "linux-arm64", "osx", "win"} {
+	for _, arch := range []string{"linux-amd64", "linux-armv7", "linux-arm64", "osx", "osx-arm64", "win"} {
 		out := path.Join(manifest.Directory, "work", "archive", arch, fmt.Sprintf("istio-%s", manifest.Version))
-		if err := os.MkdirAll(out, 0750); err != nil {
+		if err := os.MkdirAll(out, 0o750); err != nil {
 			return err
 		}
 
@@ -63,7 +63,7 @@ func Archive(manifest model.Manifest) error {
 		}
 
 		manifestsDir := path.Join(out, "manifests")
-		if err := os.MkdirAll(manifestsDir, 0755); err != nil {
+		if err := os.MkdirAll(manifestsDir, 0o755); err != nil {
 			return err
 		}
 		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "charts"), manifestsDir); err != nil {
@@ -98,7 +98,7 @@ func Archive(manifest model.Manifest) error {
 		if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), istioctlBinary), path.Join(out, "bin", istioctlDest)); err != nil {
 			return err
 		}
-		if err := os.Chmod(path.Join(out, "bin", istioctlDest), 0755); err != nil {
+		if err := os.Chmod(path.Join(out, "bin", istioctlDest), 0o755); err != nil {
 			return err
 		}
 
