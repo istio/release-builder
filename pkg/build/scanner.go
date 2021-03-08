@@ -93,7 +93,7 @@ func Scanner(manifest model.Manifest) error {
 	log.Infof("Base image scan of %s failed with:\n %s", baseImageName, string(body))
 
 	// If IgnoreVulernability is true, just just return
-	if manifest.IgnoreVulnerability == true {
+	if manifest.IgnoreVulnerability {
 		return nil
 	}
 
@@ -115,7 +115,9 @@ func Scanner(manifest model.Manifest) error {
 		"HUBS=docker.io/istio gcr.io/istio-release",
 		"TAG=" + newBaseVersion,
 		"BUILDX_BAKE_EXTRA_OPTIONS=--no-cache --pull",
-		"DOCKER_TARGETS=docker.base docker.distroless docker.app_sidecar_base_debian_9 docker.app_sidecar_base_debian_10 docker.app_sidecar_base_ubuntu_xenial docker.app_sidecar_base_ubuntu_bionic docker.app_sidecar_base_ubuntu_focal docker.app_sidecar_base_centos_7 docker.app_sidecar_base_centos_8",
+		"DOCKER_TARGETS=docker.base docker.distroless docker.app_sidecar_base_debian_9 docker.app_sidecar_base_debian_10" +
+			" docker.app_sidecar_base_ubuntu_xenial docker.app_sidecar_base_ubuntu_bionic docker.app_sidecar_base_ubuntu_focal" +
+			" docker.app_sidecar_base_centos_7 docker.app_sidecar_base_centos_8",
 	}
 	if err := util.RunMake(manifest, "istio", buildEnv, "dockerx.pushx"); err != nil {
 		return fmt.Errorf("failed to build base images: %v", err)
@@ -134,5 +136,5 @@ func Scanner(manifest model.Manifest) error {
 		return fmt.Errorf("failed PR creation: %v", err)
 	}
 
-	return fmt.Errorf("New base images created. PR needs to be merged and then run another build")
+	return fmt.Errorf("new base images created, new PR needs to be merged before another build is run")
 }
