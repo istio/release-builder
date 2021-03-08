@@ -17,16 +17,17 @@ package build
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 // Structs for json data required
@@ -50,7 +51,7 @@ func Scanner(manifest model.Manifest) error {
 	if err != nil {
 		return fmt.Errorf("grep error: %v", err)
 	}
-	baseVersion := strings.Split(out.String(), " ")[2] // Assumes line of the form BASE_VERSION ?+ baseVersion
+	baseVersion := strings.TrimSpace(strings.Split(out.String(), " ")[2]) // Assumes line of the form BASE_VERSION ?= baseVersion
 
 	// Call imagescanner passing in base image name. If request times out, retry the request
 	baseImageName := "istio/base:" + baseVersion
@@ -88,6 +89,50 @@ func Scanner(manifest model.Manifest) error {
 		return nil
 	}
 
-	// There were vulnerabilities. Return body.
-	return errors.New("Image name: " + baseImageName + "\n" + string(body))
+	// There were vulnerabilities. Output message listing vulnerabilities.
+	log.Infof("Base image scan of %s failed with:\n %s", baseImageName, string(body))
+
+	// If IgnoreVulernability is true, just just return
+	if manifest.IgnoreVulnerability == true {
+		return nil
+	}
+
+	// Else build a new set of images.
+	// baseVersion is like 1.10-dev.1
+	// Increment the digit after the last period to get the new tag.
+	index := strings.LastIndex(baseVersion, ".") + 1
+	var digit int
+	if digit, err = strconv.Atoi(baseVersion[index:]); err != nil {
+		return err
+	}
+	newBaseVersion := baseVersion[:index] + strconv.Itoa(digit+1)
+	log.Infof("new baseVersion: %s", newBaseVersion)
+
+	// Attempted to run the ./tools/build-base-images.sh but locally, that gave me a
+	// number of different failures related to docker, PATHS, TTY, etc.
+	// Instead run the make command similar to what the script does.
+	buildEnv := []string{
+		"HUBS=docker.io/istio gcr.io/istio-release",
+		"TAG=" + newBaseVersion,
+		"BUILDX_BAKE_EXTRA_OPTIONS=--no-cache --pull",
+		"DOCKER_TARGETS=docker.base docker.distroless docker.app_sidecar_base_debian_9 docker.app_sidecar_base_debian_10 docker.app_sidecar_base_ubuntu_xenial docker.app_sidecar_base_ubuntu_bionic docker.app_sidecar_base_ubuntu_focal docker.app_sidecar_base_centos_7 docker.app_sidecar_base_centos_8",
+	}
+	if err := util.RunMake(manifest, "istio", buildEnv, "dockerx.pushx"); err != nil {
+		return fmt.Errorf("failed to build base images: %v", err)
+	}
+
+	// Now create a PR to update the TAG to use the new images
+	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + newBaseVersion + "/"
+	sedCmd := util.VerboseCommand("sed", "-i", sedString, "Makefile.core.mk")
+	sedCmd.Dir = manifest.RepoDir("istio")
+	if err := sedCmd.Run(); err != nil {
+		return fmt.Errorf("failed to run sed command: %v", err)
+	}
+
+	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+newBaseVersion,
+		"Update BASE_VERSION to "+newBaseVersion, false); err != nil {
+		return fmt.Errorf("failed PR creation: %v", err)
+	}
+
+	return fmt.Errorf("New base images created. PR needs to be merged and then run another build")
 }
