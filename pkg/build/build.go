@@ -33,11 +33,7 @@ import (
 func Build(manifest model.Manifest) error {
 	if _, f := manifest.BuildOutputs[model.Scanner]; f {
 		if err := Scanner(manifest); err != nil {
-			if manifest.IgnoreVulnerability {
-				log.Infof("Ignoring a vulnerability error: %v", err)
-			} else {
-				return fmt.Errorf("failed image scan: %v", err)
-			}
+			return fmt.Errorf("failed image scan: %v", err)
 		}
 	}
 
