@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -108,18 +109,18 @@ func Scanner(manifest model.Manifest) error {
 	newBaseVersion := baseVersion[:index] + strconv.Itoa(digit+1)
 	log.Infof("new baseVersion: %s", newBaseVersion)
 
-	// Attempted to run the ./tools/build-base-images.sh but locally, that gave me a
-	// number of different failures related to docker, PATHS, TTY, etc.
-	// Instead run the make command similar to what the script does.
-	buildEnv := []string{
+	// Run the script to create the base images
+	buildImageEnv := []string{
 		"HUBS=docker.io/istio gcr.io/istio-release",
 		"TAG=" + newBaseVersion,
-		"BUILDX_BAKE_EXTRA_OPTIONS=--no-cache --pull",
-		"DOCKER_TARGETS=docker.base docker.distroless docker.app_sidecar_base_debian_9 docker.app_sidecar_base_debian_10" +
-			" docker.app_sidecar_base_ubuntu_xenial docker.app_sidecar_base_ubuntu_bionic docker.app_sidecar_base_ubuntu_focal" +
-			" docker.app_sidecar_base_centos_7 docker.app_sidecar_base_centos_8",
 	}
-	if err := util.RunMake(manifest, "istio", buildEnv, "dockerx.pushx"); err != nil {
+	cmd := util.VerboseCommand("tools/build-base-images.sh")
+	cmd.Env = util.StandardEnv(manifest)
+	cmd.Env = append(cmd.Env, buildImageEnv...)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Dir = manifest.RepoDir("istio")
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to build base images: %v", err)
 	}
 
