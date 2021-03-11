@@ -17,16 +17,18 @@ package build
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 // Structs for json data required
@@ -50,7 +52,7 @@ func Scanner(manifest model.Manifest) error {
 	if err != nil {
 		return fmt.Errorf("grep error: %v", err)
 	}
-	baseVersion := strings.Split(out.String(), " ")[2] // Assumes line of the form BASE_VERSION ?+ baseVersion
+	baseVersion := strings.TrimSpace(strings.Split(out.String(), " ")[2]) // Assumes line of the form BASE_VERSION ?= baseVersion
 
 	// Call imagescanner passing in base image name. If request times out, retry the request
 	baseImageName := "istio/base:" + baseVersion
@@ -88,6 +90,52 @@ func Scanner(manifest model.Manifest) error {
 		return nil
 	}
 
-	// There were vulnerabilities. Return body.
-	return errors.New("Image name: " + baseImageName + "\n" + string(body))
+	// There were vulnerabilities. Output message listing vulnerabilities.
+	log.Infof("Base image scan of %s failed with:\n %s", baseImageName, string(body))
+
+	// If IgnoreVulernability is true, just just return
+	if manifest.IgnoreVulnerability {
+		return nil
+	}
+
+	// Else build a new set of images.
+	// baseVersion is like 1.10-dev.1
+	// Increment the digit after the last period to get the new tag.
+	index := strings.LastIndex(baseVersion, ".") + 1
+	var digit int
+	if digit, err = strconv.Atoi(baseVersion[index:]); err != nil {
+		return err
+	}
+	newBaseVersion := baseVersion[:index] + strconv.Itoa(digit+1)
+	log.Infof("new baseVersion: %s", newBaseVersion)
+
+	// Run the script to create the base images
+	buildImageEnv := []string{
+		"HUBS=docker.io/istio gcr.io/istio-release",
+		"TAG=" + newBaseVersion,
+	}
+	cmd := util.VerboseCommand("tools/build-base-images.sh")
+	cmd.Env = util.StandardEnv(manifest)
+	cmd.Env = append(cmd.Env, buildImageEnv...)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Dir = manifest.RepoDir("istio")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to build base images: %v", err)
+	}
+
+	// Now create a PR to update the TAG to use the new images
+	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + newBaseVersion + "/"
+	sedCmd := util.VerboseCommand("sed", "-i", sedString, "Makefile.core.mk")
+	sedCmd.Dir = manifest.RepoDir("istio")
+	if err := sedCmd.Run(); err != nil {
+		return fmt.Errorf("failed to run sed command: %v", err)
+	}
+
+	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+newBaseVersion,
+		"Update BASE_VERSION to "+newBaseVersion, false); err != nil {
+		return fmt.Errorf("failed PR creation: %v", err)
+	}
+
+	return fmt.Errorf("new base images created, new PR needs to be merged before another build is run")
 }
