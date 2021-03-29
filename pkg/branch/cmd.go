@@ -21,13 +21,15 @@ import (
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg"
+	"istio.io/release-builder/pkg/util"
 )
 
 var (
 	flags = struct {
-		manifest string
-		dryrun   bool
-		step     int
+		manifest        string
+		dryrun          bool
+		step            int
+		githubTokenFile string
 	}{
 		manifest: "example/manifest_branch.yaml",
 		dryrun:   true, // Default to dry-run for now
@@ -61,7 +63,12 @@ var (
 			}
 			log.Infof("Fetched all sources and setup working directory at %v", manifest.WorkDir())
 
-			if err := Branch(manifest, flags.step, flags.dryrun); err != nil {
+			token, err := util.GetGithubToken(flags.githubTokenFile)
+			if err != nil {
+				return err
+			}
+
+			if err := Branch(manifest, flags.step, flags.dryrun, token); err != nil {
 				return fmt.Errorf("failed to branch: %v", err)
 			}
 
@@ -78,6 +85,8 @@ func init() {
 		"Do not run any github commands.")
 	branchCmd.PersistentFlags().IntVar(&flags.step, "step", flags.step,
 		"Which step to run.")
+	branchCmd.PersistentFlags().StringVar(&flags.githubTokenFile, "githubtoken", flags.githubTokenFile,
+		"The file containing a github token.")
 }
 
 func GetBranchCommand() *cobra.Command {
