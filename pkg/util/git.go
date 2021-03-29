@@ -16,14 +16,22 @@ package util
 
 import (
 	"bytes"
+	"context"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
+	"strings"
+
+	"github.com/google/go-github/v28/github"
+	"golang.org/x/oauth2"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
 
 // PushCommit will create a branch and push a commit with the specified commit text
-func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryrun bool) (changes bool, err error) {
+func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryrun bool, githubToken string) (changes bool, err error) {
 	output := bytes.Buffer{}
 	cmd := VerboseCommand("git", "status", "--porcelain")
 	cmd.Dir = manifest.RepoDir(repo)
@@ -50,7 +58,22 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 			return true, err
 		}
 
-		cmd = VerboseCommand("git", "commit", "-m", commitString)
+		// Get user.email and user.name from the GitHub token
+		ctx := context.Background()
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: githubToken},
+		)
+
+		tc := oauth2.NewClient(ctx, ts)
+		client := github.NewClient(tc)
+
+		user, _, err := client.Users.Get(ctx, "")
+		if err != nil {
+			return true, err
+		}
+
+		cmd = VerboseCommand("git", "commit", "-m", commitString, "-c", "user.name="+*user.Name, "-c", "user.email="+*user.Email,
+			"--author="+*user.Name+"<"+*user.Email+">")
 		cmd.Dir = manifest.RepoDir(repo)
 		if err := cmd.Run(); err != nil {
 			return true, err
@@ -67,8 +90,8 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 
 // CreatePR will look for changes. If changes exist, it will create
 // a branch and push a commit with the specified commit text
-func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun bool) error {
-	changes, err := PushCommit(manifest, repo, branch, commitString, dryrun)
+func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun bool, githubToken string) error {
+	changes, err := PushCommit(manifest, repo, branch, commitString, dryrun, githubToken)
 	if err != nil {
 		return err
 	}
@@ -88,4 +111,17 @@ func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun
 		}
 	}
 	return nil
+}
+
+// GetGithubToken returns the GitHub token from the specified file. If the filename
+// isn't specified, it will return the token set in the GITHUB_TOKEN environment variable.
+func GetGithubToken(file string) (string, error) {
+	if file != "" {
+		b, err := ioutil.ReadFile(file)
+		if err != nil {
+			return "", fmt.Errorf("failed to read github token: %v", file)
+		}
+		return strings.TrimSpace(string(b)), nil
+	}
+	return os.Getenv("GITHUB_TOKEN"), nil
 }
