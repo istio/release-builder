@@ -19,14 +19,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"istio.io/release-builder/pkg"
-
 	"istio.io/pkg/log"
+	"istio.io/release-builder/pkg"
+	"istio.io/release-builder/pkg/util"
 )
 
 var (
 	flags = struct {
-		manifest string
+		manifest        string
+		githubTokenFile string
 	}{
 		manifest: "example/manifest.yaml",
 	}
@@ -59,7 +60,12 @@ var (
 				return fmt.Errorf("failed to standardize manifest: %v", err)
 			}
 
-			if err := Build(manifest); err != nil {
+			token, err := util.GetGithubToken(flags.githubTokenFile)
+			if err != nil {
+				return err
+			}
+
+			if err := Build(manifest, token); err != nil {
 				return fmt.Errorf("failed to build: %v", err)
 			}
 
@@ -72,6 +78,8 @@ var (
 func init() {
 	buildCmd.PersistentFlags().StringVar(&flags.manifest, "manifest", flags.manifest,
 		"The manifest to build.")
+	buildCmd.PersistentFlags().StringVar(&flags.githubTokenFile, "githubtoken", flags.githubTokenFile,
+		"The file containing a github token.")
 }
 
 func GetBuildCommand() *cobra.Command {
