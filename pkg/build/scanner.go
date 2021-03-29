@@ -42,7 +42,7 @@ type Results struct {
 }
 
 // Scanner checks the base image for any CVEs.
-func Scanner(manifest model.Manifest) error {
+func Scanner(manifest model.Manifest, githubToken string) error {
 	// Retrieve BASE_VERSION from the istio/istio Makefile
 	istioDir := manifest.RepoDir("istio")
 	var out bytes.Buffer
@@ -133,7 +133,7 @@ func Scanner(manifest model.Manifest) error {
 	}
 
 	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+newBaseVersion,
-		"Update BASE_VERSION to "+newBaseVersion, false); err != nil {
+		"Update BASE_VERSION to "+newBaseVersion, false, githubToken); err != nil {
 		return fmt.Errorf("failed PR creation: %v", err)
 	}
 

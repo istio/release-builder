@@ -23,11 +23,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
-
-	"istio.io/pkg/log"
 )
 
 var (
@@ -107,7 +106,7 @@ func Publish(manifest model.Manifest) error {
 		}
 	}
 	if flags.github != "" {
-		token, err := getGithubToken(flags.githubtoken)
+		token, err := util.GetGithubToken(flags.githubtoken)
 		if err != nil {
 			return err
 		}
@@ -137,14 +136,4 @@ func getGrafanaToken(file string) (string, error) {
 		return strings.TrimSpace(string(b)), nil
 	}
 	return os.Getenv("GRAFANA_TOKEN"), nil
-}
-func getGithubToken(file string) (string, error) {
-	if file != "" {
-		b, err := ioutil.ReadFile(file)
-		if err != nil {
-			return "", fmt.Errorf("failed to read github token: %v", file)
-		}
-		return strings.TrimSpace(string(b)), nil
-	}
-	return os.Getenv("GITHUB_TOKEN"), nil
 }

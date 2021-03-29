@@ -24,16 +24,15 @@ import (
 	"github.com/ghodss/yaml"
 
 	"istio.io/pkg/log"
-
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
 
 // Build will create all artifacts required by the manifest
 // This assumes the working directory has been setup and sources resolved.
-func Build(manifest model.Manifest) error {
+func Build(manifest model.Manifest, githubToken string) error {
 	if _, f := manifest.BuildOutputs[model.Scanner]; f {
-		if err := Scanner(manifest); err != nil {
+		if err := Scanner(manifest, githubToken); err != nil {
 			return fmt.Errorf("failed image scan: %v", err)
 		}
 	}
