@@ -38,9 +38,9 @@ fi
 BASE_BRANCH=${BASE_BRANCH:-${base_branch}}
 
 MANIFEST=$(cat <<EOF
-version: ${VERSION}
-docker: ${DOCKER_HUB}
-directory: ${WORK_DIR}
+version: "${VERSION}"
+docker: "${DOCKER_HUB}"
+directory: "${WORK_DIR}"
 dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
