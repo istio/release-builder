@@ -43,9 +43,9 @@ WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
 
 MANIFEST=$(cat <<EOF
-version: ${VERSION}
-docker: ${DOCKER_HUB}
-directory: ${WORK_DIR}
+version: "${VERSION}"
+docker: "${DOCKER_HUB}"
+directory: "${WORK_DIR}"
 dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
