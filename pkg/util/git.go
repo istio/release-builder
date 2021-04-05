@@ -72,8 +72,14 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 			return true, err
 		}
 
-		cmd = VerboseCommand("git", "commit", "-m", commitString, "-c", "user.name="+*user.Name, "-c", "user.email="+*user.Email,
-			"--author="+*user.Name+"<"+*user.Email+">")
+		// user.Email may be nil, so set to an empty string
+		emptyString := ""
+		if user.Email == nil {
+			user.Email = &emptyString
+		}
+
+		cmd = VerboseCommand("git", "-c", "user.name="+*user.Name, "-c", "user.email="+*user.Email, "commit",
+			"--message", commitString, "--author="+*user.Name+"<"+*user.Email+">")
 		cmd.Dir = manifest.RepoDir(repo)
 		if err := cmd.Run(); err != nil {
 			return true, err
@@ -98,12 +104,13 @@ func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun
 
 	if changes && !dryrun {
 		var cmd *exec.Cmd
-		if repo != "envoy" {
-			cmd = VerboseCommand("gh", "pr", "create", "--repo", manifest.Dependencies.Get()[repo].Git,
-				"--fill", "--head", branch, "--base", manifest.Dependencies.Get()[repo].Branch, "--label", "release-notes-none")
-		} else {
+		// Don't label the envoy or non istio repos with `release-notes-none`
+		if repo == "envoy" || !strings.Contains(manifest.Dependencies.Get()[repo].Git, "github.com/istio/") {
 			cmd = VerboseCommand("gh", "pr", "create", "--repo", manifest.Dependencies.Get()[repo].Git,
 				"--fill", "--head", branch, "--base", manifest.Dependencies.Get()[repo].Branch)
+		} else {
+			cmd = VerboseCommand("gh", "pr", "create", "--repo", manifest.Dependencies.Get()[repo].Git,
+				"--fill", "--head", branch, "--base", manifest.Dependencies.Get()[repo].Branch, "--label", "release-notes-none")
 		}
 		cmd.Dir = manifest.RepoDir(repo)
 		if err := cmd.Run(); err != nil {
