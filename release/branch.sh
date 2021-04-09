@@ -26,6 +26,8 @@ REPO_ORG=${REPO_ORG:-istio}
 DRY_RUN=${DRY_RUN:=true}
 VERSION=${VERSION:-"$(< "${WD}/trigger-branch" grep VERSION= | cut -d'=' -f2)"}
 STEP=${STEP:-"$(< "${WD}/trigger-branch" grep STEP= | cut -d'=' -f2)"}
+GITHUB_TOKEN_FILE=${GITHUB_TOKEN_FILE:-}
+
 WORK_DIR="$(mktemp -d)/branch"
 mkdir -p "${WORK_DIR}"
 
@@ -84,4 +86,4 @@ EOF
 # "Temporary" hacks
 export PATH=${GOPATH}/bin:${PATH}
 
-go run main.go branch --manifest <(echo "${MANIFEST}") --step="${STEP}" --dryrun="${DRY_RUN}"
+go run main.go branch --manifest <(echo "${MANIFEST}") --step="${STEP}" --dryrun="${DRY_RUN}" --githubtoken "${GITHUB_TOKEN_FILE}"
