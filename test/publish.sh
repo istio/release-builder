@@ -29,7 +29,7 @@ fi
 
 DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
-VERSION="1.8.0-releasebuilder.$(git rev-parse --short HEAD)"
+VERSION="1.10.0-releasebuilder.$(git rev-parse --short HEAD)"
 
 WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
@@ -66,7 +66,7 @@ dependencies:
     git: https://github.com/istio/tools
     branch: release-1.10
   envoy:
-    git: https://github.com/istio/envoy
+    git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
 dashboards:
   istio-extension-dashboard: 13277
