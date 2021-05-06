@@ -23,8 +23,8 @@ import (
 	"regexp"
 	"strings"
 
-	semver "github.com/Masterminds/semver/v3"
-	"github.com/google/go-github/v28/github"
+	"github.com/Masterminds/semver/v3"
+	"github.com/google/go-github/v35/github"
 	"golang.org/x/oauth2"
 
 	"istio.io/pkg/log"
