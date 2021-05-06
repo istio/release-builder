@@ -23,8 +23,17 @@ import (
 	"regexp"
 	"strings"
 
+<<<<<<< HEAD
+	semver "github.com/Masterminds/semver/v3"
+	"github.com/google/go-github/v28/github"
+=======
+	"istio.io/pkg/log"
+	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v35/github"
+>>>>>>> 9bc8704 (Fix imports for yaml dependency)
 	"golang.org/x/oauth2"
 
 	"istio.io/pkg/log"

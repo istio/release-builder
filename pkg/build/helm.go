@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ghodss/yaml"
+	"sigs.k8s.io/yaml"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
