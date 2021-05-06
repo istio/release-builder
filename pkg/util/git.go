@@ -23,7 +23,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v35/github"
 	"golang.org/x/oauth2"
 
 	"istio.io/pkg/log"
