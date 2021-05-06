@@ -1,16 +1,14 @@
 module istio.io/release-builder
 
-go 1.13
+go 1.16
 
 require (
-	cloud.google.com/go v0.34.0
-	github.com/Masterminds/semver/v3 v3.0.3
-	github.com/ghodss/yaml v1.0.0
-	github.com/google/go-github/v28 v28.0.1
-	github.com/google/martian v2.1.0+incompatible // indirect
-	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
-	github.com/rogpeppe/go-internal v1.5.0
-	github.com/spf13/cobra v0.0.4
-	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
-	istio.io/pkg v0.0.0-20191008025934-66d669f9a3fd
+	cloud.google.com/go/storage v1.15.0
+	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/google/go-github/v35 v35.2.0
+	github.com/rogpeppe/go-internal v1.8.0
+	github.com/spf13/cobra v1.1.3
+	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
+	istio.io/pkg v0.0.0-20210504140408-703cba576e59
+	sigs.k8s.io/yaml v1.2.0
 )
