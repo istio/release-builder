@@ -49,7 +49,6 @@ var (
 		"manifests/charts/istio-cni",
 		"manifests/charts/istio-control/istio-discovery/",
 		"manifests/charts/istio-operator",
-		"manifests/charts/istiod-remote",
 	}
 )
 
