@@ -34,7 +34,7 @@ func Build(manifest model.Manifest, githubToken string) error {
 	if _, f := manifest.BuildOutputs[model.Scanner]; f {
 		if err := Scanner(manifest, githubToken); err != nil {
 			if manifest.IgnoreVulnerability {
-				log.Infof("Ignoring vulnerabilty scanning error: %v", err)
+				log.Infof("Ignoring vulnerability scanning error: %v", err)
 			} else {
 				return fmt.Errorf("failed image scan: %v", err)
 			}
