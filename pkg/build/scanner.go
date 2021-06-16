@@ -63,8 +63,9 @@ func Scanner(manifest model.Manifest, githubToken string) error {
 		if err != nil {
 			if err, ok := err.(net.Error); ok && err.Timeout() {
 				fmt.Println("Scanner request timed out. Need to run request again.")
+			} else {
+				break
 			}
-			return err
 		}
 		numberRetries--
 	}
