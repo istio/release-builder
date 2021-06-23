@@ -48,7 +48,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 		return false, fmt.Errorf("failed to retrieve work tree: %v", err)
 	}
 
-	// Git the worktree status to see if there are any changes. Return if none.
+	// Get the worktree status to see if there are any changes. Return if none.
 	status, err := w.Status()
 	if err != nil {
 		return false, fmt.Errorf("failed to retrieve status: %v", err)
