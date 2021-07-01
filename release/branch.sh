@@ -57,6 +57,9 @@ ${DEPENDENCIES:-$(cat <<EOD
   common-files:
     git: https://github.com/${REPO_ORG}/common-files
     branch: ${BASE_BRANCH}
+  enhancements:
+    git: https://github.com/${REPO_ORG}/enhancements
+    branch: ${BASE_BRANCH}
   envoy:
     git: https://github.com/${REPO_ORG}/envoy
     branch: ${BASE_BRANCH}

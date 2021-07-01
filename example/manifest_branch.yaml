@@ -27,6 +27,9 @@ dependencies:
   common-files:
     git: https://github.com/istio/common-files
     branch: master
+  enhancements:
+    git: https://github.com/istio/enhancements
+    branch: master
   envoy:
     git: https://github.com/istio/envoy
     branch: master
