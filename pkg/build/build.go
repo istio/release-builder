@@ -48,7 +48,7 @@ func Build(manifest model.Manifest, githubToken string) error {
 	}
 
 	if err := SanitizeAllCharts(manifest); err != nil {
-		return fmt.Errorf("failed to sanitize charts")
+		return fmt.Errorf("failed to sanitize charts: %v",err)
 	}
 
 	if _, f := manifest.BuildOutputs[model.Debian]; f {
