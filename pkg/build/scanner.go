@@ -16,11 +16,7 @@ package build
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -56,43 +52,13 @@ func Scanner(manifest model.Manifest, githubToken string) error {
 
 	// Call imagescanner passing in base image name. If request times out, retry the request
 	baseImageName := "istio/base:" + baseVersion
-	numberRetries := 4
-	var resp *http.Response
-	for numberRetries > 0 {
-		resp, err = http.Get("http://imagescanner.cloud.ibm.com/scan?image=" + strings.TrimSpace(baseImageName))
-		if err != nil {
-			if err, ok := err.(net.Error); ok && err.Timeout() {
-				fmt.Println("Scanner request timed out. Need to run request again.")
-			} else {
-				return err
-			}
-		}
-		numberRetries--
+	cmd := exec.Command("trivy", "--ignore-unfixed", baseImageName)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err = cmd.Run(); err != nil {
+		// There were vulnerabilities. Output message listing vulnerabilities.
+		log.Infof("Base image scan of %s failed with:\n %s", baseImageName, string(err.Error()))
 	}
-	if err != nil {
-		return err
-	}
-
-	// Check response for OK
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	var response Response
-	if err := json.Unmarshal(body, &response); err != nil {
-		return err
-	}
-	if resp.StatusCode != http.StatusOK {
-		if (resp.StatusCode) == http.StatusInternalServerError {
-			return fmt.Errorf("scanning error (%s): %s", baseImageName, response.Progress)
-		}
-		return fmt.Errorf("scanning error (%s): %d", baseImageName, resp.StatusCode)
-	}
-	if response.Results.Status == "OK" {
-		log.Infof("Base image scan of %s was successful", baseImageName)
-		return nil
-	}
-
-	// There were vulnerabilities. Output message listing vulnerabilities.
-	log.Infof("Base image scan of %s failed with:\n %s", baseImageName, string(body))
 
 	// If IgnoreVulernability is true, just just return
 	if manifest.IgnoreVulnerability {
@@ -115,7 +81,7 @@ func Scanner(manifest model.Manifest, githubToken string) error {
 		"HUBS=docker.io/istio gcr.io/istio-release",
 		"TAG=" + newBaseVersion,
 	}
-	cmd := util.VerboseCommand("tools/build-base-images.sh")
+	cmd = util.VerboseCommand("tools/build-base-images.sh")
 	cmd.Env = util.StandardEnv(manifest)
 	cmd.Env = append(cmd.Env, buildImageEnv...)
 	cmd.Stderr = os.Stderr
