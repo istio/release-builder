@@ -52,7 +52,7 @@ func Scanner(manifest model.Manifest, githubToken string) error {
 
 	// Call imagescanner passing in base image name. If request times out, retry the request
 	baseImageName := "istio/base:" + baseVersion
-	cmd := util.VerboseCommand("trivy", "--ignore-unfixed", "--exit-code", "2", baseImageName)
+	cmd := util.VerboseCommand("trivy", "--ignore-unfixed", "--no-progress", "--exit-code", "2", baseImageName)
 	if err = cmd.Run(); err != nil {
 		// There were either vulnerabilities or an issue running the scaner. Output message listing vulnerabilities.
 		log.Infof("Base image scan of %s failed with:\n %s", baseImageName, err.Error())
