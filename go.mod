@@ -6,7 +6,9 @@ require (
 	cloud.google.com/go v0.34.0
 	github.com/Masterminds/semver/v3 v3.0.3
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/go-github/v28 v28.0.1
+	github.com/google/go-github/v35 v35.3.0
 	github.com/google/martian v2.1.0+incompatible // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/rogpeppe/go-internal v1.5.0
