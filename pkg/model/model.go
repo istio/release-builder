@@ -79,6 +79,7 @@ type IstioDependencies struct {
 	TestInfra      *Dependency `json:"test-infra"`
 	Tools          *Dependency `json:"tools"`
 	Envoy          *Dependency `json:"envoy"`
+	Enhancements   *Dependency `json:"enhancements"`
 	ReleaseBuilder *Dependency `json:"release-builder"`
 	CommonFiles    *Dependency `json:"common-files"`
 }
@@ -96,6 +97,7 @@ func (i *IstioDependencies) Get() map[string]*Dependency {
 		"envoy":           i.Envoy,
 		"release-builder": i.ReleaseBuilder,
 		"common-files":    i.CommonFiles,
+		"enhancements":    i.Enhancements,
 	}
 }
 
