@@ -33,6 +33,13 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
 	}
+
+	privateCmd := util.VerboseCommand("go", "run", "main.go", "branch", release)
+	privateCmd.Dir = manifest.RepoDir(repo) + "/prow/generate-transform-jobs/"
+	if err := privateCmd.Run(); err != nil {
+		return fmt.Errorf("failed to generate new private prow config: %v", err)
+	}
+
 	log.Infof("*** Prow config for new branches updated.")
 	return nil
 }
