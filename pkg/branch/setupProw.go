@@ -22,7 +22,7 @@ import (
 	"istio.io/release-builder/pkg/util"
 )
 
-// SetupProw goes to the test-infra repo and runs the command to generate the
+// SetupProw goes to the test-infra repo and runs the commands to generate the
 // config files for the new release.
 func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating prow config for new branches.")
@@ -33,6 +33,13 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
 	}
+
+	privateCmd := util.VerboseCommand("go", "run", "main.go", "branch", release)
+	privateCmd.Dir = manifest.RepoDir(repo) + "/prow/generate-transform-jobs/"
+	if err := privateCmd.Run(); err != nil {
+		return fmt.Errorf("failed to generate new private prow config: %v", err)
+	}
+
 	log.Infof("*** Prow config for new branches updated.")
 	return nil
 }
