@@ -61,6 +61,9 @@ func Build(manifest model.Manifest, githubToken string) error {
 		if err := Rpm(manifest); err != nil {
 			return fmt.Errorf("failed to build Rpm: %v", err)
 		}
+		if err := Rpm7(manifest); err != nil {
+			return fmt.Errorf("failed to build Rpm for CentOS-7: %v", err)
+		}
 	}
 
 	if _, f := manifest.BuildOutputs[model.Archive]; f {
