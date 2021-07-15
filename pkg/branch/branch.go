@@ -92,7 +92,7 @@ func Branch(manifest model.Manifest, step int, dryrun bool, token string) error 
 			prName = "[release-" + release + "] " + prName
 		}
 		if err := util.CreatePR(manifest, repo, "automatedBranchStep"+strconv.Itoa(step),
-			prName, dryrun, token); err != nil {
+			prName, dryrun, token, "", ""); err != nil {
 			return fmt.Errorf("failed PR creation: %v", err)
 		}
 	}
