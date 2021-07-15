@@ -21,6 +21,7 @@ import (
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg"
+	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
 
@@ -47,6 +48,12 @@ var (
 				return fmt.Errorf("failed to setup manifest: %v", err)
 			}
 
+			// Save these values as they are needed for git commits and PRs
+			savedIstioGit := inManifest.Dependencies.Get()["istio"].Git
+			savedIstioBranch := inManifest.Dependencies.Get()["istio"].Branch
+			log.Infof("Saved Istio git:\n%+v", savedIstioGit)
+			log.Infof("Saved Istio branch:\n%+v", savedIstioBranch)
+
 			if err := pkg.SetupWorkDir(manifest.Directory); err != nil {
 				return fmt.Errorf("failed to setup work dir: %v", err)
 			}
@@ -63,6 +70,16 @@ var (
 			token, err := util.GetGithubToken(flags.githubTokenFile)
 			if err != nil {
 				return err
+			}
+
+			if _, f := manifest.BuildOutputs[model.Scanner]; f {
+				if err := Scanner(manifest, token, savedIstioGit, savedIstioBranch); err != nil {
+					if manifest.IgnoreVulnerability {
+						log.Infof("Ignoring vulnerability scanning error: %v", err)
+					} else {
+						return fmt.Errorf("failed image scan: %v", err)
+					}
+				}
 			}
 
 			if err := Build(manifest, token); err != nil {

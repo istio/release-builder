@@ -115,7 +115,15 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 
 // CreatePR will look for changes. If changes exist, it will create a branch and push a commit with
 // the specified commit text, and then create a PR in the upstream repo.
-func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun bool, githubToken string) error {
+func CreatePR(manifest model.Manifest, repo, newBranchName, commitString string, dryrun bool, githubToken, git, branch string) error {
+	// Set git and branch from manifest if not passed in
+	if git == "" {
+		git = manifest.Dependencies.Get()[repo].Git
+	}
+
+	if branch == "" {
+		branch = manifest.Dependencies.Get()[repo].Branch
+	}
 	// Get user from the GitHub token
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -128,7 +136,7 @@ func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun
 		return err
 	}
 
-	changes, err := PushCommit(manifest, repo, branch, commitString, dryrun, githubToken, *user)
+	changes, err := PushCommit(manifest, repo, newBranchName, commitString, dryrun, githubToken, *user)
 	if err != nil {
 		return err
 	}
@@ -136,12 +144,12 @@ func CreatePR(manifest model.Manifest, repo, branch, commitString string, dryrun
 	if changes && !dryrun {
 		newPR := &github.NewPullRequest{
 			Title:               &commitString,
-			Head:                &branch,
-			Base:                &manifest.Dependencies.Get()[repo].Branch,
+			Head:                &newBranchName,
+			Base:                &branch,
 			MaintainerCanModify: github.Bool(true),
 		}
 
-		repoStrings := strings.Split(manifest.Dependencies.Get()[repo].Git, "/")
+		repoStrings := strings.Split(git, "/")
 		l := len(repoStrings)
 		orgString := repoStrings[l-2]
 		repoString := repoStrings[l-1]
