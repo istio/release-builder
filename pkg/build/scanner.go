@@ -53,12 +53,24 @@ func Scanner(manifest model.Manifest, githubToken string) error {
 	// Call imagescanner passing in base image name. If request times out, retry the request
 	baseImageName := "istio/base:" + baseVersion
 	cmd := util.VerboseCommand("trivy", "--ignore-unfixed", "--no-progress", "--exit-code", "2", baseImageName)
-	if err = cmd.Run(); err != nil {
-		// There were either vulnerabilities or an issue running the scaner. Output message listing vulnerabilities.
-		log.Infof("Base image scan of %s failed with:\n %s", baseImageName, err.Error())
+	err = cmd.Run()
+	if err == nil {
+		log.Infof("Base image scan of %s was successful", baseImageName)
+		return nil
 	}
 
-	// If IgnoreVulernability is true, just just return
+	//--exit-code 2 above states to return 2 if vulnerabilities are found. If we get a different error code or we can't check the error code, bail out
+	if exitError, ok := err.(*exec.ExitError); ok {
+		// Scanner failed with an exit code indicating a failure other than vulnerabilities found
+		if exitError.ExitCode() != 2 {
+			return fmt.Errorf("base image scan of %s failed with error:\n %s", baseImageName, err.Error())
+		}
+	} else {
+		// Scanner failed, but not with an ExitError
+		return fmt.Errorf("base image scan of %s failed. Unable to process exit code:\n %s", baseImageName, err.Error())
+	}
+
+	// Failed with an error indicating vulnerabilities were found. If IgnoreVulernability is true, just just return
 	if manifest.IgnoreVulnerability {
 		return nil
 	}
