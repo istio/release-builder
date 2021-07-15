@@ -52,7 +52,7 @@ dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.11
   api:
     git: https://github.com/istio/api
     auto: modules
@@ -64,17 +64,17 @@ ${DEPENDENCIES:-$(cat <<EOD
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.11
     goversionenabled: true
   gogo-genproto:
     git: https://github.com/istio/gogo-genproto
-    branch: master
+    branch: release-1.11
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.11
   envoy:
     git: https://github.com/istio/envoy
     auto: proxy_workspace
