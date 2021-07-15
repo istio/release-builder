@@ -76,7 +76,7 @@ ${DEPENDENCIES:-$(cat <<EOD
     git: https://github.com/istio/tools
     branch: master
   envoy:
-    git: https://github.com/istio/envoy
+    git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
 EOD
 )}
