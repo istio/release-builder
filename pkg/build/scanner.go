@@ -38,7 +38,7 @@ type Results struct {
 }
 
 // Scanner checks the base image for any CVEs.
-func Scanner(manifest model.Manifest, githubToken string) error {
+func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	// Retrieve BASE_VERSION from the istio/istio Makefile
 	istioDir := manifest.RepoDir("istio")
 	var out bytes.Buffer
@@ -96,7 +96,7 @@ func Scanner(manifest model.Manifest, githubToken string) error {
 	cmd.Env = append(cmd.Env, buildImageEnv...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	cmd.Dir = manifest.RepoDir("istio")
+	cmd.Dir = istioDir
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to build base images: %v", err)
 	}
@@ -104,13 +104,13 @@ func Scanner(manifest model.Manifest, githubToken string) error {
 	// Now create a PR to update the TAG to use the new images
 	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + newBaseVersion + "/"
 	sedCmd := util.VerboseCommand("sed", "-i", sedString, "Makefile.core.mk")
-	sedCmd.Dir = manifest.RepoDir("istio")
+	sedCmd.Dir = istioDir
 	if err := sedCmd.Run(); err != nil {
 		return fmt.Errorf("failed to run sed command: %v", err)
 	}
 
 	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+newBaseVersion,
-		"Update BASE_VERSION to "+newBaseVersion, false, githubToken); err != nil {
+		"Update BASE_VERSION to "+newBaseVersion, false, githubToken, git, branch); err != nil {
 		return fmt.Errorf("failed PR creation: %v", err)
 	}
 
