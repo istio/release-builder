@@ -27,6 +27,7 @@ import (
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 var (
@@ -137,6 +138,22 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 		return nil
 	}); err != nil {
 		return err
+	}
+	return nil
+}
+
+func HelmCharts(manifest model.Manifest) error {
+	dst := path.Join(manifest.OutDir(), "helm")
+	if err := os.MkdirAll(path.Join(dst), 0o750); err != nil {
+		return fmt.Errorf("failed to make destination directory %v: %v", dst, err)
+	}
+	for _, chart := range helmCharts {
+		dir := path.Join(manifest.RepoDir("istio"), chart)
+		c := util.VerboseCommand("helm", "package", dir)
+		c.Dir = dst
+		if err := c.Run(); err != nil {
+			return fmt.Errorf("package %v: %v", chart, err)
+		}
 	}
 	return nil
 }

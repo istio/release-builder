@@ -31,6 +31,7 @@ VERSION="$(cat "${WD}/trigger-publish")"
 
 SOURCE_GCS_BUCKET=${SOURCE_GCS_BUCKET:-istio-prerelease/prerelease}
 GCS_BUCKET=${GCS_BUCKET:-istio-release/releases}
+HELM_BUCKET=${HELM_BUCKET:-istio-release/charts}
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 GITHUB_TOKEN_FILE=${GITHUB_TOKEN_FILE:-}
@@ -45,6 +46,7 @@ export PATH=${GOPATH}/bin:${PATH}
 gsutil -m cp -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}/*" "${WORK_DIR}"
 go run main.go publish --release "${WORK_DIR}" \
     --gcsbucket "${GCS_BUCKET}" \
+    --helmbucket "${HELM_BUCKET}" \
     --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \
     --grafanatoken "${GRAFANA_TOKEN_FILE}"

@@ -77,6 +77,7 @@ func CheckRelease(release string) ([]string, string, []error) {
 		"IstioctlStandalone":   TestIstioctlStandalone,
 		"TestDocker":           TestDocker,
 		"HelmVersionsIstio":    TestHelmVersionsIstio,
+		"HelmChartVersions":    TestHelmChartVersions,
 		"OperatorProfiles":     TestOperatorProfiles,
 		"HelmOperatorManifest": TestHelmOperatorManifest,
 		"Manifest":             TestManifest,
@@ -188,11 +189,7 @@ func (g GenericMap) Path(path []string) (interface{}, error) {
 	return nil, nil
 }
 
-func getValues(path string) (map[string]interface{}, error) {
-	values, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
+func getValues(values []byte) (map[string]interface{}, error) {
 	var typedValues map[string]interface{}
 	if err := yaml.Unmarshal(values, &typedValues); err != nil {
 		return nil, err
@@ -277,6 +274,29 @@ func TestProxyVersion(r ReleaseInfo) error {
 	return nil
 }
 
+func TestHelmChartVersions(r ReleaseInfo) error {
+	expected := []string{
+		"config",
+		"istio-cni",
+		"istio-discovery",
+		"istio-egress",
+		"istio-ingress",
+	}
+	for _, chart := range expected {
+		buf := bytes.Buffer{}
+		c := exec.Command("helm", "show", "values",
+			filepath.Join(r.release, "helm", fmt.Sprintf("%s-%s.tgz", chart, r.manifest.Version)))
+		c.Stdout = &buf
+		if err := c.Run(); err != nil {
+			return err
+		}
+		if err := validateHubTag(r, buf.Bytes(), "global"); err != nil {
+			return fmt.Errorf("%s: %v", chart, err)
+		}
+	}
+	return nil
+}
+
 func TestHelmVersionsIstio(r ReleaseInfo) error {
 	manifestValues := []string{
 		"manifests/charts/gateways/istio-egress/values.yaml",
@@ -286,7 +306,7 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		"manifests/charts/istiod-remote/values.yaml",
 	}
 	for _, file := range manifestValues {
-		err := validateHubTag(r, file, "global")
+		err := validateHubTagFromFile(r, file, "global")
 		if err != nil {
 			return err
 		}
@@ -294,8 +314,16 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 	return nil
 }
 
-func validateHubTag(r ReleaseInfo, file string, paths string) error {
-	values, err := getValues(filepath.Join(r.archive, file))
+func validateHubTagFromFile(r ReleaseInfo, file string, paths string) error {
+	values, err := ioutil.ReadFile(filepath.Join(r.archive, file))
+	if err != nil {
+		return err
+	}
+	return validateHubTag(r, values, paths)
+}
+
+func validateHubTag(r ReleaseInfo, valuesBytes []byte, paths string) error {
+	values, err := getValues(valuesBytes)
 	if err != nil {
 		return err
 	}
@@ -305,10 +333,10 @@ func validateHubTag(r ReleaseInfo, file string, paths string) error {
 	}
 	tag, err := GenericMap{values}.Path(tagPath)
 	if err != nil {
-		return fmt.Errorf("invalid path (%v): %v", file, err)
+		return fmt.Errorf("invalid path: %v", err)
 	}
 	if tag != r.manifest.Version {
-		return fmt.Errorf("archive tag incorrect (%v): got %v expected %v", file, tag, r.manifest.Version)
+		return fmt.Errorf("archive tag incorrect: got %v expected %v", tag, r.manifest.Version)
 	}
 	hubPath := []string{paths, "hub"}
 	if paths == "" {
@@ -316,17 +344,17 @@ func validateHubTag(r ReleaseInfo, file string, paths string) error {
 	}
 	hub, err := GenericMap{values}.Path(hubPath)
 	if err != nil {
-		return fmt.Errorf("invalid path (%v): %v", file, err)
+		return fmt.Errorf("invalid path: %v", err)
 	}
 	if hub != r.manifest.Docker {
-		return fmt.Errorf("hub incorrect (%v) : got %v expected %v", file, hub, r.manifest.Docker)
+		return fmt.Errorf("hub incorrect: got %v expected %v", hub, r.manifest.Docker)
 	}
 	return nil
 }
 
 func TestHelmOperatorManifest(r ReleaseInfo) error {
 	operatorManifestValues := "manifests/charts/istio-operator/values.yaml"
-	return validateHubTag(r, operatorManifestValues, "")
+	return validateHubTagFromFile(r, operatorManifestValues, "")
 }
 
 func TestOperatorProfiles(r ReleaseInfo) error {
@@ -334,7 +362,11 @@ func TestOperatorProfiles(r ReleaseInfo) error {
 		"manifests/profiles/default.yaml",
 	}
 	for _, f := range operatorChecks {
-		values, err := getValues(filepath.Join(r.archive, f))
+		by, err := ioutil.ReadFile(filepath.Join(r.archive, f))
+		if err != nil {
+			return err
+		}
+		values, err := getValues(by)
 		if err != nil {
 			return err
 		}
