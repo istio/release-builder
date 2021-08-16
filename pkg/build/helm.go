@@ -118,7 +118,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 			}
 			contents := string(read)
 			// These fields contain the version, we swap out the placeholder with the correct version
-			for _, replacement := range []string{"version"} {
+			for _, replacement := range []string{"version", "appVersion"} {
 				before := fmt.Sprintf("%s: %s", replacement, cv)
 				after := fmt.Sprintf("%s: %s", replacement, manifest.Version)
 				contents = strings.ReplaceAll(contents, before, after)
