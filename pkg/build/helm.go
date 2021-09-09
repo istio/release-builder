@@ -158,7 +158,7 @@ func HelmCharts(manifest model.Manifest) error {
 	if err := os.MkdirAll(path.Join(dst), 0o750); err != nil {
 		return fmt.Errorf("failed to make destination directory %v: %v", dst, err)
 	}
-	for _, chart := range helmCharts {
+	for _, chart := range repoHelmCharts {
 		dir := path.Join(manifest.RepoDir("istio"), chart)
 		c := util.VerboseCommand("helm", "package", dir)
 		c.Dir = dst

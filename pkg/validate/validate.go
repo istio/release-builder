@@ -289,6 +289,10 @@ func TestHelmChartVersions(r ReleaseInfo) error {
 		if err := c.Run(); err != nil {
 			return err
 		}
+		if chart == "gateway" || chart == "base" {
+			// Gateway has no hub/tag
+			continue
+		}
 		if err := validateHubTag(r, buf.Bytes(), "global"); err != nil {
 			return fmt.Errorf("%s: %v", chart, err)
 		}
