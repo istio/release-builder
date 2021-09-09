@@ -43,14 +43,25 @@ var (
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
 	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
 
+	// helmCharts contains all helm charts we will release
 	helmCharts = []string{
 		"manifests/charts/base",
+		"manifests/charts/gateway",
 		"manifests/charts/gateways/istio-egress",
 		"manifests/charts/gateways/istio-ingress",
 		"manifests/charts/istio-cni",
-		"manifests/charts/istio-control/istio-discovery/",
+		"manifests/charts/istio-control/istio-discovery",
 		"manifests/charts/istio-operator",
 		"manifests/charts/istiod-remote",
+	}
+
+	// repoHelmCharts contains all helm charts we will release to the helm repo. This is a subset of
+	// helmCharts as we want to only publish our fully supported charts.
+	repoHelmCharts = []string{
+		"manifests/charts/base",
+		"manifests/charts/gateway",
+		"manifests/charts/istio-cni",
+		"manifests/charts/istio-control/istio-discovery",
 	}
 )
 

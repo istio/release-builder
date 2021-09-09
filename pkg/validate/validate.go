@@ -276,11 +276,10 @@ func TestProxyVersion(r ReleaseInfo) error {
 
 func TestHelmChartVersions(r ReleaseInfo) error {
 	expected := []string{
-		"config",
-		"istio-cni",
-		"istio-discovery",
-		"istio-egress",
-		"istio-ingress",
+		"cni",
+		"istiod",
+		"base",
+		"gateway",
 	}
 	for _, chart := range expected {
 		buf := bytes.Buffer{}
