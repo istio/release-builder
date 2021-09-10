@@ -27,6 +27,7 @@ import (
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
+	"istio.io/release-builder/pkg/util"
 )
 
 var (
@@ -42,14 +43,25 @@ var (
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
 	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
 
+	// helmCharts contains all helm charts we will release
 	helmCharts = []string{
 		"manifests/charts/base",
+		"manifests/charts/gateway",
 		"manifests/charts/gateways/istio-egress",
 		"manifests/charts/gateways/istio-ingress",
 		"manifests/charts/istio-cni",
-		"manifests/charts/istio-control/istio-discovery/",
+		"manifests/charts/istio-control/istio-discovery",
 		"manifests/charts/istio-operator",
 		"manifests/charts/istiod-remote",
+	}
+
+	// repoHelmCharts contains all helm charts we will release to the helm repo. This is a subset of
+	// helmCharts as we want to only publish our fully supported charts.
+	repoHelmCharts = []string{
+		"manifests/charts/base",
+		"manifests/charts/gateway",
+		"manifests/charts/istio-cni",
+		"manifests/charts/istio-control/istio-discovery",
 	}
 )
 
@@ -137,6 +149,22 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 		return nil
 	}); err != nil {
 		return err
+	}
+	return nil
+}
+
+func HelmCharts(manifest model.Manifest) error {
+	dst := path.Join(manifest.OutDir(), "helm")
+	if err := os.MkdirAll(path.Join(dst), 0o750); err != nil {
+		return fmt.Errorf("failed to make destination directory %v: %v", dst, err)
+	}
+	for _, chart := range repoHelmCharts {
+		dir := path.Join(manifest.RepoDir("istio"), chart)
+		c := util.VerboseCommand("helm", "package", dir)
+		c.Dir = dst
+		if err := c.Run(); err != nil {
+			return fmt.Errorf("package %v: %v", chart, err)
+		}
 	}
 	return nil
 }

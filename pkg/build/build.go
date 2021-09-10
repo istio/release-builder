@@ -40,6 +40,11 @@ func Build(manifest model.Manifest, githubToken string) error {
 	if err := SanitizeAllCharts(manifest); err != nil {
 		return fmt.Errorf("failed to sanitize charts: %v", err)
 	}
+	if _, f := manifest.BuildOutputs[model.Helm]; f {
+		if err := HelmCharts(manifest); err != nil {
+			return fmt.Errorf("failed to build HelmCharts: %v", err)
+		}
+	}
 
 	if _, f := manifest.BuildOutputs[model.Debian]; f {
 		if err := Debian(manifest); err != nil {
@@ -85,7 +90,7 @@ func Build(manifest model.Manifest, githubToken string) error {
 
 // writeLicense copies the complete list of licenses for all dependant repos
 func writeLicense(manifest model.Manifest) error {
-	if err := os.MkdirAll(filepath.Join(manifest.OutDir(), "licenses"), 0750); err != nil {
+	if err := os.MkdirAll(filepath.Join(manifest.OutDir(), "licenses"), 0o750); err != nil {
 		return fmt.Errorf("failed to create license dir: %v", err)
 	}
 	for repo := range manifest.Dependencies.Get() {
@@ -111,7 +116,7 @@ func writeManifest(manifest model.Manifest, dir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal manifest: %v", err)
 	}
-	if err := ioutil.WriteFile(path.Join(dir, "manifest.yaml"), yml, 0640); err != nil {
+	if err := ioutil.WriteFile(path.Join(dir, "manifest.yaml"), yml, 0o640); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
 	return nil

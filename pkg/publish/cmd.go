@@ -35,6 +35,7 @@ var (
 		dockerhub    string
 		dockertags   []string
 		gcsbucket    string
+		helmbucket   string
 		gcsaliases   []string
 		github       string
 		githubtoken  string
@@ -72,7 +73,9 @@ func init() {
 	publishCmd.PersistentFlags().StringSliceVar(&flags.dockertags, "dockertags", flags.dockertags,
 		"The tags to apply to docker images. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
-		"The gcs bucket to publish binaries to. Example: gs://istio-release.")
+		"The gcs bucket to publish binaries to. Example: istio-release/releases.")
+	publishCmd.PersistentFlags().StringVar(&flags.helmbucket, "helmbucket", flags.helmbucket,
+		"The gcs bucket to publish helm to. Example: istio-release/charts.")
 	publishCmd.PersistentFlags().StringSliceVar(&flags.gcsaliases, "gcsaliases", flags.gcsaliases,
 		"Alias to publish to gcs. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
@@ -103,6 +106,11 @@ func Publish(manifest model.Manifest) error {
 	if flags.gcsbucket != "" {
 		if err := GcsArchive(manifest, flags.gcsbucket, flags.gcsaliases); err != nil {
 			return fmt.Errorf("failed to publish to gcs: %v", err)
+		}
+	}
+	if flags.helmbucket != "" {
+		if err := Helm(manifest, flags.helmbucket); err != nil {
+			return fmt.Errorf("failed to publish to helm charts: %v", err)
 		}
 	}
 	if flags.github != "" {
