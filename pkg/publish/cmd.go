@@ -40,6 +40,7 @@ var (
 		github       string
 		githubtoken  string
 		grafanatoken string
+		cosignkey    string
 	}{}
 	publishCmd = &cobra.Command{
 		Use:          "publish",
@@ -84,6 +85,8 @@ func init() {
 		"The file containing a github token.")
 	publishCmd.PersistentFlags().StringVar(&flags.grafanatoken, "grafanatoken", flags.grafanatoken,
 		"The file containing a grafana.com API token.")
+	publishCmd.PersistentFlags().StringVar(&flags.cosignkey, "cosignkey", flags.cosignkey,
+		"A key for signing images, as passed to cosign using 'cosign sign -key <x>'")
 }
 
 func GetPublishCommand() *cobra.Command {
@@ -99,7 +102,7 @@ func validateFlags() error {
 
 func Publish(manifest model.Manifest) error {
 	if flags.dockerhub != "" {
-		if err := Docker(manifest, flags.dockerhub, flags.dockertags); err != nil {
+		if err := Docker(manifest, flags.dockerhub, flags.dockertags, flags.cosignkey); err != nil {
 			return fmt.Errorf("failed to publish to docker: %v", err)
 		}
 	}

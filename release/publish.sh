@@ -36,6 +36,7 @@ DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 GITHUB_TOKEN_FILE=${GITHUB_TOKEN_FILE:-}
 GRAFANA_TOKEN_FILE=${GRAFANA_TOKEN_FILE:-}
+COSIGN_KEY=${COSIGN_KEY:-}
 
 WORK_DIR="$(mktemp -d)/release"
 mkdir -p "${WORK_DIR}"
@@ -51,8 +52,13 @@ go run main.go publish --release "${WORK_DIR}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \
     --grafanatoken "${GRAFANA_TOKEN_FILE}"
 
+if [[ -z "${COSIGN_KEY}" ]]; then
+  COSIGN_ARGS="--cosignkey ${COSIGN_KEY}"
+fi
+
 # Also push images to a GCR repo, in case of dockerhub rate limiting issues for
 # large clusters (see https://docs.docker.com/docker-hub/download-rate-limit/).
 go run main.go publish --release "${WORK_DIR}" \
+    "${COSIGN_ARGS:-}" \
     --dockerhub "gcr.io/istio-release" \
     --dockertags "${VERSION}"
