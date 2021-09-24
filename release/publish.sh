@@ -38,6 +38,10 @@ GITHUB_TOKEN_FILE=${GITHUB_TOKEN_FILE:-}
 GRAFANA_TOKEN_FILE=${GRAFANA_TOKEN_FILE:-}
 COSIGN_KEY=${COSIGN_KEY:-}
 
+if [[ -z "${COSIGN_KEY}" ]]; then
+  COSIGN_ARGS="--cosignkey ${COSIGN_KEY}"
+fi
+
 WORK_DIR="$(mktemp -d)/release"
 mkdir -p "${WORK_DIR}"
 
@@ -46,19 +50,16 @@ export PATH=${GOPATH}/bin:${PATH}
 
 gsutil -m cp -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}/*" "${WORK_DIR}"
 go run main.go publish --release "${WORK_DIR}" \
+    ${COSIGN_ARGS:-} \
     --gcsbucket "${GCS_BUCKET}" \
     --helmbucket "${HELM_BUCKET}" \
     --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \
     --grafanatoken "${GRAFANA_TOKEN_FILE}"
 
-if [[ -z "${COSIGN_KEY}" ]]; then
-  COSIGN_ARGS="--cosignkey ${COSIGN_KEY}"
-fi
-
 # Also push images to a GCR repo, in case of dockerhub rate limiting issues for
 # large clusters (see https://docs.docker.com/docker-hub/download-rate-limit/).
 go run main.go publish --release "${WORK_DIR}" \
-    "${COSIGN_ARGS:-}" \
+    ${COSIGN_ARGS:-} \
     --dockerhub "gcr.io/istio-release" \
     --dockertags "${VERSION}"
