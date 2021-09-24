@@ -38,10 +38,10 @@ func Build(manifest model.Manifest, githubToken string) error {
 		}
 	}
 
+	if err := SanitizeAllCharts(manifest); err != nil {
+		return fmt.Errorf("failed to sanitize charts: %v", err)
+	}
 	if vm, _ := regexp.Match(`\d+\.\d+\.\d+`, []byte(manifest.Version)); vm {
-		if err := SanitizeAllCharts(manifest); err != nil {
-			return fmt.Errorf("failed to sanitize charts: %v", err)
-		}
 		if _, f := manifest.BuildOutputs[model.Helm]; f {
 			if err := HelmCharts(manifest); err != nil {
 				return fmt.Errorf("failed to build HelmCharts: %v", err)
