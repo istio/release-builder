@@ -36,10 +36,6 @@ if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
   PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
 fi
 
-if [[ -z "${COSIGN_KEY}" ]]; then
-  COSIGN_ARGS="--cosignkey ${COSIGN_KEY}"
-fi
-
 # We shouldn't push here right now, this is just which version to embed in the Helm charts
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 
@@ -111,7 +107,7 @@ go run main.go build \
 go run main.go validate --release "${WORK_DIR}/out"
 
 go run main.go publish --release "${WORK_DIR}/out" \
-  ${COSIGN_ARGS:-} \
+  --cosignkey "${COSIGN_KEY:-}" \
   --gcsbucket "${GCS_BUCKET}" \
   --helmbucket "${HELM_BUCKET}" \
   --dockerhub "${PRERELEASE_DOCKER_HUB}" \
