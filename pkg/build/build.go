@@ -20,6 +20,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 
 	"sigs.k8s.io/yaml"
 
@@ -40,10 +41,14 @@ func Build(manifest model.Manifest, githubToken string) error {
 	if err := SanitizeAllCharts(manifest); err != nil {
 		return fmt.Errorf("failed to sanitize charts: %v", err)
 	}
-	if _, f := manifest.BuildOutputs[model.Helm]; f {
-		if err := HelmCharts(manifest); err != nil {
-			return fmt.Errorf("failed to build HelmCharts: %v", err)
+	if vm, _ := regexp.Match(`\d+\.\d+\.\d+`, []byte(manifest.Version)); vm {
+		if _, f := manifest.BuildOutputs[model.Helm]; f {
+			if err := HelmCharts(manifest); err != nil {
+				return fmt.Errorf("failed to build HelmCharts: %v", err)
+			}
 		}
+	} else {
+		log.Warnf("Invalid Semantic Version. Skipping Charts build")
 	}
 
 	if _, f := manifest.BuildOutputs[model.Debian]; f {
