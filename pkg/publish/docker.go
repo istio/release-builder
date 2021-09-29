@@ -26,6 +26,8 @@ import (
 	"istio.io/release-builder/pkg/util"
 )
 
+const DefaultVariant = "debug"
+
 // Docker publishes all images to the given hub
 func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string) error {
 	dockerArchives, err := ioutil.ReadDir(path.Join(manifest.Directory, "docker"))
@@ -63,24 +65,30 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 		if len(tags) == 0 {
 			tags = []string{manifest.Version}
 		}
+		variants := []string{variant}
+		// Publish with no variant tag as well (ie "istio/pilot:tag")
+		if variant == DefaultVariant {
+			variants = append(variants, "")
+		}
 		for _, tag := range tags {
-			newTag := fmt.Sprintf("%s/%s:%s%s", hub, imageName, tag, variant)
-			if err := util.VerboseCommand("docker", "tag", currentTag, newTag).Run(); err != nil {
-				return fmt.Errorf("failed to load docker image %v: %v", currentTag, err)
-			}
+			for _, variant := range variants {
+				newTag := fmt.Sprintf("%s/%s:%s%s", hub, imageName, tag, variant)
+				if err := util.VerboseCommand("docker", "tag", currentTag, newTag).Run(); err != nil {
+					return fmt.Errorf("failed to load docker image %v: %v", currentTag, err)
+				}
 
-			if err := util.VerboseCommand("docker", "push", newTag).Run(); err != nil {
-				return fmt.Errorf("failed to push docker image %v: %v", newTag, err)
-			}
+				if err := util.VerboseCommand("docker", "push", newTag).Run(); err != nil {
+					return fmt.Errorf("failed to push docker image %v: %v", newTag, err)
+				}
 
-			// Sign images *after* push -- cosign only works against real
-			// repositories (not valid against tarballs)
-			if cosignEnabled {
-				if err := util.VerboseCommand("cosign", "sign", "-key", cosignkey, newTag).Run(); err != nil {
-					return fmt.Errorf("failed to sign image %v with key %v: %v", newTag, cosignkey, err)
+				// Sign images *after* push -- cosign only works against real
+				// repositories (not valid against tarballs)
+				if cosignEnabled {
+					if err := util.VerboseCommand("cosign", "sign", "-key", cosignkey, newTag).Run(); err != nil {
+						return fmt.Errorf("failed to sign image %v with key %v: %v", newTag, cosignkey, err)
+					}
 				}
 			}
-
 		}
 	}
 	return nil

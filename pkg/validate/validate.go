@@ -107,7 +107,7 @@ func CheckRelease(release string) ([]string, string, []error) {
 				if err != nil {
 					return err
 				}
-				sb.WriteString(fmt.Sprintf("- %s", path))
+				sb.WriteString(fmt.Sprintf("- %s\n", path))
 				return nil
 			})
 		sb.WriteString("\nFiles in archive: \n")
@@ -116,7 +116,7 @@ func CheckRelease(release string) ([]string, string, []error) {
 				if err != nil {
 					return err
 				}
-				sb.WriteString(fmt.Sprintf("- %s", path))
+				sb.WriteString(fmt.Sprintf("- %s\n", path))
 				return nil
 			})
 	}
@@ -198,7 +198,7 @@ func getValues(values []byte) (map[string]interface{}, error) {
 }
 
 func TestDocker(r ReleaseInfo) error {
-	expected := []string{"pilot-distroless", "pilot", "install-cni", "proxyv2", "proxyv2-distroless", "operator"}
+	expected := []string{"pilot-distroless", "pilot-default", "install-cni-default", "proxyv2-default", "proxyv2-distroless", "operator-default"}
 	found := map[string]struct{}{}
 	d, err := ioutil.ReadDir(filepath.Join(r.release, "docker"))
 	if err != nil {
@@ -229,7 +229,7 @@ type DockerConfigConfig struct {
 }
 
 func TestProxyVersion(r ReleaseInfo) error {
-	image := filepath.Join(r.release, "docker", "proxyv2.tar.gz")
+	image := filepath.Join(r.release, "docker", "proxyv2-default.tar.gz")
 	if err := exec.Command("tar", "xvf", image, "-C", r.tmpDir).Run(); err != nil {
 		log.Warnf("failed to unpackage release archive")
 	}
