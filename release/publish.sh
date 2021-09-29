@@ -36,6 +36,7 @@ DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 GITHUB_TOKEN_FILE=${GITHUB_TOKEN_FILE:-}
 GRAFANA_TOKEN_FILE=${GRAFANA_TOKEN_FILE:-}
+COSIGN_KEY=${COSIGN_KEY:-}
 
 WORK_DIR="$(mktemp -d)/release"
 mkdir -p "${WORK_DIR}"
@@ -45,6 +46,7 @@ export PATH=${GOPATH}/bin:${PATH}
 
 gsutil -m cp -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}/*" "${WORK_DIR}"
 go run main.go publish --release "${WORK_DIR}" \
+    --cosignkey "${COSIGN_KEY:-}" \
     --gcsbucket "${GCS_BUCKET}" \
     --helmbucket "${HELM_BUCKET}" \
     --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
@@ -54,5 +56,6 @@ go run main.go publish --release "${WORK_DIR}" \
 # Also push images to a GCR repo, in case of dockerhub rate limiting issues for
 # large clusters (see https://docs.docker.com/docker-hub/download-rate-limit/).
 go run main.go publish --release "${WORK_DIR}" \
+    --cosignkey "${COSIGN_KEY:-}" \
     --dockerhub "gcr.io/istio-release" \
     --dockertags "${VERSION}"

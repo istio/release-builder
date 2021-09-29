@@ -21,15 +21,27 @@ import (
 	"path/filepath"
 	"strings"
 
+	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
 
 // Docker publishes all images to the given hub
-func Docker(manifest model.Manifest, hub string, tags []string) error {
+func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string) error {
 	dockerArchives, err := ioutil.ReadDir(path.Join(manifest.Directory, "docker"))
 	if err != nil {
 		return fmt.Errorf("failed to read docker output of release: %v", err)
+	}
+
+	// Only attempt to sign images if a valid cosign key is provided and we are
+	// able to run 'cosign public-key <key>'.
+	cosignEnabled := false
+	if cosignkey != "" {
+		if err := util.VerboseCommand("cosign", "public-key", "-key", cosignkey).Run(); err != nil {
+			log.Errorf("Argument '--cosignkey' nonempty but unable to access key %v, disabling signing.", err)
+		} else {
+			cosignEnabled = true
+		}
 	}
 
 	for _, f := range dockerArchives {
@@ -60,6 +72,15 @@ func Docker(manifest model.Manifest, hub string, tags []string) error {
 			if err := util.VerboseCommand("docker", "push", newTag).Run(); err != nil {
 				return fmt.Errorf("failed to push docker image %v: %v", newTag, err)
 			}
+
+			// Sign images *after* push -- cosign only works against real
+			// repositories (not valid against tarballs)
+			if cosignEnabled {
+				if err := util.VerboseCommand("cosign", "sign", "-key", cosignkey, newTag).Run(); err != nil {
+					return fmt.Errorf("failed to sign image %v with key %v: %v", newTag, cosignkey, err)
+				}
+			}
+
 		}
 	}
 	return nil

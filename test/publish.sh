@@ -31,6 +31,7 @@ DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
 HELM_BUCKET=${HELM_BUCKET:-istio-build/test/charts}
 VERSION="1.12.0-releasebuilder.$(git rev-parse --short HEAD)"
+COSIGN_KEY=${COSIGN_KEY:-}
 
 WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
@@ -87,5 +88,11 @@ go run main.go build --manifest <(echo "${MANIFEST}")
 go run main.go validate --release "${WORK_DIR}/out"
 
 if [[ -z "${DRY_RUN:-}" ]]; then
-  go run main.go publish --release "${WORK_DIR}/out" --helmbucket "${HELM_BUCKET}" --gcsbucket "${GCS_BUCKET}" --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}"
+go run main.go publish --release "${WORK_DIR}/out" \
+  --cosignkey "${COSIGN_KEY:-}" \
+  --helmbucket "${HELM_BUCKET}" \
+  --gcsbucket "${GCS_BUCKET}" \
+  --dockerhub "${DOCKER_HUB}" \
+  --dockertags "${VERSION}"
+
 fi

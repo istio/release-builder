@@ -30,6 +30,7 @@ gcloud auth configure-docker -q
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
 HELM_BUCKET=${HELM_BUCKET:-istio-prerelease/charts}
+COSIGN_KEY=${COSIGN_KEY:-}
 
 if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
   PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
@@ -99,6 +100,15 @@ EOF
 # "Temporary" hacks
 export PATH=${GOPATH}/bin:${PATH}
 
-go run main.go build --manifest <(echo "${MANIFEST}") --githubtoken "${GITHUB_TOKEN_FILE}"
+go run main.go build \
+  --manifest <(echo "${MANIFEST}") \
+  --githubtoken "${GITHUB_TOKEN_FILE}"
+
 go run main.go validate --release "${WORK_DIR}/out"
-go run main.go publish --release "${WORK_DIR}/out" --gcsbucket "${GCS_BUCKET}" --helmbucket "${HELM_BUCKET}" --dockerhub "${PRERELEASE_DOCKER_HUB}" --dockertags "${VERSION}"
+
+go run main.go publish --release "${WORK_DIR}/out" \
+  --cosignkey "${COSIGN_KEY:-}" \
+  --gcsbucket "${GCS_BUCKET}" \
+  --helmbucket "${HELM_BUCKET}" \
+  --dockerhub "${PRERELEASE_DOCKER_HUB}" \
+  --dockertags "${VERSION}"
