@@ -71,8 +71,8 @@ export PATH=${GOPATH}/bin:${PATH}
 
 if [ $BUILD_BASE_IMAGES = true ] ; then
   MANIFEST=$(cat <<EOF
-version: "1.8.0-test"
-docker: "docker.io/istio"
+version: "${VERSION}"
+docker: "${DOCKER_HUB}"
 directory: "${WORK_DIR}"
 dependencies:
   istio:
