@@ -74,8 +74,20 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	buildTimestamp := strings.ReplaceAll(time.Now().Format(time.RFC3339), ":", "-")
 	log.Infof("new base tag: %s", buildTimestamp)
 
+	// Setup for multiarch build.
+	// See https://medium.com/@artur.klauser/building-multi-architecture-docker-images-with-buildx-27d80f7e2408 for more info
+	if err := util.VerboseCommand("docker",
+		"run", "--rm", "--privileged", "multiarch/qemu-user-static", "--reset", "-p", "yes").Run(); err != nil {
+		return fmt.Errorf("failed to run qemu-user-static container: %v", err)
+	}
+	if err := util.VerboseCommand("docker",
+		"buildx", "create", "--name", "multi-arch", "--platform", "linux/amd64,linux/arm64", "--use").Run(); err != nil {
+		return fmt.Errorf("failed to set multi-arch as current builder instance: %v", err)
+	}
+
 	// Run the script to create the base images
 	buildImageEnv := []string{
+		"DOCKER_ARCHITECTURES=linux/amd64,linux/arm64",
 		"HUBS=docker.io/istio gcr.io/istio-release",
 		"TAG=" + buildTimestamp,
 	}
@@ -90,7 +102,7 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	}
 
 	// Now create a PR to update the TAG to use the new images
-	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + buildTimestamp+ "/"
+	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + buildTimestamp + "/"
 	sedCmd := util.VerboseCommand("sed", "-i", sedString, "Makefile.core.mk")
 	sedCmd.Dir = istioDir
 	if err := sedCmd.Run(); err != nil {
