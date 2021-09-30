@@ -71,7 +71,10 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	}
 
 	// Else build a new set of images.
-	buildTimestamp := strings.ReplaceAll(time.Now().Format(time.RFC3339), ":", "-")
+	// Time format chosen for consistency with build tools tag:
+	// https://github.com/istio/tools/blob/ee7da00900dc878a2e865e43250c34735f130b7a/docker/build-tools/build-and-push.sh#L27
+	const timeFormat = "2006-01-02T15-04-05"
+	buildTimestamp := time.Now().Format(timeFormat)
 	log.Infof("new base tag: %s", buildTimestamp)
 
 	// Setup for multiarch build.
