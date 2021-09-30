@@ -71,7 +71,6 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 		BuildOutputs:        outputs,
 		ProxyOverride:       in.ProxyOverride,
 		GrafanaDashboards:   in.GrafanaDashboards,
-		IgnoreVulnerability: in.IgnoreVulnerability,
 	}, nil
 }
 

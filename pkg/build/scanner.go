@@ -70,11 +70,6 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		return fmt.Errorf("base image scan of %s failed. Unable to process exit code:\n %s", baseImageName, err.Error())
 	}
 
-	// Failed with an error indicating vulnerabilities were found. If IgnoreVulernability is true, just just return
-	//if manifest.IgnoreVulnerability {
-	//	return nil
-	//}
-
 	// Else build a new set of images.
 	buildTimestamp := strings.ReplaceAll(time.Now().Format(time.RFC3339), ":", "-")
 	log.Infof("new base tag: %s", buildTimestamp)

@@ -73,14 +73,10 @@ var (
 			}
 
 			if flags.buildBaseImages {
-					if err := Scanner(manifest, token, savedIstioGit, savedIstioBranch); err != nil {
-						if manifest.IgnoreVulnerability {
-							log.Infof("Ignoring vulnerability scanning error: %v", err)
-						} else {
-							return fmt.Errorf("failed image scan: %v", err)
-						}
-					}
-					return nil
+				if err := Scanner(manifest, token, savedIstioGit, savedIstioBranch); err != nil {
+					return fmt.Errorf("failed image scan: %v", err)
+				}
+				return nil
 			}
 
 			if err := Build(manifest, token); err != nil {

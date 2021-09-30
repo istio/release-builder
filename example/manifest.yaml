@@ -11,9 +11,6 @@ docker: docker.io/istio
 # Directory specifies the working directory to build in
 directory: /tmp/istio-release
 
-# Ignore/Continue after a base image vulnerability is found
-ignoreVulnerability: true
-
 # Dependencies specifies dependencies of the build
 # Note - only istio
 # Other dependencies are only required to grab licenses and publish tags to Github.
