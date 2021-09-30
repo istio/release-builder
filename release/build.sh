@@ -17,38 +17,7 @@
 WD=$(dirname "$0")
 WD=$(cd "$WD"; pwd)
 
-set -eux
-
-gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
-
-# Temporary hack to get around some gcloud credential issues
-mkdir ~/.docker
-cp "${DOCKER_CONFIG}/config.json" ~/.docker/
-export DOCKER_CONFIG=~/.docker
-gcloud auth configure-docker -q
-
-PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
-GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
-HELM_BUCKET=${HELM_BUCKET:-istio-prerelease/charts}
-COSIGN_KEY=${COSIGN_KEY:-}
-
-if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
-  PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
-fi
-
-# We shouldn't push here right now, this is just which version to embed in the Helm charts
-DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
-
-# For build, don't use GITHUB_TOKEN_FILE env var set by preset-release-pipeline
-# which is pointing to the github token for istio-release-robot. Instead point to
-# the github token for istio-testing. The token is currently only used to create the
-# PR to update the build image.
-GITHUB_TOKEN_FILE=/etc/github-token/oauth
-
-VERSION="$(cat "${WD}/trigger-build")"
-
-WORK_DIR="$(mktemp -d)/build"
-mkdir -p "${WORK_DIR}"
+set -x
 
 MANIFEST=$(cat <<EOF
 version: "${VERSION}"
@@ -99,6 +68,24 @@ EOF
 
 # "Temporary" hacks
 export PATH=${GOPATH}/bin:${PATH}
+
+if [ $BUILD_BASE_IMAGES = true ] ; then
+  MANIFEST=$(cat <<EOF
+version: "1.8.0-test"
+docker: "docker.io/istio"
+directory: "${WORK_DIR}"
+dependencies:
+  istio:
+    git: https://github.com/istio/istio
+    branch: master
+EOF
+)
+  go run main.go build \
+    --manifest <(echo "${MANIFEST}") \
+    --githubtoken "${GITHUB_TOKEN_FILE}" \
+    --build-base-images
+  exit 1
+fi
 
 go run main.go build \
   --manifest <(echo "${MANIFEST}") \

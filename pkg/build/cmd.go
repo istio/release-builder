@@ -21,7 +21,6 @@ import (
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg"
-	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
 
@@ -29,6 +28,7 @@ var (
 	flags = struct {
 		manifest        string
 		githubTokenFile string
+		buildBaseImages bool
 	}{
 		manifest: "example/manifest.yaml",
 	}
@@ -72,14 +72,15 @@ var (
 				return err
 			}
 
-			if _, f := manifest.BuildOutputs[model.Scanner]; f {
-				if err := Scanner(manifest, token, savedIstioGit, savedIstioBranch); err != nil {
-					if manifest.IgnoreVulnerability {
-						log.Infof("Ignoring vulnerability scanning error: %v", err)
-					} else {
-						return fmt.Errorf("failed image scan: %v", err)
+			if flags.buildBaseImages {
+					if err := Scanner(manifest, token, savedIstioGit, savedIstioBranch); err != nil {
+						if manifest.IgnoreVulnerability {
+							log.Infof("Ignoring vulnerability scanning error: %v", err)
+						} else {
+							return fmt.Errorf("failed image scan: %v", err)
+						}
 					}
-				}
+					return nil
 			}
 
 			if err := Build(manifest, token); err != nil {
@@ -97,6 +98,8 @@ func init() {
 		"The manifest to build.")
 	buildCmd.PersistentFlags().StringVar(&flags.githubTokenFile, "githubtoken", flags.githubTokenFile,
 		"The file containing a github token.")
+	buildCmd.PersistentFlags().BoolVar(&flags.buildBaseImages, "build-base-images", flags.buildBaseImages,
+		"When set scan base images for vulnerabilities and build new ones if needed.")
 }
 
 func GetBuildCommand() *cobra.Command {

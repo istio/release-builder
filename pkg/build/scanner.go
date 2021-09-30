@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
+	"time"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -71,25 +71,18 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	}
 
 	// Failed with an error indicating vulnerabilities were found. If IgnoreVulernability is true, just just return
-	if manifest.IgnoreVulnerability {
-		return nil
-	}
+	//if manifest.IgnoreVulnerability {
+	//	return nil
+	//}
 
 	// Else build a new set of images.
-	// baseVersion is like 1.10-dev.1
-	// Increment the digit after the last period to get the new tag.
-	index := strings.LastIndex(baseVersion, ".") + 1
-	var digit int
-	if digit, err = strconv.Atoi(baseVersion[index:]); err != nil {
-		return err
-	}
-	newBaseVersion := baseVersion[:index] + strconv.Itoa(digit+1)
-	log.Infof("new baseVersion: %s", newBaseVersion)
+	buildTimestamp := strings.ReplaceAll(time.Now().Format(time.RFC3339), ":", "-")
+	log.Infof("new base tag: %s", buildTimestamp)
 
 	// Run the script to create the base images
 	buildImageEnv := []string{
 		"HUBS=docker.io/istio gcr.io/istio-release",
-		"TAG=" + newBaseVersion,
+		"TAG=" + buildTimestamp,
 	}
 	cmd = util.VerboseCommand("tools/build-base-images.sh")
 	cmd.Env = util.StandardEnv(manifest)
@@ -102,15 +95,15 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	}
 
 	// Now create a PR to update the TAG to use the new images
-	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + newBaseVersion + "/"
+	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + buildTimestamp+ "/"
 	sedCmd := util.VerboseCommand("sed", "-i", sedString, "Makefile.core.mk")
 	sedCmd.Dir = istioDir
 	if err := sedCmd.Run(); err != nil {
 		return fmt.Errorf("failed to run sed command: %v", err)
 	}
 
-	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+newBaseVersion,
-		"Update BASE_VERSION to "+newBaseVersion, false, githubToken, git, branch); err != nil {
+	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+buildTimestamp,
+		"Update BASE_VERSION to "+buildTimestamp, false, githubToken, git, branch); err != nil {
 		return fmt.Errorf("failed PR creation: %v", err)
 	}
 
