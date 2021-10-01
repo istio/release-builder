@@ -40,7 +40,6 @@ MANIFEST=$(cat <<EOF
 version: ${VERSION}
 docker: ${DOCKER_HUB}
 directory: ${WORK_DIR}
-ignoreVulnerability: true
 dependencies:
   istio:
     git: https://github.com/istio/istio

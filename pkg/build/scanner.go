@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
+	"time"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -70,26 +70,29 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		return fmt.Errorf("base image scan of %s failed. Unable to process exit code:\n %s", baseImageName, err.Error())
 	}
 
-	// Failed with an error indicating vulnerabilities were found. If IgnoreVulernability is true, just just return
-	if manifest.IgnoreVulnerability {
-		return nil
-	}
-
 	// Else build a new set of images.
-	// baseVersion is like 1.10-dev.1
-	// Increment the digit after the last period to get the new tag.
-	index := strings.LastIndex(baseVersion, ".") + 1
-	var digit int
-	if digit, err = strconv.Atoi(baseVersion[index:]); err != nil {
-		return err
+	// Time format chosen for consistency with build tools tag:
+	// https://github.com/istio/tools/blob/ee7da00900dc878a2e865e43250c34735f130b7a/docker/build-tools/build-and-push.sh#L27
+	const timeFormat = "2006-01-02T15-04-05"
+	buildTimestamp := time.Now().Format(timeFormat)
+	log.Infof("new base tag: %s", buildTimestamp)
+
+	// Setup for multiarch build.
+	// See https://medium.com/@artur.klauser/building-multi-architecture-docker-images-with-buildx-27d80f7e2408 for more info
+	if err := util.VerboseCommand("docker",
+		"run", "--rm", "--privileged", "multiarch/qemu-user-static", "--reset", "-p", "yes").Run(); err != nil {
+		return fmt.Errorf("failed to run qemu-user-static container: %v", err)
 	}
-	newBaseVersion := baseVersion[:index] + strconv.Itoa(digit+1)
-	log.Infof("new baseVersion: %s", newBaseVersion)
+	if err := util.VerboseCommand("docker",
+		"buildx", "create", "--name", "multi-arch", "--platform", "linux/amd64,linux/arm64", "--use").Run(); err != nil {
+		return fmt.Errorf("failed to set multi-arch as current builder instance: %v", err)
+	}
 
 	// Run the script to create the base images
 	buildImageEnv := []string{
+		"DOCKER_ARCHITECTURES=linux/amd64,linux/arm64",
 		"HUBS=docker.io/istio gcr.io/istio-release",
-		"TAG=" + newBaseVersion,
+		"TAG=" + buildTimestamp,
 	}
 	cmd = util.VerboseCommand("tools/build-base-images.sh")
 	cmd.Env = util.StandardEnv(manifest)
@@ -102,15 +105,15 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	}
 
 	// Now create a PR to update the TAG to use the new images
-	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + newBaseVersion + "/"
+	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + buildTimestamp + "/"
 	sedCmd := util.VerboseCommand("sed", "-i", sedString, "Makefile.core.mk")
 	sedCmd.Dir = istioDir
 	if err := sedCmd.Run(); err != nil {
 		return fmt.Errorf("failed to run sed command: %v", err)
 	}
 
-	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+newBaseVersion,
-		"Update BASE_VERSION to "+newBaseVersion, false, githubToken, git, branch); err != nil {
+	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+buildTimestamp,
+		"Update BASE_VERSION to "+buildTimestamp, false, githubToken, git, branch); err != nil {
 		return fmt.Errorf("failed PR creation: %v", err)
 	}
 

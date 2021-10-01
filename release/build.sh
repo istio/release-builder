@@ -39,6 +39,9 @@ fi
 # We shouldn't push here right now, this is just which version to embed in the Helm charts
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 
+# When set, we skip the actual build, scan base images, and create and push new ones if needed.
+BUILD_BASE_IMAGES=${BUILD_BASE_IMAGES:=false}
+
 # For build, don't use GITHUB_TOKEN_FILE env var set by preset-release-pipeline
 # which is pointing to the github token for istio-release-robot. Instead point to
 # the github token for istio-testing. The token is currently only used to create the
@@ -99,6 +102,24 @@ EOF
 
 # "Temporary" hacks
 export PATH=${GOPATH}/bin:${PATH}
+
+if [ $BUILD_BASE_IMAGES = true ] ; then
+  MANIFEST=$(cat <<EOF
+version: "${VERSION}"
+docker: "${DOCKER_HUB}"
+directory: "${WORK_DIR}"
+dependencies:
+  istio:
+    git: https://github.com/istio/istio
+    branch: master
+EOF
+)
+  go run main.go build \
+    --manifest <(echo "${MANIFEST}") \
+    --githubtoken "${GITHUB_TOKEN_FILE}" \
+    --build-base-images
+  exit 1
+fi
 
 go run main.go build \
   --manifest <(echo "${MANIFEST}") \
