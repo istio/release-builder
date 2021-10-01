@@ -275,6 +275,10 @@ func TestProxyVersion(r ReleaseInfo) error {
 }
 
 func TestHelmChartVersions(r ReleaseInfo) error {
+	if !util.IsValidSemver(r.manifest.Version) {
+		log.Infof("Skipping TestHelmChartVersions; not a valid semver")
+		return nil
+	}
 	expected := []string{
 		"cni",
 		"istiod",
