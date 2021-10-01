@@ -18,6 +18,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"sigs.k8s.io/yaml"
 
 	"istio.io/pkg/log"
@@ -72,4 +73,11 @@ func RunMake(manifest model.Manifest, repo string, env []string, c ...string) er
 func YamlLog(prefix string, i interface{}) {
 	manifestYaml, _ := yaml.Marshal(i)
 	log.Infof("%s: %v", prefix, string(manifestYaml))
+}
+
+// IsValidSemver checks if the string is a valid semver
+// Mirror https://github.com/helm/helm/blob/9fafb4ad6811afb017cc464b630be2ff8390ac63/pkg/chart/metadata.go#L144
+func IsValidSemver(v string) bool {
+	_, err := semver.NewVersion(v)
+	return err == nil
 }
