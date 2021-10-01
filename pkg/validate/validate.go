@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -47,7 +46,8 @@ func NewReleaseInfo(release string) ReleaseInfo {
 		panic(err)
 	}
 
-	if err := exec.Command("tar", "xvf", filepath.Join(release, fmt.Sprintf("istio-%s-linux-amd64.tar.gz", manifest.Version)), "-C", tmpDir).Run(); err != nil {
+	if err := util.VerboseCommand("tar", "xvf", filepath.Join(release,
+		fmt.Sprintf("istio-%s-linux-amd64.tar.gz", manifest.Version)), "-C", tmpDir).Run(); err != nil {
 		log.Warnf("failed to unpackage release archive")
 	}
 	return ReleaseInfo{
@@ -126,7 +126,7 @@ func CheckRelease(release string) ([]string, string, []error) {
 func TestIstioctlArchive(r ReleaseInfo) error {
 	// Check istioctl from archive
 	buf := &bytes.Buffer{}
-	cmd := exec.Command(filepath.Join(r.archive, "bin", "istioctl"), "version", "--remote=false", "--short")
+	cmd := util.VerboseCommand(filepath.Join(r.archive, "bin", "istioctl"), "version", "--remote=false", "--short")
 	cmd.Stdout = buf
 	if err := cmd.Run(); err != nil {
 		return err
@@ -141,11 +141,11 @@ func TestIstioctlArchive(r ReleaseInfo) error {
 func TestIstioctlStandalone(r ReleaseInfo) error {
 	// Check istioctl from stand-alone archive
 	istioctlArchivePath := filepath.Join(r.release, fmt.Sprintf("istioctl-%s-linux-amd64.tar.gz", r.manifest.Version))
-	if err := exec.Command("tar", "xvf", istioctlArchivePath, "-C", r.tmpDir).Run(); err != nil {
+	if err := util.VerboseCommand("tar", "xvf", istioctlArchivePath, "-C", r.tmpDir).Run(); err != nil {
 		return err
 	}
 	buf := &bytes.Buffer{}
-	cmd := exec.Command(filepath.Join(r.tmpDir, "istioctl"), "version", "--remote=false", "--short")
+	cmd := util.VerboseCommand(filepath.Join(r.tmpDir, "istioctl"), "version", "--remote=false", "--short")
 	cmd.Stdout = buf
 	if err := cmd.Run(); err != nil {
 		return err
@@ -198,7 +198,7 @@ func getValues(values []byte) (map[string]interface{}, error) {
 }
 
 func TestDocker(r ReleaseInfo) error {
-	expected := []string{"pilot-distroless", "pilot-default", "install-cni-default", "proxyv2-default", "proxyv2-distroless", "operator-default"}
+	expected := []string{"pilot-distroless", "pilot-debug", "install-cni-debug", "proxyv2-debug", "proxyv2-distroless", "operator-debug"}
 	found := map[string]struct{}{}
 	d, err := ioutil.ReadDir(filepath.Join(r.release, "docker"))
 	if err != nil {
@@ -229,8 +229,8 @@ type DockerConfigConfig struct {
 }
 
 func TestProxyVersion(r ReleaseInfo) error {
-	image := filepath.Join(r.release, "docker", "proxyv2-default.tar.gz")
-	if err := exec.Command("tar", "xvf", image, "-C", r.tmpDir).Run(); err != nil {
+	image := filepath.Join(r.release, "docker", "proxyv2-debug.tar.gz")
+	if err := util.VerboseCommand("tar", "xvf", image, "-C", r.tmpDir).Run(); err != nil {
 		log.Warnf("failed to unpackage release archive")
 	}
 
@@ -283,7 +283,7 @@ func TestHelmChartVersions(r ReleaseInfo) error {
 	}
 	for _, chart := range expected {
 		buf := bytes.Buffer{}
-		c := exec.Command("helm", "show", "values",
+		c := util.VerboseCommand("helm", "show", "values",
 			filepath.Join(r.release, "helm", fmt.Sprintf("%s-%s.tgz", chart, r.manifest.Version)))
 		c.Stdout = &buf
 		if err := c.Run(); err != nil {

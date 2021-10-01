@@ -26,7 +26,7 @@ import (
 // docker.save in the repos does most of the work, we just need to call this and copy the files over
 func Docker(manifest model.Manifest) error {
 	// Build both default and distroless variants
-	env := []string{"DOCKER_BUILD_VARIANTS=default distroless"}
+	env := []string{"DOCKER_BUILD_VARIANTS=debug distroless"}
 
 	if manifest.ProxyOverride != "" {
 		// Add the vars to tell Istio to use our own Envoy binary
