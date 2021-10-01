@@ -101,5 +101,8 @@ func getImageNameVariant(fname string) (string, string) {
 	if match, _ := filepath.Match("*-distroless", imageName); match {
 		return strings.TrimSuffix(imageName, "-distroless"), "distroless"
 	}
+	if match, _ := filepath.Match("*-debug", imageName); match {
+		return strings.TrimSuffix(imageName, "-debug"), "debug"
+	}
 	return imageName, ""
 }
