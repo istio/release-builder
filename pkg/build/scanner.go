@@ -111,7 +111,16 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		return fmt.Errorf("failed to run sed command: %v", err)
 	}
 
-	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+buildTimestamp, "Update BASE_VERSION to "+buildTimestamp, fmt.Sprintf("```\n%s\n```", trivyScanOutput), false, githubToken, git, branch); err != nil {
+	if err := util.CreatePR(
+		manifest,
+		"istio",
+		"newBaseVersion"+buildTimestamp,
+		"Update BASE_VERSION to "+buildTimestamp,
+		fmt.Sprintf("```\n%s\n```", trivyScanOutput),
+		false,
+		githubToken,
+		git,
+		branch); err != nil {
 		return fmt.Errorf("failed PR creation: %v", err)
 	}
 
