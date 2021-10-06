@@ -50,10 +50,9 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	}
 	baseVersion := strings.TrimSpace(strings.Split(out.String(), " ")[2]) // Assumes line of the form BASE_VERSION ?= baseVersion
 
-	// Call imagescanner passing in base image name. If request times out, retry the request
+	// Call image scanner passing in base image name. If request times out, retry the request
 	baseImageName := "istio/base:" + baseVersion
-	cmd := util.VerboseCommand("trivy", "--ignore-unfixed", "--no-progress", "--exit-code", "2", baseImageName)
-	err = cmd.Run()
+	trivyScanOutput, err := util.RunWithOutput("trivy", "--ignore-unfixed", "--no-progress", "--exit-code", "2", baseImageName)
 	if err == nil {
 		log.Infof("Base image scan of %s was successful", baseImageName)
 		return nil
@@ -94,7 +93,7 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		"HUBS=docker.io/istio gcr.io/istio-release",
 		"TAG=" + buildTimestamp,
 	}
-	cmd = util.VerboseCommand("tools/build-base-images.sh")
+	cmd := util.VerboseCommand("tools/build-base-images.sh")
 	cmd.Env = util.StandardEnv(manifest)
 	cmd.Env = append(cmd.Env, buildImageEnv...)
 	cmd.Stderr = os.Stderr
@@ -112,10 +111,18 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		return fmt.Errorf("failed to run sed command: %v", err)
 	}
 
-	if err := util.CreatePR(manifest, "istio", "newBaseVersion"+buildTimestamp,
-		"Update BASE_VERSION to "+buildTimestamp, false, githubToken, git, branch); err != nil {
+	if err := util.CreatePR(
+		manifest,
+		"istio",
+		"newBaseVersion"+buildTimestamp,
+		"Update BASE_VERSION to "+buildTimestamp,
+		fmt.Sprintf("```\n%s\n```", trivyScanOutput),
+		false,
+		githubToken,
+		git,
+		branch); err != nil {
 		return fmt.Errorf("failed PR creation: %v", err)
 	}
 
-	return fmt.Errorf("new base images created, new PR needs to be merged before another build is run")
+	return nil
 }
