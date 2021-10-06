@@ -16,6 +16,7 @@ package util
 
 import (
 	"archive/zip"
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -35,13 +36,27 @@ import (
 	"istio.io/release-builder/pkg/model"
 )
 
-// VerboseCommand runs a command, outputing stderr and stdout
+// VerboseCommand runs a command, outputting stderr and stdout
 func VerboseCommand(name string, arg ...string) *exec.Cmd {
 	log.Infof("Running command: %v %v", name, strings.Join(arg, " "))
 	cmd := exec.Command(name, arg...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd
+}
+
+// RunWithOutput runs a command, outputting stderr and stdout, and returning the command's stdout
+func RunWithOutput(name string, arg ...string) (string, error) {
+	var outBuffer bytes.Buffer
+	var errBuffer bytes.Buffer
+	cmd := VerboseCommand(name, arg...)
+	cmd.Stdout = io.MultiWriter(os.Stdout, &outBuffer)
+	cmd.Stderr = io.MultiWriter(os.Stderr, &errBuffer)
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("running command %s failed: %s: %s",
+			strings.Join(arg, " "), err.Error(), errBuffer.String())
+	}
+	return outBuffer.String(), nil
 }
 
 func CopyDir(src, dst string) error {
