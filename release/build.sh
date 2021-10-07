@@ -118,7 +118,7 @@ EOF
     --manifest <(echo "${MANIFEST}") \
     --githubtoken "${GITHUB_TOKEN_FILE}" \
     --build-base-images
-  exit 1
+  exit 0
 fi
 
 go run main.go build \
