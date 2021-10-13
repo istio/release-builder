@@ -124,16 +124,22 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 	if branch == "" {
 		branch = manifest.Dependencies.Get()[repo].Branch
 	}
-	// Get user from the GitHub token
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: githubToken},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-	user, _, err := client.Users.Get(ctx, "")
-	if err != nil {
-		return err
+	// Get client to access GH and then get user for GH token. Only needed if not a dryrun.
+	var client *github.Client
+	var ctx context.Context
+	user := &github.User{} // default to empty user for PushCommit call
+	if !dryrun {
+		ctx = context.Background()
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: githubToken},
+		)
+		tc := oauth2.NewClient(ctx, ts)
+		client = github.NewClient(tc)
+		var err error
+		user, _, err = client.Users.Get(ctx, "")
+		if err != nil {
+			return err
+		}
 	}
 
 	changes, err := PushCommit(manifest, repo, newBranchName, commitString, dryrun, githubToken, *user)
