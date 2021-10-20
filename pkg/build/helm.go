@@ -140,7 +140,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 				contents = strings.ReplaceAll(contents, before, after)
 			}
 
-			if filepath.Base(s) == path.Join(manifest.RepoDir("istio"), baseChart) && fname == "values.yaml" {
+			if s == path.Join(manifest.RepoDir("istio"), baseChart) && fname == "values.yaml" {
 				before := `defaultRevision: ""`
 				after := "defaultRevision: default"
 				contents = strings.ReplaceAll(contents, before, after)
