@@ -43,9 +43,12 @@ var (
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
 	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
 
+	// base chart
+	baseChart = "manifests/charts/base"
+
 	// helmCharts contains all helm charts we will release
 	helmCharts = []string{
-		"manifests/charts/base",
+		baseChart,
 		"manifests/charts/gateway",
 		"manifests/charts/gateways/istio-egress",
 		"manifests/charts/gateways/istio-ingress",
@@ -134,6 +137,12 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 			for _, replacement := range []string{"version", "appVersion"} {
 				before := fmt.Sprintf("%s: %s", replacement, cv)
 				after := fmt.Sprintf("%s: %s", replacement, manifest.Version)
+				contents = strings.ReplaceAll(contents, before, after)
+			}
+
+			if filepath.Base(s) == path.Join(manifest.RepoDir("istio"), baseChart) && fname == "values.yaml" {
+				before := `defaultRevision: ""`
+				after := "defaultRevision: default"
 				contents = strings.ReplaceAll(contents, before, after)
 			}
 
