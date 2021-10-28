@@ -35,7 +35,7 @@ func UpdateCommonFiles(manifest model.Manifest, release string, dryrun bool) err
 			continue
 		}
 		// Skip particular repos
-		if repo == "common-files" || repo == "envoy" || repo == "test-infra" {
+		if repo == "common-files" || repo == "envoy" || repo == "test-infra" || repo == "enhancements" {
 			log.Infof("Skipping repo: %v", repo)
 			continue
 		}
