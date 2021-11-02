@@ -73,8 +73,8 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	// Time format chosen for consistency with build tools tag:
 	// https://github.com/istio/tools/blob/ee7da00900dc878a2e865e43250c34735f130b7a/docker/build-tools/build-and-push.sh#L27
 	const timeFormat = "2006-01-02T15-04-05"
-	buildTimestamp := time.Now().Format(timeFormat)
-	log.Infof("new base tag: %s", buildTimestamp)
+	tag := fmt.Sprintf("%s-%s", manifest.Version, time.Now().Format(timeFormat))
+	log.Infof("new base tag: %s", tag)
 
 	// Setup for multiarch build.
 	// See https://medium.com/@artur.klauser/building-multi-architecture-docker-images-with-buildx-27d80f7e2408 for more info
@@ -91,7 +91,7 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	buildImageEnv := []string{
 		"DOCKER_ARCHITECTURES=linux/amd64,linux/arm64",
 		"HUBS=docker.io/istio gcr.io/istio-release",
-		"TAG=" + buildTimestamp,
+		"TAG=" + tag,
 	}
 	cmd := util.VerboseCommand("tools/build-base-images.sh")
 	cmd.Env = util.StandardEnv(manifest)
@@ -104,7 +104,7 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	}
 
 	// Now create a PR to update the TAG to use the new images
-	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + buildTimestamp + "/"
+	sedString := "s/BASE_VERSION ?=.*/BASE_VERSION ?= " + tag + "/"
 	sedCmd := util.VerboseCommand("sed", "-i", sedString, "Makefile.core.mk")
 	sedCmd.Dir = istioDir
 	if err := sedCmd.Run(); err != nil {
@@ -114,8 +114,8 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	if err := util.CreatePR(
 		manifest,
 		"istio",
-		"newBaseVersion"+buildTimestamp,
-		"Update BASE_VERSION to "+buildTimestamp,
+		"newBaseVersion"+tag,
+		"Update BASE_VERSION to "+tag,
 		fmt.Sprintf("```\n%s\n```", trivyScanOutput),
 		false,
 		githubToken,
