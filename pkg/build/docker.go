@@ -33,10 +33,6 @@ func Docker(manifest model.Manifest) error {
 		env = append(env, "ISTIO_ENVOY_BASE_URL="+manifest.ProxyOverride)
 	}
 
-	// Istio operator requires compiled-in charts to be generated before the image is built.
-	if err := util.RunMake(manifest, "istio", env, "gen-charts"); err != nil {
-		return fmt.Errorf("failed to make istio gen-charts: %v", err)
-	}
 	if err := util.RunMake(manifest, "istio", env, "docker.save"); err != nil {
 		return fmt.Errorf("failed to create %v docker archives: %v", "istio", err)
 	}
