@@ -108,6 +108,7 @@ if [ $BUILD_BASE_IMAGES = true ] ; then
 version: "${VERSION}"
 docker: "${DOCKER_HUB}"
 directory: "${WORK_DIR}"
+ignoreVulnerability: false
 dependencies:
   istio:
     git: https://github.com/istio/istio
