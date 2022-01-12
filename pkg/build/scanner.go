@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,6 +37,14 @@ type Response struct {
 type Results struct {
 	Status string
 }
+
+var alwaysGenerateBaseImage = func() bool {
+	b, err := strconv.ParseBool(os.Getenv("ALWAYS_GENERATE_BASE_IMAGE"))
+	if err != nil {
+		return false
+	}
+	return b
+}()
 
 // Scanner checks the base image for any CVEs.
 func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
@@ -55,7 +64,11 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	trivyScanOutput, err := util.RunWithOutput("trivy", "--ignore-unfixed", "--no-progress", "--exit-code", "2", baseImageName)
 	if err == nil {
 		log.Infof("Base image scan of %s was successful", baseImageName)
-		return nil
+		if alwaysGenerateBaseImage {
+			log.Infof("Generating base image anyways due to ALWAYS_GENERATE_BASE_IMAGE=true")
+		} else {
+			return nil
+		}
 	}
 
 	//--exit-code 2 above states to return 2 if vulnerabilities are found. If we get a different error code or we can't check the error code, bail out
