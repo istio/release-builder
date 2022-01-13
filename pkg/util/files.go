@@ -53,8 +53,7 @@ func RunWithOutput(name string, arg ...string) (string, error) {
 	cmd.Stdout = io.MultiWriter(os.Stdout, &outBuffer)
 	cmd.Stderr = io.MultiWriter(os.Stderr, &errBuffer)
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("running command %s failed: %s: %s",
-			strings.Join(arg, " "), err.Error(), errBuffer.String())
+		return "", err
 	}
 	return outBuffer.String(), nil
 }
