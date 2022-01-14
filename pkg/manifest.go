@@ -63,10 +63,15 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 		outputs[model.Grafana] = struct{}{}
 		outputs[model.Scanner] = struct{}{}
 	}
+	do := in.DockerOutput
+	if do == "" {
+		do = model.DockerOutputTar
+	}
 	return model.Manifest{
 		Dependencies:      in.Dependencies,
 		Version:           in.Version,
 		Docker:            in.Docker,
+		DockerOutput:      do,
 		Directory:         wd,
 		BuildOutputs:      outputs,
 		ProxyOverride:     in.ProxyOverride,

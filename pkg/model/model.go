@@ -118,6 +118,15 @@ func (i *IstioDependencies) Set(repo string, dependency Dependency) {
 	*dp = dependency
 }
 
+type DockerOutput string
+
+const (
+	// DockerOutputTar outputs docker images to tar files on disk
+	DockerOutputTar DockerOutput = "tar"
+	// DockerOutputContext loads docker images into the local docker context
+	DockerOutputContext DockerOutput = "context"
+)
+
 // Manifest defines what is in a release
 type InputManifest struct {
 	// Dependencies declares all git repositories used to build this release
@@ -126,6 +135,8 @@ type InputManifest struct {
 	Version string `json:"version"`
 	// Docker specifies the docker hub to use in the helm charts.
 	Docker string `json:"docker"`
+	// DockerOutput specifies where docker images are written.
+	DockerOutput DockerOutput `json:"dockerOutput"`
 	// Directory defines the base working directory for the release.
 	// This is excluded from the final serialization
 	Directory string `json:"directory"`
@@ -146,6 +157,8 @@ type Manifest struct {
 	Version string `json:"version"`
 	// Docker specifies the docker hub to use in the helm charts.
 	Docker string `json:"docker"`
+	// DockerOutput specifies where docker images are written.
+	DockerOutput DockerOutput `json:"dockerOutput"`
 	// Directory defines the base working directory for the release.
 	// This is excluded from the final serialization
 	Directory string `json:"-"`
