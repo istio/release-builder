@@ -28,14 +28,14 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating prow config for new branches.")
 	repo := "test-infra"
 
-	cmd := util.VerboseCommand("go", "run", "generate.go", "branch", release)
-	cmd.Dir = manifest.RepoDir(repo) + "/prow/config/cmd"
+	cmd := util.VerboseCommand("go", "run", "tools/prowgen/cmd/prowgen/main.go", "branch", release)
+	cmd.Dir = manifest.RepoDir(repo)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
 	}
 
-	privateCmd := util.VerboseCommand("go", "run", "main.go", "branch", release)
-	privateCmd.Dir = manifest.RepoDir(repo) + "/prow/generate-transform-jobs/"
+	privateCmd := util.VerboseCommand("go", "run", "tools/generate-transform-jobs/main.go", "branch", release)
+	privateCmd.Dir = manifest.RepoDir(repo)
 	if err := privateCmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new private prow config: %v", err)
 	}
