@@ -16,6 +16,7 @@ package build
 
 import (
 	"fmt"
+	"path"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -26,14 +27,15 @@ import (
 func Sbom(manifest model.Manifest) error {
 	// Retrieve istio repository path to run the sbom generator
 	istioRepoDir := manifest.RepoDir("istio")
-	outDir := manifest.OutDir()
+	sourceSbomFile := path.Join(manifest.OutDir(), fmt.Sprintf("istio-source-%s.spdx", manifest.Version))
+	sourceSbomNamespace := fmt.Sprintf("https://istio.io/%s/source", manifest.Version)
 
-	// Run spdx sbom generator to generate the software bill of materials(SBOM) for istio
-	log.Infof("Running spdx sbom generator for istio repository")
-	if err := util.VerboseCommand("docker",
-		"run", "--rm", "-v", istioRepoDir+":/repository", "-v", outDir+":/out", "spdx/spdx-sbom-generator", "--include-license-text",
-		"--output-dir", "/out", "--path", "/repository").Run(); err != nil {
-		return fmt.Errorf("couldn't generate sbom for istio: %v", err)
+	// Run bom generator to generate the software bill of materials(SBOM) for istio.
+	log.Infof("Generating Software Bill Of Materials for istio source code")
+	if err := util.VerboseCommand("bom", "generate", "--namespace", sourceSbomNamespace, "-d", istioRepoDir, "--output", sourceSbomFile).Run(); err != nil {
+		return fmt.Errorf("couldn't generate sbom for istio source: %v", err)
 	}
+
+	// TODO: Next step will be to generate SBOM for release artifacts.
 	return nil
 }
