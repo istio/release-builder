@@ -89,7 +89,7 @@ func Build(manifest model.Manifest, githubToken string) error {
 		return fmt.Errorf("failed to package license file: %v", err)
 	}
 
-	if err := Sbom(manifest); err != nil {
+	if err := GenerateBillOfMaterials(manifest); err != nil {
 		return fmt.Errorf("failed to generate sbom: %v", err)
 	}
 

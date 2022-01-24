@@ -24,18 +24,28 @@ import (
 )
 
 // Sbom generates Software Bill Of Materials for istio repo in an SPDX readable format.
-func Sbom(manifest model.Manifest) error {
+func GenerateBillOfMaterials(manifest model.Manifest) error {
 	// Retrieve istio repository path to run the sbom generator
 	istioRepoDir := manifest.RepoDir("istio")
-	sourceSbomFile := path.Join(manifest.OutDir(), fmt.Sprintf("istio-source-%s.spdx", manifest.Version))
-	sourceSbomNamespace := fmt.Sprintf("https://istio.io/%s/source", manifest.Version)
+	sourceSbomFile := path.Join(manifest.OutDir(), "istio-source.spdx")
+	sourceSbomNamespace := fmt.Sprintf("https://storage.googleapis.com/istio-release/releases/%s/istio-source.spdx",
+		manifest.Version)
+	releaseSbomFile := path.Join(manifest.OutDir(), "istio-release.spdx")
+	releaseSbomNamespace := fmt.Sprintf("https://storage.googleapis.com/istio-release/releases/%s/istio-release.spdx",
+		manifest.Version)
 
 	// Run bom generator to generate the software bill of materials(SBOM) for istio.
-	log.Infof("Generating Software Bill Of Materials for istio source code")
+	log.Infof("Generating Software Bill of Materials for istio release artifacts")
+	if err := util.VerboseCommand("bom", "generate", "--namespace", releaseSbomNamespace,
+		"--dirs", manifest.OutDir(), "--ignore", "licenses,'*.sha256'",
+		"--output", releaseSbomFile).Run(); err != nil {
+		return fmt.Errorf("couldn't generate sbom for istio release artifacts: %v", err)
+	}
+
+	// Run bom generator to generate the software bill of materials(SBOM) for istio.
+	log.Infof("Generating Software Bill of Materials for istio source code")
 	if err := util.VerboseCommand("bom", "generate", "--namespace", sourceSbomNamespace, "-d", istioRepoDir, "--output", sourceSbomFile).Run(); err != nil {
 		return fmt.Errorf("couldn't generate sbom for istio source: %v", err)
 	}
-
-	// TODO: Next step will be to generate SBOM for release artifacts.
 	return nil
 }
