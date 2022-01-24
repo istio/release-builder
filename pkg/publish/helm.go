@@ -33,11 +33,26 @@ import (
 )
 
 // Helm publishes charts to the given GCS bucket
-func Helm(manifest model.Manifest, bucket string) error {
+func Helm(manifest model.Manifest, bucket string, hub string) error {
+	if bucket != "" {
+		if err := publishHelmIndex(manifest, bucket); err != nil {
+			return err
+		}
+	}
+
+	if hub != "" {
+		if err := publishHelmOCI(manifest, hub); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func publishHelmIndex(manifest model.Manifest, bucket string) error {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		// TODO: Handle error.
 		return err
 	}
 
@@ -88,7 +103,22 @@ func Helm(manifest model.Manifest, bucket string) error {
 		}
 		log.Infof("Wrote %v to gs://%s/%s", f.Name(), bucketName, objName)
 	}
+	return nil
+}
 
+func publishHelmOCI(manifest model.Manifest, hub string) error {
+	helmDir := filepath.Join(manifest.Directory, "helm")
+	dirInfo, err := ioutil.ReadDir(helmDir)
+	if err != nil {
+		return err
+	}
+	// Publish as OCI artifacts
+	for _, f := range dirInfo {
+		name := filepath.Join(helmDir, f.Name())
+		if err := util.VerboseCommand("helm", "push", name, "oci://"+hub).Run(); err != nil {
+			return fmt.Errorf("failed to load docker image %v: %v", f.Name(), err)
+		}
+	}
 	return nil
 }
 
