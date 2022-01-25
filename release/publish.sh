@@ -49,6 +49,7 @@ go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \
     --gcsbucket "${GCS_BUCKET}" \
     --helmbucket "${HELM_BUCKET}" \
+    --helmhub "${DOCKER_HUB}/charts" \
     --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \
     --grafanatoken "${GRAFANA_TOKEN_FILE}"
@@ -57,5 +58,6 @@ go run main.go publish --release "${WORK_DIR}" \
 # large clusters (see https://docs.docker.com/docker-hub/download-rate-limit/).
 go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \
+    --helmhub "gcr.io/istio-release/charts" \
     --dockerhub "gcr.io/istio-release" \
     --dockertags "${VERSION}"

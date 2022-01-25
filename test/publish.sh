@@ -90,6 +90,7 @@ if [[ -z "${DRY_RUN:-}" ]]; then
 go run main.go publish --release "${WORK_DIR}/out" \
   --cosignkey "${COSIGN_KEY:-}" \
   --helmbucket "${HELM_BUCKET}" \
+  --helmhub "${DOCKER_HUB}/charts" \
   --gcsbucket "${GCS_BUCKET}" \
   --dockerhub "${DOCKER_HUB}" \
   --dockertags "${VERSION}"
