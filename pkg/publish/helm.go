@@ -114,6 +114,9 @@ func publishHelmOCI(manifest model.Manifest, hub string) error {
 	}
 	// Publish as OCI artifacts
 	for _, f := range dirInfo {
+		if filepath.Ext(f.Name()) != "tgz" {
+			continue
+		}
 		name := filepath.Join(helmDir, f.Name())
 		if err := util.VerboseCommand("helm", "push", name, "oci://"+hub).Run(); err != nil {
 			return fmt.Errorf("failed to load docker image %v: %v", f.Name(), err)
