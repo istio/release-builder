@@ -129,7 +129,7 @@ func externalizeDashboard(version, file string) error {
 	}
 	// Substitute the datasource with the variable placeholder
 	result = bytes.ReplaceAll(result, []byte(`"datasource": "Prometheus"`), []byte(`"datasource": "${DS_PROMETHEUS}"`))
-	if err := ioutil.WriteFile(file, result, 0644); err != nil {
+	if err := ioutil.WriteFile(file, result, 0o644); err != nil {
 		return fmt.Errorf("failed to write: %v", err)
 	}
 	return nil
