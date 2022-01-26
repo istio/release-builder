@@ -43,7 +43,7 @@ DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 # PR to update the build image.
 GITHUB_TOKEN_FILE=/etc/github-token/oauth
 
-VERSION="$(cat "${WD}/trigger-build")"
+VERSION=${VERSION:-$(cat "${WD}/trigger-build")}
 
 WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
