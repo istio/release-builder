@@ -81,13 +81,13 @@ func cloneRepo(manifest model.Manifest, repo string, dependency *model.Dependenc
 // * work/ initially contains all the sources, but may be modified during the build
 // * out/ contains all final artifacts
 func SetupWorkDir(dir string) error {
-	if err := os.MkdirAll(path.Join(dir, "sources"), 0750); err != nil {
+	if err := os.MkdirAll(path.Join(dir, "sources"), 0o750); err != nil {
 		return fmt.Errorf("failed to set up working directory: %v", err)
 	}
-	if err := os.MkdirAll(path.Join(dir, "work"), 0750); err != nil {
+	if err := os.MkdirAll(path.Join(dir, "work"), 0o750); err != nil {
 		return fmt.Errorf("failed to set up working directory: %v", err)
 	}
-	if err := os.MkdirAll(path.Join(dir, "out"), 0750); err != nil {
+	if err := os.MkdirAll(path.Join(dir, "out"), 0o750); err != nil {
 		return fmt.Errorf("failed to set up working directory: %v", err)
 	}
 	return nil
