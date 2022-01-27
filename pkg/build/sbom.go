@@ -39,12 +39,12 @@ func GenerateBillOfMaterials(manifest model.Manifest) error {
 
 	// construct all the docker image tarball names as bom currently cannot accept directory as input
 	dockerDir := path.Join(manifest.OutDir(), "docker")
-	docker_images := []string{}
+	dockerImages := []string{}
 	if err := filepath.Walk(dockerDir, func(path string, fi os.FileInfo, err error) error {
 		if fi.IsDir() {
 			return nil
 		}
-		docker_images = append(docker_images, path)
+		dockerImages = append(dockerImages, path)
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to walk directory %s: %v", dockerDir, err)
@@ -54,7 +54,7 @@ func GenerateBillOfMaterials(manifest model.Manifest) error {
 	log.Infof("Generating Software Bill of Materials for istio release artifacts")
 	if err := util.VerboseCommand("bom", "generate", "--namespace", releaseSbomNamespace,
 		"--ignore", "licenses,'*.sha256',docker", "--dirs", manifest.OutDir(),
-		"--image-archive", strings.Join(docker_images, ","), "--output", releaseSbomFile).Run(); err != nil {
+		"--image-archive", strings.Join(dockerImages, ","), "--output", releaseSbomFile).Run(); err != nil {
 		return fmt.Errorf("couldn't generate sbom for istio release artifacts: %v", err)
 	}
 
