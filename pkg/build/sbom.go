@@ -52,15 +52,16 @@ func GenerateBillOfMaterials(manifest model.Manifest) error {
 
 	// Run bom generator to generate the software bill of materials(SBOM) for istio.
 	log.Infof("Generating Software Bill of Materials for istio release artifacts")
-	if err := util.VerboseCommand("bom", "generate", "--namespace", releaseSbomNamespace,
-		"--ignore", "licenses,'*.sha256',docker", "--dirs", manifest.OutDir(),
+	if err := util.VerboseCommand("bom", "generate", "--name", "Istio Release "+manifest.Version,
+		"--namespace", releaseSbomNamespace, "--ignore", "licenses,'*.sha256',docker", "--dirs", manifest.OutDir(),
 		"--image-archive", strings.Join(dockerImages, ","), "--output", releaseSbomFile).Run(); err != nil {
 		return fmt.Errorf("couldn't generate sbom for istio release artifacts: %v", err)
 	}
 
 	// Run bom generator to generate the software bill of materials(SBOM) for istio.
 	log.Infof("Generating Software Bill of Materials for istio source code")
-	if err := util.VerboseCommand("bom", "generate", "--namespace", sourceSbomNamespace, "-d", istioRepoDir, "--output", sourceSbomFile).Run(); err != nil {
+	if err := util.VerboseCommand("bom", "generate", "--name", "Istio Source "+manifest.Version,
+		"--namespace", sourceSbomNamespace, "-d", istioRepoDir, "--output", sourceSbomFile).Run(); err != nil {
 		return fmt.Errorf("couldn't generate sbom for istio source: %v", err)
 	}
 	return nil
