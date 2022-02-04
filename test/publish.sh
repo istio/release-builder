@@ -30,7 +30,7 @@ fi
 DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
 HELM_BUCKET=${HELM_BUCKET:-istio-build/test/charts}
-VERSION="1.12.0-releasebuilder.$(git rev-parse --short HEAD)"
+VERSION="1.14.0-releasebuilder.$(git rev-parse --short HEAD)"
 COSIGN_KEY=${COSIGN_KEY:-}
 
 WORK_DIR="$(mktemp -d)/build"
