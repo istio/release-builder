@@ -127,7 +127,7 @@ func CreateSha(src string) error {
 	}
 	sha := sha256.Sum256(b)
 	shaFile := fmt.Sprintf("%x %s\n", sha, path.Base(src))
-	if err := ioutil.WriteFile(src+".sha256", []byte(shaFile), 0644); err != nil {
+	if err := ioutil.WriteFile(src+".sha256", []byte(shaFile), 0o644); err != nil {
 		return fmt.Errorf("failed to write sha256 to %v: %v", src, err)
 	}
 	return nil
@@ -141,7 +141,7 @@ func CopyFile(src, dst string) error {
 	}
 	defer in.Close()
 
-	if err := os.MkdirAll(path.Join(dst, ".."), 0750); err != nil {
+	if err := os.MkdirAll(path.Join(dst, ".."), 0o750); err != nil {
 		return fmt.Errorf("failed to make destination directory %v: %v", dst, err)
 	}
 	out, err := os.Create(dst)
