@@ -104,7 +104,12 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	buildImageEnv := []string{
 		"DOCKER_ARCHITECTURES=linux/amd64,linux/arm64",
 		"HUBS=docker.io/istio gcr.io/istio-release",
-		"TAG=" + tag,
+	}
+	if manifest.Version == "master" {
+		// Push :latest tag for master
+		buildImageEnv = append(buildImageEnv, fmt.Sprintf("TAGS=%s %s", tag, "latest"))
+	} else {
+		buildImageEnv = append(buildImageEnv, "TAG="+tag)
 	}
 	cmd := util.VerboseCommand("tools/build-base-images.sh")
 	cmd.Env = util.StandardEnv(manifest)
