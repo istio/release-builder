@@ -98,6 +98,29 @@ EOF
 # "Temporary" hacks
 export PATH=${GOPATH}/bin:${PATH}
 
+<<<<<<< HEAD
 go run main.go build --manifest <(echo "${MANIFEST}") --githubtoken "${GITHUB_TOKEN_FILE}"
+=======
+if [ $BUILD_BASE_IMAGES = true ] ; then
+  MANIFEST=$(cat <<EOF
+version: "${VERSION}"
+docker: "${DOCKER_HUB}"
+directory: "${WORK_DIR}"
+dependencies:
+  istio:
+    git: https://github.com/istio/istio
+    branch: master
+EOF
+)
+  go run main.go build \
+    --manifest <(echo "${MANIFEST}") \
+    --githubtoken "${GITHUB_TOKEN_FILE}" \
+    --build-base-images
+  exit 0
+fi
+
+go run main.go build --manifest <(echo "${MANIFEST}")
+
+>>>>>>> a91e06d... build: do not require github token (#950)
 go run main.go validate --release "${WORK_DIR}/out"
 go run main.go publish --release "${WORK_DIR}/out" --gcsbucket "${GCS_BUCKET}" --dockerhub "${PRERELEASE_DOCKER_HUB}" --dockertags "${VERSION}"
