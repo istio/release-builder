@@ -121,9 +121,7 @@ EOF
   exit 0
 fi
 
-go run main.go build \
-  --manifest <(echo "${MANIFEST}") \
-  --githubtoken "${GITHUB_TOKEN_FILE}"
+go run main.go build --manifest <(echo "${MANIFEST}")
 
 go run main.go validate --release "${WORK_DIR}/out"
 
