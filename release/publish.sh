@@ -19,13 +19,17 @@ WD=$(cd "$WD"; pwd)
 
 set -eux
 
-gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
+if [[ -n "${DOCKER_CONFIG:-}" ]]; then
+  # If DOCKER_CONFIG is set, we are mounting a known docker config.
+  # we will want to merge in gcloud options, so we can push to GCR *and* the other (docker hub) credentials.
+  # However, DOCKER_CONFIG is a read only mount. So we copy it to somewhere writeable then merge in the GCR creds
+  mkdir ~/.docker
+  cp "${DOCKER_CONFIG}/config.json" ~/.docker/
+  export DOCKER_CONFIG=~/.docker
+  gcloud auth configure-docker -q
+fi
+# No else needed - the prow entrypoint already runs configure-docker for standard cases
 
-# Temporary hack to get around some gcloud credential issues
-mkdir ~/.docker
-cp "${DOCKER_CONFIG}/config.json" ~/.docker/
-export DOCKER_CONFIG=~/.docker
-gcloud auth configure-docker -q
 
 VERSION="$(cat "${WD}/trigger-publish")"
 

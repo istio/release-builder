@@ -19,13 +19,16 @@ WD=$(cd "$WD"; pwd)
 
 set -eux
 
-gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
-
-# Temporary hack to get around some gcloud credential issues
-mkdir ~/.docker
-cp "${DOCKER_CONFIG}/config.json" ~/.docker/
-export DOCKER_CONFIG=~/.docker
-gcloud auth configure-docker -q
+if [[ -n "${DOCKER_CONFIG:-}" ]]; then
+  # If DOCKER_CONFIG is set, we are mounting a known docker config.
+  # we will want to merge in gcloud options, so we can push to GCR *and* the other (docker hub) credentials.
+  # However, DOCKER_CONFIG is a read only mount. So we copy it to somewhere writeable then merge in the GCR creds
+  mkdir ~/.docker
+  cp "${DOCKER_CONFIG}/config.json" ~/.docker/
+  export DOCKER_CONFIG=~/.docker
+  gcloud auth configure-docker -q
+fi
+# No else needed - the prow entrypoint already runs configure-docker for standard cases
 
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
@@ -41,12 +44,6 @@ DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 
 # When set, we skip the actual build, scan base images, and create and push new ones if needed.
 BUILD_BASE_IMAGES=${BUILD_BASE_IMAGES:=false}
-
-# For build, don't use GITHUB_TOKEN_FILE env var set by preset-release-pipeline
-# which is pointing to the github token for istio-release-robot. Instead point to
-# the github token for istio-testing. The token is currently only used to create the
-# PR to update the build image.
-GITHUB_TOKEN_FILE=/etc/github-token/oauth
 
 VERSION=${VERSION:-$(cat "${WD}/trigger-build")}
 
@@ -104,6 +101,11 @@ EOF
 export PATH=${GOPATH}/bin:${PATH}
 
 if [ $BUILD_BASE_IMAGES = true ] ; then
+  # For build, don't use GITHUB_TOKEN_FILE env var set by preset-release-pipeline
+  # which is pointing to the github token for istio-release-robot. Instead point to
+  # the github token for istio-testing. The token is currently only used to create the
+  # PR to update the build image.
+  GITHUB_TOKEN_FILE=/etc/github-token/oauth
   MANIFEST=$(cat <<EOF
 version: "${VERSION}"
 docker: "${DOCKER_HUB}"
