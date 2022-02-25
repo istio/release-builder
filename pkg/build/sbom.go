@@ -41,6 +41,12 @@ func GenerateBillOfMaterials(manifest model.Manifest) error {
 	dockerDir := path.Join(manifest.OutDir(), "docker")
 	dockerImages := []string{}
 	if err := filepath.Walk(dockerDir, func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if fi == nil {
+			return fmt.Errorf("failed to get fileinfo for file at path %s", path)
+		}
 		if fi.IsDir() {
 			return nil
 		}
