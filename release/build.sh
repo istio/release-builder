@@ -37,12 +37,6 @@ fi
 # We shouldn't push here right now, this is just which version to embed in the Helm charts
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 
-# For build, don't use GITHUB_TOKEN_FILE env var set by preset-release-pipeline
-# which is pointing to the github token for istio-release-robot. Instead point to
-# the github token for istio-testing. The token is currently only used to create the
-# PR to update the build image.
-GITHUB_TOKEN_FILE=/etc/github-token/oauth
-
 VERSION=${VERSION:-$(cat "${WD}/trigger-build")}
 
 WORK_DIR="$(mktemp -d)/build"
@@ -98,6 +92,6 @@ EOF
 # "Temporary" hacks
 export PATH=${GOPATH}/bin:${PATH}
 
-go run main.go build --manifest <(echo "${MANIFEST}") --githubtoken "${GITHUB_TOKEN_FILE}"
+go run main.go build --manifest <(echo "${MANIFEST}")
 go run main.go validate --release "${WORK_DIR}/out"
 go run main.go publish --release "${WORK_DIR}/out" --gcsbucket "${GCS_BUCKET}" --dockerhub "${PRERELEASE_DOCKER_HUB}" --dockertags "${VERSION}"

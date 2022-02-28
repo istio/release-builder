@@ -67,12 +67,11 @@ var (
 				return fmt.Errorf("failed to standardize manifest: %v", err)
 			}
 
-			token, err := util.GetGithubToken(flags.githubTokenFile)
-			if err != nil {
-				return err
-			}
-
 			if _, f := manifest.BuildOutputs[model.Scanner]; f {
+				token, err := util.GetGithubToken(flags.githubTokenFile)
+				if err != nil {
+					return err
+				}
 				if err := Scanner(manifest, token, savedIstioGit, savedIstioBranch); err != nil {
 					if manifest.IgnoreVulnerability {
 						log.Infof("Ignoring vulnerability scanning error: %v", err)
@@ -82,7 +81,7 @@ var (
 				}
 			}
 
-			if err := Build(manifest, token); err != nil {
+			if err := Build(manifest); err != nil {
 				return fmt.Errorf("failed to build: %v", err)
 			}
 
