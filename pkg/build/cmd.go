@@ -67,19 +67,18 @@ var (
 				return fmt.Errorf("failed to standardize manifest: %v", err)
 			}
 
-			token, err := util.GetGithubToken(flags.githubTokenFile)
-			if err != nil {
-				return err
-			}
-
 			if flags.buildBaseImages {
+				token, err := util.GetGithubToken(flags.githubTokenFile)
+				if err != nil {
+					return err
+				}
 				if err := Scanner(manifest, token, savedIstioGit, savedIstioBranch); err != nil {
 					return fmt.Errorf("failed image scan: %v", err)
 				}
 				return nil
 			}
 
-			if err := Build(manifest, token); err != nil {
+			if err := Build(manifest); err != nil {
 				return fmt.Errorf("failed to build: %v", err)
 			}
 
