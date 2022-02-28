@@ -89,8 +89,14 @@ func Build(manifest model.Manifest) error {
 		return fmt.Errorf("failed to package license file: %v", err)
 	}
 
-	if err := GenerateBillOfMaterials(manifest); err != nil {
-		return fmt.Errorf("failed to generate sbom: %v", err)
+	if manifest.DockerOutput == model.DockerOutputContext {
+		log.Warnf("Docker output in 'context' mode; will not produce SBOM.")
+	} else if manifest.SkipGenerateBillOfMaterials {
+		log.Warnf("Input manifest set SkipGenerateBillOfMaterials; will not produce SBOM.")
+	} else {
+		if err := GenerateBillOfMaterials(manifest); err != nil {
+			return fmt.Errorf("failed to generate sbom: %v", err)
+		}
 	}
 
 	return nil
