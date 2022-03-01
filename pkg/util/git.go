@@ -115,7 +115,8 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 
 // CreatePR will look for changes. If changes exist, it will create a branch and push a commit with
 // the specified commit text, and then create a PR in the upstream repo.
-func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, description string, dryrun bool, githubToken, git, branch string) error {
+func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, description string, dryrun bool, githubToken, git, branch string,
+	labels []string) error {
 	// Set git and branch from manifest if not passed in
 	if git == "" {
 		git = manifest.Dependencies.Get()[repo].Git
@@ -168,14 +169,19 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 
 		log.Infof("PR created: %s\n", pr.GetHTMLURL())
 
-		// Add a release-notes-none label on the PR if istio org, but not envoy repo.
+		// Add additional supplied labels plus release-notes-note in non-envoy repos
 		if orgString == "istio" && repoString != "envoy" {
-			label, _, err := client.Issues.AddLabelsToIssue(ctx, orgString, repoString, *pr.Number, []string{"release-notes-none"})
+			labels = append(labels, []string{"release-notes-none"}...)
+		}
+
+		var label []*github.Label
+		if len(labels) > 0 {
+			label, _, err = client.Issues.AddLabelsToIssue(ctx, orgString, repoString, *pr.Number, labels)
 			if err != nil {
 				return err
 			}
-			log.Infof("Labels:\n%v", label)
 		}
+		log.Infof("Labels:\n%v", label)
 
 	}
 	return nil
