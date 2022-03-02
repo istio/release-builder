@@ -120,7 +120,8 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		false,
 		githubToken,
 		git,
-		branch); err != nil {
+		branch,
+		[]string{"auto-merge"}); err != nil {
 		return fmt.Errorf("failed PR creation: %v", err)
 	}
 
