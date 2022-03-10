@@ -73,19 +73,24 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 	if err := fetchCurrentIndex(helmDir, bkt, objectPrefix); err != nil {
 		return fmt.Errorf("fetch index: %v", err)
 	}
+	dirInfo, err := ioutil.ReadDir(helmDir)
+	if err != nil {
+		return err
+	}
 
 	// Create a new index, merging the existing one with our new charts
 	idxCmd := util.VerboseCommand("helm", "repo", "index", ".",
 		"--url", fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketName, objectPrefix),
 		"--merge", "index.yaml")
 	idxCmd.Dir = helmDir
+	log.Infof("Running helm repo index with dir %v", idxCmd.Dir)
+	for _, f := range dirInfo {
+		log.Infof("dir containers: %v", f.Name())
+	}
 	if err := idxCmd.Run(); err != nil {
 		return fmt.Errorf("index repo: %v", err)
 	}
-	dirInfo, err := ioutil.ReadDir(helmDir)
-	if err != nil {
-		return err
-	}
+
 	for _, f := range dirInfo {
 		objName := path.Join(objectPrefix, f.Name())
 		obj := bkt.Object(objName)
