@@ -1,7 +1,7 @@
 # Version specifies which version is being built
 # This is use for `--version`, metrics, and determining proxy capabilities.
 # Note that since this determines proxy capabilities, it is desirable to follow Istio semver
-version: 1.14.0-test
+version: 1.10.0-scan
 
 # Some of the artifacts have a docker hub built in - currently this is the operator and Helm charts
 # The specified docker hub will be used there. Note - this does not effect where the images are published,
@@ -10,6 +10,9 @@ docker: docker.io/istio
 
 # Directory specifies the working directory to build in
 directory: /tmp/istio-release
+
+# Ignore/Continue after a base image vulnerability is found
+ignoreVulnerability: false
 
 # Dependencies specifies dependencies of the build
 # Note - only istio
@@ -24,40 +27,6 @@ directory: /tmp/istio-release
 #           possible values are `deps` to check istio.deps, and `modules` to check go.mod
 dependencies:
   istio:
-    git: https://github.com/istio/istio
+    git: https://github.com/ericvn/istio
     branch: master
-  api:
-    git: https://github.com/istio/api
-    auto: modules
-  proxy:
-    git: https://github.com/istio/proxy
-    auto: deps
-  pkg:
-    git: https://github.com/istio/pkg
-    auto: modules
-  client-go:
-    git: https://github.com/istio/client-go
-    branch: master
-    goversionenabled: true
-  gogo-genproto:
-    git: https://github.com/istio/gogo-genproto
-    branch: master
-  test-infra:
-    git: https://github.com/istio/test-infra
-    branch: master
-  tools:
-    git: https://github.com/istio/tools
-    branch: master
-  envoy:
-    git: https://github.com/envoyproxy/envoy
-    auto: proxy_workspace
-  release-builder:
-    git: https://github.com/istio/release-builder
-    auto: release-commit
-dashboards:
-  istio-extension-dashboard: 13277
-  istio-mesh-dashboard: 7639
-  istio-performance-dashboard: 11829
-  istio-service-dashboard: 7636
-  istio-workload-dashboard: 7630
-  pilot-dashboard: 7645
+
