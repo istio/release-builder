@@ -191,6 +191,8 @@ func FetchAuto(repo string, dep *model.Dependency, dest string) error {
 		return fetchAutoModules(repo, dep, dest)
 	} else if dep.Auto == model.ProxyWorkspace {
 		return fetchAutoProxyWorkspace(dep, dest)
+	} else if dep.Auto == model.RCFile {
+		return fetchAutoReleaseBuilder(dep, dest)
 	}
 	return fmt.Errorf("unknown auto dependency: %v", dep.Auto)
 }
@@ -255,6 +257,24 @@ func fetchAutoProxyWorkspace(dep *model.Dependency, dest string) error {
 
 	if sha == "" {
 		return errors.New("failed to automatically resolve source for envoy")
+	}
+	dep.Sha = sha
+	return nil
+}
+
+func fetchAutoReleaseBuilder(dep *model.Dependency, dest string) error {
+	// BUILDER_SHA is declared in release-commit.sh.
+	rcFile, err := ioutil.ReadFile(path.Join(dest, "../istio/prow/release-commit.sh"))
+	if err != nil {
+		return err
+	}
+	rbReg := regexp.MustCompile("BUILDER_SHA=([a-z0-9]{40})")
+	var sha string
+	if found := rbReg.FindStringSubmatch(string(rcFile)); len(found) == 2 {
+		sha = found[1]
+	}
+	if sha == "" {
+		return errors.New("failed to automatically resolve source for release-builder")
 	}
 	dep.Sha = sha
 	return nil

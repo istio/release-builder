@@ -69,6 +69,9 @@ dependencies:
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
+  release-builder:
+    git: https://github.com/istio/release-builder
+    auto: release-commit
 dashboards:
   istio-extension-dashboard: 13277
   istio-mesh-dashboard: 7639
