@@ -71,7 +71,7 @@ dependencies:
     auto: proxy_workspace
   release-builder:
     git: https://github.com/istio/release-builder
-    auto: release-commit
+    branch: master
 dashboards:
   istio-extension-dashboard: 13277
   istio-mesh-dashboard: 7639

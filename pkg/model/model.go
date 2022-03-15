@@ -40,9 +40,6 @@ const (
 	// ProxyWorkspace will resolve by looking at the WORKSPACE file in istio/proxy.
 	// This should only be used to resolve Envoy dep SHA.
 	ProxyWorkspace string = "proxy_workspace"
-	// ReleaseCommit will resolve by looking at the prow/release-commit.sh file in istio/istio.
-	// This should only be used to resolve release-builder dep SHA.
-	RCFile string = "release-commit"
 )
 
 // Dependency defines a git dependency for the build

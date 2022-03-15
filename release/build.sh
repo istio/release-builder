@@ -86,7 +86,7 @@ ${DEPENDENCIES:-$(cat <<EOD
     auto: proxy_workspace
   release-builder:
     git: https://github.com/istio/release-builder
-    auto: release-commit
+    branch: master
 EOD
 )}
 dashboards:
