@@ -75,7 +75,6 @@ type IstioDependencies struct {
 	Proxy          *Dependency `json:"proxy"`
 	Pkg            *Dependency `json:"pkg"`
 	ClientGo       *Dependency `json:"client-go"`
-	GogoGenproto   *Dependency `json:"gogo-genproto"`
 	TestInfra      *Dependency `json:"test-infra"`
 	Tools          *Dependency `json:"tools"`
 	Envoy          *Dependency `json:"envoy"`
@@ -91,7 +90,6 @@ func (i *IstioDependencies) Get() map[string]*Dependency {
 		"proxy":           i.Proxy,
 		"pkg":             i.Pkg,
 		"client-go":       i.ClientGo,
-		"gogo-genproto":   i.GogoGenproto,
 		"test-infra":      i.TestInfra,
 		"tools":           i.Tools,
 		"envoy":           i.Envoy,

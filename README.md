@@ -136,7 +136,7 @@ directory in your current working directory. The `artifacts` directory will cont
 ## Running a branch locally
 
 It's easiest to run a build against an org with has all the istio repos forked:
-istio, api, client-go, cni, common-files, envoy, gogo-genproto, pkg, proxy,
+istio, api, client-go, cni, common-files, envoy, pkg, proxy,
 release-builder,test-infra, tools.
 
 If you don’t, the initial cloning of the code will fail.
