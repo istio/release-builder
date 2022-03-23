@@ -16,7 +16,9 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"path"
+	"runtime"
 )
 
 type (
@@ -183,12 +185,12 @@ func (m Manifest) RepoDir(repo string) string {
 
 // GoOutDir is a helper to return the directory of Istio build output
 func (m Manifest) GoOutDir() string {
-	return path.Join(m.Directory, "work", "out", "linux_amd64", "release")
+	return path.Join(m.Directory, "work", "out", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH), "release")
 }
 
 // RepoOutDir is a helper to return the directory of Istio build output for repos the place outputs inside the repo
 func (m Manifest) RepoOutDir(repo string) string {
-	return path.Join(m.Directory, "work", "src", "istio.io", repo, "out", "linux_amd64", "release")
+	return path.Join(m.Directory, "work", "src", "istio.io", repo, "out", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH), "release")
 }
 
 // WorkDir is a help to return the work directory
