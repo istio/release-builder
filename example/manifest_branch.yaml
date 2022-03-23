@@ -33,9 +33,6 @@ dependencies:
   envoy:
     git: https://github.com/istio/envoy
     branch: master
-  gogo-genproto:
-    git: https://github.com/istio/gogo-genproto
-    branch: master
   pkg:
     git: https://github.com/istio/pkg
     branch: master
