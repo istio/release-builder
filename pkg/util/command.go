@@ -61,6 +61,7 @@ func RunMake(manifest model.Manifest, repo string, env []string, c ...string) er
 	cmd.Env = removeEnvKey(cmd.Env, "CONTAINER_TARGET_OUT_LINUX")
 	cmd.Env = removeEnvKey(cmd.Env, "TARGET_OS")
 	cmd.Env = removeEnvKey(cmd.Env, "TARGET_ARCH")
+	cmd.Env = removeEnvKey(cmd.Env, "FOR_BUILD_CONTAINER")
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
