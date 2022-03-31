@@ -133,13 +133,13 @@ directory in your current working directory. The `artifacts` directory will cont
 | "docker" subdirectory | _tar files for the created docker images_ |
 | "licenses" subdirectory | _tar.gz of the license files from the specified dependency repos_ |
 
-## Running a branch locally
+## Running the branch steps locally
 
-It's easiest to run a build against an org with has all the istio repos forked:
-istio, api, client-go, cni, common-files, envoy, pkg, proxy,
-release-builder,test-infra, tools.
-
-If you don’t, the initial cloning of the code will fail.
+It's easiest to run test branches against an org with has all the istio repos defined in /release/branch.sh
+forked: istio, api, client-go, cni, common-files, envoy, pkg, proxy,
+release-builder,test-infra, tools. It's easier to close/remove things like PRs and branches in your own
+repo. Note that these forks should be up to date as the code will be using them for things like determining
+the latest SHAs of commits.
 
 1. Run `make shell` to get a prompt within the build container.
 
@@ -147,7 +147,14 @@ If you don’t, the initial cloning of the code will fail.
     For example, later versions of Docker Desktop for Mac may require an environment variable set so the build
     container can communincate with Docker on the host.
 
-1. As a test which can be run long before the branch cut to verify that this works locally,
+1. Run `crane digest gcr.io/distroless/static-debian11`. If you see an error like:
+    ```
+    2022/03/30 09:49:21 HEAD request failed, falling back on GET: error getting credentials - err: exec: "docker-credential-desktop": executable file not found in $PATH, out: ``
+    Error: error getting credentials - err: exec: "docker-credential-desktop": executable file not found in $PATH, out: ``
+    ```
+    You may be able it by removing the `"credsStore": "desktop"` from your `~/.docker/config.json`. The reason for this is the build container uses the host's Docker config which is telling it to use a credstore the container cannot access. You will need to exit and start the `make shell` before trying the command again. MAKE A COPY BEFORE REMOVING so that you can revert back after the branching.
+
+1. As a test which can be run before the branch cut dayto verify your environment,
     run `REPO_ORG=<your org name (ex. ericvn)> STEP=1 ./release/branch.sh`.
 
     STEP=1 is `make update_dependencies` and a `make gen` for reference. You will see a git clone of the various
@@ -176,22 +183,33 @@ If you don’t, the initial cloning of the code will fail.
     Branch step 1 to release-1.9 done in /tmp/tmp.vqqPvgjZjZ/branch/work
     ```
 
-    If you actually cd to the directory listed `+/istio.io/<repo>` you can do things like `git diff` and
-    `git status`.
+    If you actually cd to the directory listed `/tmp/.../branch/work/src/istio.io/<repo>` you can do things
+    like `git diff` and `git status`.
 
-1. Adding DRY_RUN=false (ex: `REPO_ORG=ericvn STEP=1 DRY_RUN=false ./release/branch.sh`) will create a
-    PR in the REPO_ORG/repo if changes are found. It does rely on the git user info being available
-    inside the build container. You should end up with a REPO_ORG/istio PR (you can close after
-    verifying it’s there if it’s a test). If this fails, verify that the GITHUB_TOKEN or github files
+1. Adding DRY_RUN=false (ex: `REPO_ORG=ericvn STEP=1 DRY_RUN=false ./release/branch.sh`) will create
+    PRs in the REPO_ORG/repo if changes are found. It does rely on the git user info being available
+    inside the build container (see next note). You should end up with a REPO_ORG/istio PR (you can close
+    after verifying it’s there if it’s a test). If this fails, verify that the GITHUB_TOKEN or github files
     are available in the container. You may also do a `git login` inside the container to set the
     credentials.
 
+1. When running with DRY_RUN=false, you may see errors like:
+   ```
+   Error: failed to branch: failed PR creation: GET https://api.github.com/user: 401 Bad credentials []
+   ```
+
+   Try running `gh auth status` in your shell. You can export your github token in GITHUB_TOKEN, or run
+   `gh auth login` before running the steps above.
+
 Notes:
 
+* Watch for failure messages within the output. These commands are only run when cutting new branches and it
+  is very likley changes were made that require changes within the branching logic. You can bring issues up in
+  the #test-and-release slack channel and/or submit needed changes in the code here.
 * `STEP=2 DRY_RUN=false` needs to be done without REPO_ORG specified so the branches are created in istio.io org.
-* STEPs > 2 need to have the branches created so run a STEP=2 against your personal org for dry runs of later steps.
-* There is a little magic I am trying to use to limit the number of automated PRs being created by the pipeline
-  (only create a single set of automated common-files update PRs instead of 2). In Step 4, I update one of the
-  common files which specify which common-files branch to pull from and then in Step 5 when common-files gets
+* STEPs > 2 need to have the new branches created so run a STEP=2 against your personal org for dry runs of later steps.
+* There is a little magic trying to use to limit the number of automated PRs being created by the pipeline
+  (only create a single set of automated common-files update PRs instead of 2). In Step 4, one of the
+  common files is updated to specify which common-files branch to pull from and then in Step 5 when common-files gets
   updated it will cause the pipeline automation to go through the repos to actually update from common-files
   (which uses the branch changed in step 4).
