@@ -148,10 +148,12 @@ the latest SHAs of commits.
     container can communincate with Docker on the host.
 
 1. Run `crane digest gcr.io/distroless/static-debian11`. If you see an error like:
-    ```
+
+    ```text
     2022/03/30 09:49:21 HEAD request failed, falling back on GET: error getting credentials - err: exec: "docker-credential-desktop": executable file not found in $PATH, out: ``
     Error: error getting credentials - err: exec: "docker-credential-desktop": executable file not found in $PATH, out: ``
     ```
+
     You may be able it by removing the `"credsStore": "desktop"` from your `~/.docker/config.json`. The reason for this is the build container uses the host's Docker config which is telling it to use a credstore the container cannot access. You will need to exit and start the `make shell` before trying the command again. MAKE A COPY BEFORE REMOVING so that you can revert back after the branching.
 
 1. As a test which can be run before the branch cut dayto verify your environment,
@@ -194,7 +196,8 @@ the latest SHAs of commits.
     credentials.
 
 1. When running with DRY_RUN=false, you may see errors like:
-   ```
+
+   ```text
    Error: failed to branch: failed PR creation: GET https://api.github.com/user: 401 Bad credentials []
    ```
 
