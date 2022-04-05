@@ -38,6 +38,10 @@ var (
 		regexp.MustCompile(`tag: 1\..-dev`),
 	}
 
+	quotedTagRegexes = []*regexp.Regexp{
+		regexp.MustCompile(`"tag": "latest"`),
+	}
+
 	operatorDeployRegex = regexp.MustCompile(`image: gcr.io/istio-testing/operator:.*`)
 
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
@@ -77,9 +81,14 @@ func sanitizeTemplate(manifest model.Manifest, p string) error {
 	// The hub and tag should be update
 	for _, hub := range hubs {
 		contents = strings.ReplaceAll(contents, fmt.Sprintf("hub: %s", hub), fmt.Sprintf("hub: %s", manifest.Docker))
+		contents = strings.ReplaceAll(contents, fmt.Sprintf("\"hub\": \"%s\"", hub), fmt.Sprintf("\"hub\": \"%s\"", manifest.Docker))
 	}
 	for _, tagRegex := range tagRegexes {
 		contents = tagRegex.ReplaceAllString(contents, fmt.Sprintf("tag: %s", manifest.Version))
+	}
+
+	for _, quotedTagRegex := range quotedTagRegexes {
+		contents = quotedTagRegex.ReplaceAllString(contents, fmt.Sprintf("\"tag\": \"%s\"", manifest.Version))
 	}
 
 	// Some manifests have images directly embedded
@@ -99,7 +108,7 @@ func sanitizeTemplate(manifest model.Manifest, p string) error {
 func SanitizeAllCharts(manifest model.Manifest) error {
 	for _, chart := range helmCharts {
 		if err := sanitizeChart(manifest, path.Join(manifest.RepoDir("istio"), chart)); err != nil {
-			return fmt.Errorf("failed to sanitze chart %v: %v", chart, err)
+			return fmt.Errorf("failed to sanitize chart %v: %v", chart, err)
 		}
 	}
 	return nil
@@ -124,7 +133,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 	cv := chart["version"].(string)
 	if err := filepath.Walk(s, func(p string, info os.FileInfo, err error) error {
 		fname := path.Base(p)
-		if fname == "Chart.yaml" || fname == "values.yaml" {
+		if fname == "Chart.yaml" || fname == "values.yaml" || fname == "gen-istio.yaml" {
 			read, err := ioutil.ReadFile(p)
 			if err != nil {
 				return err
