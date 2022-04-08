@@ -71,7 +71,7 @@ func (d Dependency) Ref() string {
 // Dependencies for the build
 type IstioDependencies struct {
 	Istio          *Dependency `json:"istio"`
-	Api            *Dependency `json:"api"` //nolint: golint, stylecheck
+	Api            *Dependency `json:"api"` //nolint: golint, revive, stylecheck
 	Proxy          *Dependency `json:"proxy"`
 	Pkg            *Dependency `json:"pkg"`
 	ClientGo       *Dependency `json:"client-go"`
