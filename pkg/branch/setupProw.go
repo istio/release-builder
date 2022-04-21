@@ -16,6 +16,7 @@ package branch
 
 import (
 	"fmt"
+	"path"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -28,14 +29,14 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating prow config for new branches.")
 	repo := "test-infra"
 
-	cmd := util.VerboseCommand("go", "run", "tools/prowgen/cmd/prowgen/main.go", "branch", release)
-	cmd.Dir = manifest.RepoDir(repo)
+	cmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "branch", release)
+	cmd.Dir = path.Join(manifest.RepoDir(repo), "tools/prowgen")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
 	}
 
-	privateCmd := util.VerboseCommand("go", "run", "tools/generate-transform-jobs/main.go", "branch", release)
-	privateCmd.Dir = manifest.RepoDir(repo)
+	privateCmd := util.VerboseCommand("go", "run", "main.go", "branch", release)
+	cmd.Dir = path.Join(manifest.RepoDir(repo), "tools/generate-transform-jobs")
 	if err := privateCmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new private prow config: %v", err)
 	}
