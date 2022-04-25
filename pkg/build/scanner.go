@@ -69,17 +69,17 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		} else {
 			return nil
 		}
-	}
-
-	//--exit-code 2 above states to return 2 if vulnerabilities are found. If we get a different error code or we can't check the error code, bail out
-	if exitError, ok := err.(*exec.ExitError); ok {
-		// Scanner failed with an exit code indicating a failure other than vulnerabilities found
-		if exitError.ExitCode() != 2 {
-			return fmt.Errorf("base image scan of %s failed with error:\n %s", baseImageName, err.Error())
-		}
 	} else {
-		// Scanner failed, but not with an ExitError
-		return fmt.Errorf("base image scan of %s failed. Unable to process exit code:\n %s", baseImageName, err.Error())
+		//--exit-code 2 above states to return 2 if vulnerabilities are found. If we get a different error code or we can't check the error code, bail out
+		if exitError, ok := err.(*exec.ExitError); ok {
+			// Scanner failed with an exit code indicating a failure other than vulnerabilities found
+			if exitError.ExitCode() != 2 {
+				return fmt.Errorf("base image scan of %s failed with error:\n %s", baseImageName, err.Error())
+			}
+		} else {
+			// Scanner failed, but not with an ExitError
+			return fmt.Errorf("base image scan of %s failed. Unable to process exit code:\n %s", baseImageName, err.Error())
+		}
 	}
 
 	// Else build a new set of images.
