@@ -16,6 +16,10 @@
 
 WD=$(dirname "$0")
 WD=$(cd "$WD"; pwd)
+ROOT=$(dirname "$WD")
+
+# Ensure we are running from the repo root
+cd "${ROOT}"
 
 set -eux
 
