@@ -89,7 +89,7 @@ func init() {
 	publishCmd.PersistentFlags().StringVar(&flags.grafanatoken, "grafanatoken", flags.grafanatoken,
 		"The file containing a grafana.com API token.")
 	publishCmd.PersistentFlags().StringVar(&flags.cosignkey, "cosignkey", flags.cosignkey,
-		"A key for signing images, as passed to cosign using 'cosign sign -key <x>'")
+		"A key for signing images, as passed to cosign using 'cosign sign --key <x>'")
 }
 
 func GetPublishCommand() *cobra.Command {
