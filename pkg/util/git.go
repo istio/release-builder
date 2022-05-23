@@ -116,7 +116,8 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 // CreatePR will look for changes. If changes exist, it will create a branch and push a commit with
 // the specified commit text, and then create a PR in the upstream repo.
 func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, description string, dryrun bool, githubToken, git, branch string,
-	labels []string) error {
+	labels []string,
+) error {
 	// Set git and branch from manifest if not passed in
 	if git == "" {
 		git = manifest.Dependencies.Get()[repo].Git
