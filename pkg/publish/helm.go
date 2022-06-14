@@ -68,30 +68,33 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 
 	helmDir := filepath.Join(manifest.Directory, "helm")
 
-	// First pull down the current index, so we can merge it. This has a race, but we are extremely unlikely
-	// to publish two versions in the same second
-	if err := fetchCurrentIndex(helmDir, bkt, objectPrefix); err != nil {
-		return fmt.Errorf("fetch index: %v", err)
+	// Pull down the index, update it, and push it back up.
+	// MutateObject ensures there are no races.
+	err = MutateObject(helmDir, bkt, objectPrefix, "index.yaml", func() error {
+		idxCmd := util.VerboseCommand("helm", "repo", "index", ".",
+			"--url", fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketName, objectPrefix),
+			"--merge", "index.yaml")
+		idxCmd.Dir = helmDir
+		log.Infof("Running helm repo index with dir %v", idxCmd.Dir)
+		if err := idxCmd.Run(); err != nil {
+			return fmt.Errorf("index repo: %v", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("helm publish: %v", err)
 	}
+
+	// Now push all our charts up
 	dirInfo, err := ioutil.ReadDir(helmDir)
 	if err != nil {
 		return err
 	}
-
-	// Create a new index, merging the existing one with our new charts
-	idxCmd := util.VerboseCommand("helm", "repo", "index", ".",
-		"--url", fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketName, objectPrefix),
-		"--merge", "index.yaml")
-	idxCmd.Dir = helmDir
-	log.Infof("Running helm repo index with dir %v", idxCmd.Dir)
 	for _, f := range dirInfo {
-		log.Infof("dir containers: %v", f.Name())
-	}
-	if err := idxCmd.Run(); err != nil {
-		return fmt.Errorf("index repo: %v", err)
-	}
-
-	for _, f := range dirInfo {
+		if filepath.Ext(f.Name()) != ".tgz" {
+			log.Infof("skipping %v", f.Name())
+			continue
+		}
 		objName := path.Join(objectPrefix, f.Name())
 		obj := bkt.Object(objName)
 		w := obj.NewWriter(ctx)
@@ -126,27 +129,6 @@ func publishHelmOCI(manifest model.Manifest, hub string) error {
 		if err := util.VerboseCommand("helm", "push", name, "oci://"+hub).Run(); err != nil {
 			return fmt.Errorf("failed to load docker image %v: %v", f.Name(), err)
 		}
-	}
-	return nil
-}
-
-func fetchCurrentIndex(outDir string, bkt *storage.BucketHandle, objectPrefix string) error {
-	r, err := bkt.Object(filepath.Join(objectPrefix, "index.yaml")).NewReader(context.Background())
-	if err != nil {
-		if err == storage.ErrObjectNotExist {
-			// This may be fine if we are publishing for the first time. Helm will allow us to `--merge non-existing-file.yaml`.
-			log.Warnf("existing index.yaml does not exist")
-			return nil
-		}
-		return err
-	}
-	defer r.Close()
-	idx, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-	if err := ioutil.WriteFile(filepath.Join(outDir, "index.yaml"), idx, 0o644); err != nil {
-		return err
 	}
 	return nil
 }
