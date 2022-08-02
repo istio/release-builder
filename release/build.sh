@@ -62,7 +62,7 @@ dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.15
   api:
     git: https://github.com/istio/api
     auto: modules
@@ -74,20 +74,20 @@ ${DEPENDENCIES:-$(cat <<EOD
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.15
     goversionenabled: true
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.15
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
   release-builder:
     git: https://github.com/istio/release-builder
-    branch: master
+    branch: release-1.15
 EOD
 )}
 dashboards:
@@ -117,7 +117,7 @@ directory: "${WORK_DIR}"
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.15
 EOF
 )
   go run main.go build \
