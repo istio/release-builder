@@ -35,16 +35,6 @@ import (
 	"istio.io/release-builder/pkg/util"
 )
 
-const DefaultVariant = "debug"
-
-type imageKey struct {
-	name, variant string
-}
-
-type image struct {
-	name, variant, architecture string
-}
-
 // Image defines a single docker image. There are potentially many Image outputs for each .tar.gz - this
 // represents the fully expanded form.
 // Example:
@@ -78,14 +68,6 @@ func (i Image) VariantSuffix() string {
 		return "-" + i.Variant
 	}
 	return ""
-}
-
-// explicitArch turns an arch - which may be "" - into a non-empty arch, based on defaults.
-func explicitArch(s string) string {
-	if s == "" {
-		return "amd64"
-	}
-	return s
 }
 
 func toSuffix(s string) string {
