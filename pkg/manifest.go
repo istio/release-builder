@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -30,7 +29,7 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 	wd := in.Directory
 	if wd == "" {
 		var err error
-		wd, err = ioutil.TempDir(os.TempDir(), "istio-release")
+		wd, err = os.MkdirTemp(os.TempDir(), "istio-release")
 		if err != nil {
 			return model.Manifest{}, fmt.Errorf("failed to create working directory: %v", err)
 		}
@@ -88,7 +87,7 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 
 func ReadManifest(manifestFile string) (model.Manifest, error) {
 	manifest := model.Manifest{}
-	by, err := ioutil.ReadFile(manifestFile)
+	by, err := os.ReadFile(manifestFile)
 	if err != nil {
 		return manifest, fmt.Errorf("failed to read manifest file: %v", err)
 	}
@@ -117,7 +116,7 @@ func validateManifestDependencies(dependencies model.IstioDependencies) error {
 
 func ReadInManifest(manifestFile string) (model.InputManifest, error) {
 	manifest := model.InputManifest{}
-	by, err := ioutil.ReadFile(manifestFile)
+	by, err := os.ReadFile(manifestFile)
 	if err != nil {
 		return manifest, fmt.Errorf("failed to read manifest file: %v", err)
 	}

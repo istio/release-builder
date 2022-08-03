@@ -17,7 +17,6 @@ package util
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -192,7 +191,7 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 // isn't specified, it will return the token set in the GITHUB_TOKEN environment variable.
 func GetGithubToken(file string) (string, error) {
 	if file != "" {
-		b, err := ioutil.ReadFile(file)
+		b, err := os.ReadFile(file)
 		if err != nil {
 			return "", fmt.Errorf("failed to read github token: %v", file)
 		}
