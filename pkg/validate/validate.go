@@ -207,10 +207,17 @@ func TestDocker(r ReleaseInfo) error {
 	for _, i := range d {
 		found[i.Name()] = struct{}{}
 	}
-	for _, i := range expected {
-		image := i + ".tar.gz"
-		if _, f := found[image]; !f {
-			return fmt.Errorf("expected docker image %v, but had %v", image, found)
+	for _, plat := range r.manifest.Architectures {
+		_, arch, _ := strings.Cut(plat, "/")
+		suffix := ""
+		if arch != "amd64" {
+			suffix = "-" + arch
+		}
+		for _, i := range expected {
+			image := i + suffix + ".tar.gz"
+			if _, f := found[image]; !f {
+				return fmt.Errorf("expected docker image %v, but had %v", image, found)
+			}
 		}
 	}
 	return nil

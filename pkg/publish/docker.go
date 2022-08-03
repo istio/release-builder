@@ -21,6 +21,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/daemon"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/types"
+
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
@@ -28,8 +37,67 @@ import (
 
 const DefaultVariant = "debug"
 
+type imageKey struct {
+	name, variant string
+}
+
+type image struct {
+	name, variant, architecture string
+}
+
+// Image defines a single docker image. There are potentially many Image outputs for each .tar.gz - this
+// represents the fully expanded form.
+// Example:
+//   Image{
+//   	 OriginalTag: "localhost/proxyv2:original", // Hub from manifest
+//   	 NewTag:      "gcr.io/istio-release/proxyv2:new", // Hub from --dockerhubs and --dockertags
+//   	 Variant      "",
+//   	 Image        "proxyv2",
+//   }
+// An image also logically containers an "Architecture" component. However, we want to merge based on arch, so we
+// use this as a `map[Image][]architecture{}
+type Image struct {
+	OriginalTag string
+	NewTag      string
+	Variant     string // May be empty for default variant
+	Image       string
+}
+
+func (i Image) OriginalReference(arch string) string {
+	return fmt.Sprintf("%s%s%s", i.OriginalTag, toSuffix(i.Variant), toSuffix(arch))
+}
+
+func (i Image) NewReference(arch string) string {
+	return fmt.Sprintf("%s%s%s", i.NewTag, toSuffix(i.Variant), toSuffix(arch))
+}
+
+func (i Image) VariantSuffix() string {
+	if i.Variant != "" {
+		return "-" + i.Variant
+	}
+	return ""
+}
+
+// explicitArch turns an arch - which may be "" - into a non-empty arch, based on defaults.
+func explicitArch(s string) string {
+	if s == "" {
+		return "amd64"
+	}
+	return s
+}
+
+func toSuffix(s string) string {
+	if s == "" {
+		return ""
+	}
+	return "-" + s
+}
+
 // Docker publishes all images to the given hub
 func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string) error {
+	if len(tags) == 0 {
+		tags = []string{manifest.Version}
+	}
 	dockerArchives, err := ioutil.ReadDir(path.Join(manifest.Directory, "docker"))
 	if err != nil {
 		return fmt.Errorf("failed to read docker output of release: %v", err)
@@ -46,47 +114,68 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 		}
 	}
 
+	// As inputs, we have a variety of tar.gz files emitted from `docker save`.
+	// Our goal is to take these, and potentially mangle the hub/tags, and push to the real registry.
+	// This becomes more complex because for multi-arch images, we want to push a single manifest but we have multiple tar files (one per arch).
+
+	// first, we will load all our images into the local docker daemon, and setup an index of Image -> architectures.
+	// Each entry will result in one upstream tag created.
+	images := map[Image][]string{}
 	for _, f := range dockerArchives {
 		if !strings.HasSuffix(f.Name(), "tar.gz") {
 			return fmt.Errorf("invalid image found in docker folder: %v", f.Name())
 		}
-
-		imageName, variant := getImageNameVariant(f.Name())
-		if variant != "" {
-			// Prepend - so it shows up as name-variant in the final tag
-			variant = "-" + variant
-		}
 		if err := util.VerboseCommand("docker", "load", "-i", path.Join(manifest.Directory, "docker", f.Name())).Run(); err != nil {
 			return fmt.Errorf("failed to load docker image %v: %v", f.Name(), err)
 		}
-
-		// Images are always built with the `istio` hub initially. We will retag these to the correct hub
-		currentTag := fmt.Sprintf("%s/%s:%s%s", manifest.Docker, imageName, manifest.Version, variant)
-		if len(tags) == 0 {
-			tags = []string{manifest.Version}
-		}
+		imageName, variant, arch := getImageNameVariant(f.Name())
 		variants := []string{variant}
-		// Publish with no variant tag as well (ie "istio/pilot:tag")
-		if variant == DefaultVariant {
-			variants = append(variants, "")
-		}
 		for _, tag := range tags {
 			for _, variant := range variants {
-				newTag := fmt.Sprintf("%s/%s:%s%s", hub, imageName, tag, variant)
-				if err := util.VerboseCommand("docker", "tag", currentTag, newTag).Run(); err != nil {
-					return fmt.Errorf("failed to load docker image %v: %v", currentTag, err)
+				img := Image{
+					OriginalTag: fmt.Sprintf("%s/%s:%s", manifest.Docker, imageName, manifest.Version),
+					NewTag:      fmt.Sprintf("%s/%s:%s", hub, imageName, tag),
+					Variant:     variant,
+					Image:       imageName,
 				}
+				images[img] = append(images[img], arch)
+			}
+		}
+	}
 
-				if err := util.VerboseCommand("docker", "push", newTag).Run(); err != nil {
-					return fmt.Errorf("failed to push docker image %v: %v", newTag, err)
+	// Now that we have the desired outputs, start pushing
+	for img, archs := range images {
+		// Split case for simple images (single arch) vs multi-arch manifests.
+		if len(archs) == 1 {
+			arch := archs[0]
+			// Single architecture. We just want to push directly
+			// Single arch, push directly
+			if err := util.VerboseCommand("docker", "tag", img.OriginalReference(arch), img.NewReference(arch)).Run(); err != nil {
+				return fmt.Errorf("failed to tag docker image %v->%v: %v", img.OriginalReference(arch), img.NewReference(arch), err)
+			}
+
+			if err := util.VerboseCommand("docker", "push", img.NewReference(arch)).Run(); err != nil {
+				return fmt.Errorf("failed to push docker image %v: %v", img.NewReference(arch), err)
+			}
+
+			// Sign images *after* push -- cosign only works against real
+			// repositories (not valid against tarballs)
+			if cosignEnabled {
+				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference(arch)).Run(); err != nil {
+					return fmt.Errorf("failed to sign image %v with key %v: %v", img.NewReference(arch), cosignkey, err)
 				}
-
-				// Sign images *after* push -- cosign only works against real
-				// repositories (not valid against tarballs)
-				if cosignEnabled {
-					if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, newTag).Run(); err != nil {
-						return fmt.Errorf("failed to sign image %v with key %v: %v", newTag, cosignkey, err)
-					}
+			}
+		} else {
+			localImages := []string{}
+			for _, arch := range archs {
+				localImages = append(localImages, img.OriginalReference(arch))
+			}
+			if err := publishManifest(img.NewReference(""), localImages); err != nil {
+				return err
+			}
+			if cosignEnabled {
+				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference("")).Run(); err != nil {
+					return fmt.Errorf("failed to sign image %v with key %v: %v", img.NewReference(""), cosignkey, err)
 				}
 			}
 		}
@@ -94,15 +183,103 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 	return nil
 }
 
+// publishManifest packages each image in `images` into a single manifest, and pushes to `manifest`.
+func publishManifest(manifest string, images []string) error {
+	log.Infof("creating manifest %v from %v", manifest, images)
+	// Typically we could just use `docker manifest create manifest images...`. However, we need to actually
+	// push source images first. We want to push these without a tag, so users never use them. Docker cannot
+	// push directly by tag, so here we are...
+	craneImages := []v1.Image{}
+	for _, image := range images {
+		tagRef, err := name.ParseReference(image)
+		if err != nil {
+			return fmt.Errorf("failed to parse %v: %v", image, err)
+		}
+		log.Infof("starting push of %v for manifest (without tag)", tagRef)
+		img, err := daemon.Image(tagRef)
+		if err != nil {
+			return fmt.Errorf("failed to load %v: %v", image, err)
+		}
+		digest, err := img.Digest()
+		if err != nil {
+			return fmt.Errorf("failed to get digest for %v: %v", image, err)
+		}
+		digestRef, err := name.NewDigest(fmt.Sprintf("%s@%s", tagRef.Context(), digest.String()))
+		if err != nil {
+			return fmt.Errorf("failed to build digest reference for %v: %v", image, err)
+		}
+		if err := remote.Write(digestRef, img, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+			return fmt.Errorf("failed to push %v: %v", image, err)
+		}
+		craneImages = append(craneImages, img)
+		log.Infof("pushed %v for manifest", digestRef)
+	}
+	// Now all the images are in the registry, build the manifest. We can't just utilize `docker manifest create`,
+	// since that would be too easy - docker requires the images are in the local daemon, and loading them changes the digest.
+	// Instead, we do it ourselves again.
+	var index v1.ImageIndex = empty.Index
+	index = mutate.IndexMediaType(index, types.DockerManifestList)
+	for _, img := range craneImages {
+		mt, err := img.MediaType()
+		if err != nil {
+			return fmt.Errorf("failed to get mediatype: %w", err)
+		}
+
+		h, err := img.Digest()
+		if err != nil {
+			return fmt.Errorf("failed to compute digest: %w", err)
+		}
+
+		size, err := img.Size()
+		if err != nil {
+			return fmt.Errorf("failed to compute size: %w", err)
+		}
+		cfg, err := img.ConfigFile()
+		if err != nil {
+			return fmt.Errorf("failed to get config file: %w", err)
+		}
+		index = mutate.AppendManifests(index, mutate.IndexAddendum{
+			Add: img,
+			Descriptor: v1.Descriptor{
+				MediaType: mt,
+				Size:      size,
+				Digest:    h,
+				Platform: &v1.Platform{
+					Architecture: cfg.Architecture,
+					OS:           cfg.OS,
+					OSVersion:    cfg.OSVersion,
+					Variant:      cfg.Variant,
+					Features:     nil,
+				},
+			},
+		})
+	}
+	manifestRef, err := name.ParseReference(manifest)
+	if err != nil {
+		return fmt.Errorf("failed to parse %v: %v", manifestRef, err)
+	}
+	if err := remote.MultiWrite(map[name.Reference]remote.Taggable{manifestRef: index}, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+		return fmt.Errorf("failed to push %v: %v", manifestRef, err)
+	}
+	return nil
+}
+
 // getImageNameVariant determines the name of the image (eg, pilot) and variant (eg, distroless).
 // This is derived from the file name.
-func getImageNameVariant(fname string) (string, string) {
+func getImageNameVariant(fname string) (name string, variant string, arch string) {
 	imageName := strings.Split(fname, ".")[0]
+	if match, _ := filepath.Match("*-arm64", imageName); match {
+		arch = "arm64"
+		imageName = strings.TrimSuffix(imageName, "-arm64")
+	}
 	if match, _ := filepath.Match("*-distroless", imageName); match {
-		return strings.TrimSuffix(imageName, "-distroless"), "distroless"
+		variant = "distroless"
+		imageName = strings.TrimSuffix(imageName, "-distroless")
 	}
 	if match, _ := filepath.Match("*-debug", imageName); match {
-		return strings.TrimSuffix(imageName, "-debug"), "debug"
+		variant = "debug"
+		imageName = strings.TrimSuffix(imageName, "-debug")
 	}
-	return imageName, ""
+	name = imageName
+	return
 }
