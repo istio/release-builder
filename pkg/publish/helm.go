@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -86,7 +85,7 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 	}
 
 	// Now push all our charts up
-	dirInfo, err := ioutil.ReadDir(helmDir)
+	dirInfo, err := os.ReadDir(helmDir)
 	if err != nil {
 		return err
 	}
@@ -116,7 +115,7 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 
 func publishHelmOCI(manifest model.Manifest, hub string) error {
 	helmDir := filepath.Join(manifest.Directory, "helm")
-	dirInfo, err := ioutil.ReadDir(helmDir)
+	dirInfo, err := os.ReadDir(helmDir)
 	if err != nil {
 		return err
 	}

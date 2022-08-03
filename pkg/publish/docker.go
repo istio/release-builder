@@ -16,7 +16,7 @@ package publish
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -100,7 +100,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 	if len(tags) == 0 {
 		tags = []string{manifest.Version}
 	}
-	dockerArchives, err := ioutil.ReadDir(path.Join(manifest.Directory, "docker"))
+	dockerArchives, err := os.ReadDir(path.Join(manifest.Directory, "docker"))
 	if err != nil {
 		return fmt.Errorf("failed to read docker output of release: %v", err)
 	}

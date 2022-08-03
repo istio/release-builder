@@ -17,7 +17,6 @@ package publish
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -94,7 +93,7 @@ func GithubRelease(manifest model.Manifest, client *github.Client, githuborg str
 }
 
 func GithubUploadReleaseAssets(ctx context.Context, manifest model.Manifest, client *github.Client, githuborg string, rel *github.RepositoryRelease) error {
-	files, err := ioutil.ReadDir(path.Join(manifest.Directory))
+	files, err := os.ReadDir(path.Join(manifest.Directory))
 	if err != nil {
 		return err
 	}

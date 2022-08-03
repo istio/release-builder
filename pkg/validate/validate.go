@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -35,7 +34,7 @@ import (
 )
 
 func NewReleaseInfo(release string) ReleaseInfo {
-	tmpDir, err := ioutil.TempDir("/tmp", "release-test")
+	tmpDir, err := os.MkdirTemp("/tmp", "release-test")
 	if err != nil {
 		panic(err)
 	}
@@ -200,7 +199,7 @@ func getValues(values []byte) (map[string]interface{}, error) {
 func TestDocker(r ReleaseInfo) error {
 	expected := []string{"pilot-distroless", "pilot-debug", "install-cni-debug", "proxyv2-debug", "proxyv2-distroless", "operator-debug"}
 	found := map[string]struct{}{}
-	d, err := ioutil.ReadDir(filepath.Join(r.release, "docker"))
+	d, err := os.ReadDir(filepath.Join(r.release, "docker"))
 	if err != nil {
 		return fmt.Errorf("failed to read docker dir: %v", err)
 	}
@@ -241,7 +240,7 @@ func TestProxyVersion(r ReleaseInfo) error {
 		log.Warnf("failed to unpackage release archive")
 	}
 
-	manifestBytes, err := ioutil.ReadFile(filepath.Join(r.tmpDir, "manifest.json"))
+	manifestBytes, err := os.ReadFile(filepath.Join(r.tmpDir, "manifest.json"))
 	if err != nil {
 		return fmt.Errorf("couldn't read manifest: %v", err)
 	}
@@ -250,7 +249,7 @@ func TestProxyVersion(r ReleaseInfo) error {
 		return fmt.Errorf("failed to unmarshal manifest: %v", err)
 	}
 
-	configBytes, err := ioutil.ReadFile(filepath.Join(r.tmpDir, manifest[0].Config))
+	configBytes, err := os.ReadFile(filepath.Join(r.tmpDir, manifest[0].Config))
 	if err != nil {
 		return fmt.Errorf("couldn't read config: %v", err)
 	}
@@ -329,7 +328,7 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 }
 
 func validateHubTagFromFile(r ReleaseInfo, file string, paths string) error {
-	values, err := ioutil.ReadFile(filepath.Join(r.archive, file))
+	values, err := os.ReadFile(filepath.Join(r.archive, file))
 	if err != nil {
 		return err
 	}
@@ -376,7 +375,7 @@ func TestOperatorProfiles(r ReleaseInfo) error {
 		"manifests/profiles/default.yaml",
 	}
 	for _, f := range operatorChecks {
-		by, err := ioutil.ReadFile(filepath.Join(r.archive, f))
+		by, err := os.ReadFile(filepath.Join(r.archive, f))
 		if err != nil {
 			return err
 		}
@@ -420,7 +419,7 @@ func TestManifest(r ReleaseInfo) error {
 
 func TestGrafana(r ReleaseInfo) error {
 	created := map[string]struct{}{}
-	dir, err := ioutil.ReadDir(path.Join(r.release, "grafana"))
+	dir, err := os.ReadDir(path.Join(r.release, "grafana"))
 	if err != nil {
 		return err
 	}
@@ -438,7 +437,7 @@ func TestGrafana(r ReleaseInfo) error {
 }
 
 func TestLicenses(r ReleaseInfo) error {
-	l, err := ioutil.ReadDir(filepath.Join(r.release, "licenses"))
+	l, err := os.ReadDir(filepath.Join(r.release, "licenses"))
 	if err != nil {
 		return err
 	}

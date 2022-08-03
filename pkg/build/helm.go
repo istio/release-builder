@@ -16,7 +16,6 @@ package build
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -72,7 +71,7 @@ var (
 // Similar to sanitizeChart, but works on generic templates rather than only Helm charts.
 // This updates the hub and tag fields for a single file
 func sanitizeTemplate(manifest model.Manifest, p string) error {
-	read, err := ioutil.ReadFile(p)
+	read, err := os.ReadFile(p)
 	if err != nil {
 		return err
 	}
@@ -95,7 +94,7 @@ func sanitizeTemplate(manifest model.Manifest, p string) error {
 	// Rather than try to make a very generic regex, specifically enumerate these to avoid false positives
 	contents = operatorDeployRegex.ReplaceAllString(contents, fmt.Sprintf("image: %s/operator:%s", manifest.Docker, manifest.Version))
 
-	err = ioutil.WriteFile(p, []byte(contents), 0)
+	err = os.WriteFile(p, []byte(contents), 0)
 	if err != nil {
 		return err
 	}
@@ -118,7 +117,7 @@ func SanitizeAllCharts(manifest model.Manifest) error {
 // In order to do this, we simply replace the current version with the new one.
 func sanitizeChart(manifest model.Manifest, s string) error {
 	// TODO improve this to not use raw string handling of yaml
-	currentVersion, err := ioutil.ReadFile(path.Join(s, "Chart.yaml"))
+	currentVersion, err := os.ReadFile(path.Join(s, "Chart.yaml"))
 	if err != nil {
 		return err
 	}
@@ -134,7 +133,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 	if err := filepath.Walk(s, func(p string, info os.FileInfo, err error) error {
 		fname := path.Base(p)
 		if fname == "Chart.yaml" || fname == "values.yaml" || fname == "gen-istio.yaml" {
-			read, err := ioutil.ReadFile(p)
+			read, err := os.ReadFile(p)
 			if err != nil {
 				return err
 			}
@@ -146,7 +145,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 				contents = strings.ReplaceAll(contents, before, after)
 			}
 
-			err = ioutil.WriteFile(p, []byte(contents), 0)
+			err = os.WriteFile(p, []byte(contents), 0)
 			if err != nil {
 				return err
 			}
