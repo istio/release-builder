@@ -48,12 +48,14 @@ type image struct {
 // Image defines a single docker image. There are potentially many Image outputs for each .tar.gz - this
 // represents the fully expanded form.
 // Example:
-//   Image{
-//   	 OriginalTag: "localhost/proxyv2:original", // Hub from manifest
-//   	 NewTag:      "gcr.io/istio-release/proxyv2:new", // Hub from --dockerhubs and --dockertags
-//   	 Variant      "",
-//   	 Image        "proxyv2",
-//   }
+//
+//	Image{
+//		 OriginalTag: "localhost/proxyv2:original", // Hub from manifest
+//		 NewTag:      "gcr.io/istio-release/proxyv2:new", // Hub from --dockerhubs and --dockertags
+//		 Variant      "",
+//		 Image        "proxyv2",
+//	}
+//
 // An image also logically containers an "Architecture" component. However, we want to merge based on arch, so we
 // use this as a `map[Image][]architecture{}
 type Image struct {
