@@ -58,6 +58,7 @@ MANIFEST=$(cat <<EOF
 version: "${VERSION}"
 docker: "${DOCKER_HUB}"
 directory: "${WORK_DIR}"
+architectures: [linux/amd64, linux/arm64]
 dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
@@ -114,6 +115,7 @@ if [ $BUILD_BASE_IMAGES = true ] ; then
 version: "${VERSION}"
 docker: "${DOCKER_HUB}"
 directory: "${WORK_DIR}"
+architectures: [linux/amd64, linux/arm64]
 dependencies:
   istio:
     git: https://github.com/istio/istio
