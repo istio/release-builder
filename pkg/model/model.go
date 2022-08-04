@@ -135,6 +135,10 @@ type InputManifest struct {
 	Docker string `json:"docker"`
 	// DockerOutput specifies where docker images are written.
 	DockerOutput DockerOutput `json:"dockerOutput"`
+	// Architectures defines the architectures to build for.
+	// Note: this impacts only docker and deb/rpm; istioctl is always built in additional platforms.
+	// Example: []string{"linux/amd64", "linux/arm64"}.
+	Architectures []string `json:"architectures"`
 	// Directory defines the base working directory for the release.
 	// This is excluded from the final serialization
 	Directory string `json:"directory"`
@@ -160,6 +164,10 @@ type Manifest struct {
 	Docker string `json:"docker"`
 	// DockerOutput specifies where docker images are written.
 	DockerOutput DockerOutput `json:"dockerOutput"`
+	// Architectures defines the architectures to build for.
+	// Note: this impacts only docker and deb/rpm; istioctl is always built in additional platforms.
+	// Example: []string{"linux/amd64", "linux/arm64"}.
+	Architectures []string `json:"architectures"`
 	// Directory defines the base working directory for the release.
 	// This is excluded from the final serialization
 	Directory string `json:"-"`

@@ -17,7 +17,7 @@ package publish
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -41,7 +41,7 @@ func Grafana(manifest model.Manifest, token string) error {
 		if err != nil {
 			return fmt.Errorf("request to update %v failed: %v", db, err)
 		}
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		log.Infof("Dashboard %v uploaded with code: %v. Body: %v", db, resp.StatusCode, string(body))
 	}
 
@@ -54,7 +54,7 @@ func fileUploadRequest(uri string, paramName, path string) (*http.Request, error
 	if err != nil {
 		return nil, err
 	}
-	fileContents, err := ioutil.ReadAll(file)
+	fileContents, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}

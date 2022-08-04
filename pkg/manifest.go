@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -30,7 +29,7 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 	wd := in.Directory
 	if wd == "" {
 		var err error
-		wd, err = ioutil.TempDir(os.TempDir(), "istio-release")
+		wd, err = os.MkdirTemp(os.TempDir(), "istio-release")
 		if err != nil {
 			return model.Manifest{}, fmt.Errorf("failed to create working directory: %v", err)
 		}
@@ -67,21 +66,28 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 	if do == "" {
 		do = model.DockerOutputTar
 	}
+	arch := in.Architectures
+	if len(arch) == 0 {
+		// Default to just amd64. In the future we may want to include arm64 by default
+		arch = []string{"linux/amd64"}
+	}
 	return model.Manifest{
-		Dependencies:      in.Dependencies,
-		Version:           in.Version,
-		Docker:            in.Docker,
-		DockerOutput:      do,
-		Directory:         wd,
-		BuildOutputs:      outputs,
-		ProxyOverride:     in.ProxyOverride,
-		GrafanaDashboards: in.GrafanaDashboards,
+		Dependencies:                in.Dependencies,
+		Version:                     in.Version,
+		Docker:                      in.Docker,
+		DockerOutput:                do,
+		Directory:                   wd,
+		BuildOutputs:                outputs,
+		ProxyOverride:               in.ProxyOverride,
+		GrafanaDashboards:           in.GrafanaDashboards,
+		SkipGenerateBillOfMaterials: in.SkipGenerateBillOfMaterials,
+		Architectures:               arch,
 	}, nil
 }
 
 func ReadManifest(manifestFile string) (model.Manifest, error) {
 	manifest := model.Manifest{}
-	by, err := ioutil.ReadFile(manifestFile)
+	by, err := os.ReadFile(manifestFile)
 	if err != nil {
 		return manifest, fmt.Errorf("failed to read manifest file: %v", err)
 	}
@@ -110,7 +116,7 @@ func validateManifestDependencies(dependencies model.IstioDependencies) error {
 
 func ReadInManifest(manifestFile string) (model.InputManifest, error) {
 	manifest := model.InputManifest{}
-	by, err := ioutil.ReadFile(manifestFile)
+	by, err := os.ReadFile(manifestFile)
 	if err != nil {
 		return manifest, fmt.Errorf("failed to read manifest file: %v", err)
 	}

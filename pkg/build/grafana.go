@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 
 	"istio.io/release-builder/pkg/model"
@@ -33,7 +33,7 @@ func Grafana(manifest model.Manifest) error {
 	); err != nil {
 		return err
 	}
-	dashboards, err := ioutil.ReadDir(path.Join(manifest.WorkDir(), "grafana"))
+	dashboards, err := os.ReadDir(path.Join(manifest.WorkDir(), "grafana"))
 	if err != nil {
 		return fmt.Errorf("failed to read dashboards: %v", err)
 	}
@@ -55,7 +55,7 @@ func Grafana(manifest model.Manifest) error {
 // in the charts, to the "external" representation. This is the form needed to publish to grafana.com
 // This has two fields added, __inputs and __requires, and the datasource is not hardcoded.
 func externalizeDashboard(version, file string) error {
-	original, err := ioutil.ReadFile(file)
+	original, err := os.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("failed to read %v: %v", file, err)
 	}
@@ -129,7 +129,7 @@ func externalizeDashboard(version, file string) error {
 	}
 	// Substitute the datasource with the variable placeholder
 	result = bytes.ReplaceAll(result, []byte(`"datasource": "Prometheus"`), []byte(`"datasource": "${DS_PROMETHEUS}"`))
-	if err := ioutil.WriteFile(file, result, 0o644); err != nil {
+	if err := os.WriteFile(file, result, 0o644); err != nil {
 		return fmt.Errorf("failed to write: %v", err)
 	}
 	return nil
