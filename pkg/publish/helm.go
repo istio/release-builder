@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
+	"sigs.k8s.io/yaml"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -71,6 +72,7 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 	// Pull down the index, update it, and push it back up.
 	// MutateObject ensures there are no races.
 	err = MutateObject(helmDir, bkt, objectPrefix, "index.yaml", func() error {
+		dumpIndex(filepath.Join(helmDir, "index.yaml"), "before")
 		idxCmd := util.VerboseCommand("helm", "repo", "index", ".",
 			"--url", fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketName, objectPrefix),
 			"--merge", "index.yaml")
@@ -79,6 +81,7 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 		if err := idxCmd.Run(); err != nil {
 			return fmt.Errorf("index repo: %v", err)
 		}
+		dumpIndex(filepath.Join(helmDir, "index.yaml"), "after")
 		return nil
 	})
 	if err != nil {
@@ -112,6 +115,34 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 		log.Infof("Wrote %v to gs://%s/%s", f.Name(), bucketName, objName)
 	}
 	return nil
+}
+
+type helmChart struct {
+	AppVersion string `json:"appVersion"`
+}
+
+type helmIndex struct {
+	Entries map[string][]helmChart `json:"entries"`
+}
+
+// dumpIndex outputs a summary of a helm index.yaml file, for debugging.
+func dumpIndex(fpath string, context string) {
+	data, err := os.ReadFile(fpath)
+	if err != nil {
+		log.Errorf("failed to read %v: %v", fpath, err)
+		return
+	}
+	idx := &helmIndex{}
+	if err := yaml.Unmarshal(data, idx); err != nil {
+		log.Errorf("failed to unmarshal %v: %v", string(data), err)
+		return
+	}
+	versions := []string{}
+	// Only look at base since all charts *should* be the same set of versions.
+	for _, hc := range idx.Entries["base"] {
+		versions = append(versions, hc.AppVersion)
+	}
+	log.Infof("index.yaml contents %v: %v", context, versions)
 }
 
 func publishHelmOCI(manifest model.Manifest, hub string) error {
