@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -75,7 +74,7 @@ func CopyFilesToDir(src, dst string) error {
 	if err := VerboseCommand("mkdir", "-p", path.Join(dst, "..")).Run(); err != nil {
 		return fmt.Errorf("failed to create output directory: %v", err)
 	}
-	dir, err := ioutil.ReadDir(src)
+	dir, err := os.ReadDir(src)
 	if err != nil {
 		return err
 	}
@@ -121,13 +120,13 @@ func CopyDirFiltered(src, dst string, include []string) error {
 
 // CreateSha will create and write a sha256sum of a file
 func CreateSha(src string) error {
-	b, err := ioutil.ReadFile(src)
+	b, err := os.ReadFile(src)
 	if err != nil {
 		return fmt.Errorf("failed to read file %v: %v", src, err)
 	}
 	sha := sha256.Sum256(b)
 	shaFile := fmt.Sprintf("%x %s\n", sha, path.Base(src))
-	if err := ioutil.WriteFile(src+".sha256", []byte(shaFile), 0o644); err != nil {
+	if err := os.WriteFile(src+".sha256", []byte(shaFile), 0o644); err != nil {
 		return fmt.Errorf("failed to write sha256 to %v: %v", src, err)
 	}
 	return nil
@@ -196,7 +195,7 @@ func FetchAuto(repo string, dep *model.Dependency, dest string) error {
 }
 
 func fetchAutoModules(repo string, dep *model.Dependency, dest string) error {
-	modFile, err := ioutil.ReadFile(path.Join(dest, "../istio/go.mod"))
+	modFile, err := os.ReadFile(path.Join(dest, "../istio/go.mod"))
 	if err != nil {
 		return err
 	}
@@ -220,7 +219,7 @@ func fetchAutoModules(repo string, dep *model.Dependency, dest string) error {
 }
 
 func fetchAutoDeps(repo string, dep *model.Dependency, dest string) error {
-	depsFile, err := ioutil.ReadFile(path.Join(dest, "../istio/istio.deps"))
+	depsFile, err := os.ReadFile(path.Join(dest, "../istio/istio.deps"))
 	if err != nil {
 		return err
 	}
@@ -242,7 +241,7 @@ func fetchAutoDeps(repo string, dep *model.Dependency, dest string) error {
 }
 
 func fetchAutoProxyWorkspace(dep *model.Dependency, dest string) error {
-	wsFile, err := ioutil.ReadFile(path.Join(dest, "../proxy/WORKSPACE"))
+	wsFile, err := os.ReadFile(path.Join(dest, "../proxy/WORKSPACE"))
 	if err != nil {
 		return err
 	}

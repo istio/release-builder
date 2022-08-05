@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -134,11 +133,11 @@ func mutateObjectInner(outDir string, bkt *storage.BucketHandle, objectPrefix st
 			}
 			return err
 		}
-		idx, err := ioutil.ReadAll(r)
+		idx, err := io.ReadAll(r)
 		if err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(outFile, idx, 0o644); err != nil {
+		if err := os.WriteFile(outFile, idx, 0o644); err != nil {
 			return err
 		}
 		r.Close()

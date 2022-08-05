@@ -16,7 +16,7 @@ package branch
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"strconv"
 
@@ -104,7 +104,7 @@ func writeManifest(manifest model.Manifest, dir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal manifest: %v", err)
 	}
-	if err := ioutil.WriteFile(path.Join(dir, "manifest.yaml"), yml, 0o640); err != nil {
+	if err := os.WriteFile(path.Join(dir, "manifest.yaml"), yml, 0o640); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
 	return nil

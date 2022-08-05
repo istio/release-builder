@@ -16,7 +16,6 @@ package publish
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -143,7 +142,7 @@ func Publish(manifest model.Manifest) error {
 
 func getGrafanaToken(file string) (string, error) {
 	if file != "" {
-		b, err := ioutil.ReadFile(file)
+		b, err := os.ReadFile(file)
 		if err != nil {
 			return "", fmt.Errorf("failed to read grafana token: %v", file)
 		}
