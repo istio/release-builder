@@ -93,6 +93,20 @@ func GcsArchive(manifest model.Manifest, bucket string, aliases []string) error 
 	return nil
 }
 
+func FetchObject(bkt *storage.BucketHandle, objectPrefix string, filename string) ([]byte, error) {
+	objName := filepath.Join(objectPrefix, filename)
+	obj := bkt.Object(objName)
+	r, err := obj.NewReader(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	c, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
 // MutateObject allows pulling a file from GCS, mutating it, then pushing it back up. This adds checks
 // to ensure that if the file is mutated in the meantime, the process is repeated.
 func MutateObject(outDir string, bkt *storage.BucketHandle, objectPrefix string, filename string, f func() error) error {
@@ -169,6 +183,11 @@ func mutateObjectInner(outDir string, bkt *storage.BucketHandle, objectPrefix st
 			return ErrIndexOutOfDate
 		}
 		return fmt.Errorf("failed to close bucket: %v", err)
+	}
+	if attr, err := obj.Attrs(context.Background()); err != nil {
+		log.Errorf("failed to get attributes: %v", err)
+	} else {
+		log.Infof("Object %v now has generation %d", objName, attr.Generation)
 	}
 	return nil
 }

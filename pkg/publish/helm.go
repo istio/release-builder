@@ -72,7 +72,7 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 	// Pull down the index, update it, and push it back up.
 	// MutateObject ensures there are no races.
 	err = MutateObject(helmDir, bkt, objectPrefix, "index.yaml", func() error {
-		dumpIndex(filepath.Join(helmDir, "index.yaml"), "before")
+		dumpIndexFile(filepath.Join(helmDir, "index.yaml"), "before")
 		idxCmd := util.VerboseCommand("helm", "repo", "index", ".",
 			"--url", fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketName, objectPrefix),
 			"--merge", "index.yaml")
@@ -81,11 +81,19 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 		if err := idxCmd.Run(); err != nil {
 			return fmt.Errorf("index repo: %v", err)
 		}
-		dumpIndex(filepath.Join(helmDir, "index.yaml"), "after")
+		dumpIndexFile(filepath.Join(helmDir, "index.yaml"), "after")
 		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("helm publish: %v", err)
+	}
+
+	// Add extra logging for the actual object in GCS to ensure its written correctly
+	liveObject, err := FetchObject(bkt, objectPrefix, "index.yaml")
+	if err != nil {
+		log.Warnf("failed to get live index.yaml: %v", err)
+	} else {
+		dumpIndex(liveObject, "live")
 	}
 
 	// Now push all our charts up
@@ -125,13 +133,18 @@ type helmIndex struct {
 	Entries map[string][]helmChart `json:"entries"`
 }
 
-// dumpIndex outputs a summary of a helm index.yaml file, for debugging.
-func dumpIndex(fpath string, context string) {
+// dumpIndexFile outputs a summary of a helm index.yaml file, for debugging.
+func dumpIndexFile(fpath string, context string) {
 	data, err := os.ReadFile(fpath)
 	if err != nil {
 		log.Errorf("failed to read %v: %v", fpath, err)
 		return
 	}
+	dumpIndex(data, context)
+}
+
+// dumpIndex outputs a summary of a helm index.yaml contents, for debugging.
+func dumpIndex(data []byte, context string) {
 	idx := &helmIndex{}
 	if err := yaml.Unmarshal(data, idx); err != nil {
 		log.Errorf("failed to unmarshal %v: %v", string(data), err)
