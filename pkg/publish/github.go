@@ -70,8 +70,8 @@ func GithubRelease(manifest model.Manifest, client *github.Client, githuborg str
 	ctx := context.Background()
 
 	body := fmt.Sprintf(`[Artifacts](http://gcsweb.istio.io/gcs/istio-release/releases/%s/)
-[Release Notes](https://istio.io/news/announcing-%s/)`,
-		manifest.Version, manifest.Version)
+[Release Notes](https://istio.io/news/releases/%s/announcing-%s/)`,
+		manifest.Version, manifest.Version[:strings.LastIndex(manifest.Version, ".")]+".x", manifest.Version)
 
 	relName := fmt.Sprintf("Istio %s", manifest.Version)
 
