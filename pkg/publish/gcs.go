@@ -155,6 +155,14 @@ func mutateObjectInner(outDir string, bkt *storage.BucketHandle, objectPrefix st
 		o = o.If(storage.Conditions{GenerationMatch: generation})
 	}
 	w := o.NewWriter(context.Background())
+
+	// Ensure we do not cache. This would be fine for normal users reading, but it ends up making the release process
+	// break if we have multiple releases too quickly (default cache is 1hr).
+	w.CacheControl = "no-cache, max-age=0, no-transform"
+
+	// https://helm.sh/docs/topics/chart_repository/#ordinary-web-servers
+	w.ContentType = "text/yaml"
+
 	res, err := os.Open(outFile)
 	if err != nil {
 		return fmt.Errorf("failed to open %v: %v", res.Name(), err)
