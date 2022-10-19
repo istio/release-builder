@@ -43,7 +43,7 @@ directory: ${WORK_DIR}
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.16
   api:
     git: https://github.com/istio/api
     auto: modules
@@ -55,20 +55,20 @@ dependencies:
     auto: modules
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    branch: release-1.16
     goversionenabled: true
   test-infra:
     git: https://github.com/istio/test-infra
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.16
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
   release-builder:
     git: https://github.com/istio/release-builder
-    branch: master
+    branch: release-1.16
 dashboards:
   istio-extension-dashboard: 13277
   istio-mesh-dashboard: 7639
