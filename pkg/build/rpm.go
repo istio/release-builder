@@ -25,13 +25,27 @@ import (
 // Rpm produces an rpm package just for the sidecar
 func Rpm(manifest model.Manifest) error {
 	if err := util.RunMake(manifest, "istio", nil, "rpm/fpm"); err != nil {
-		return fmt.Errorf("failed to build sidecar.rpm: %v", err)
+		return fmt.Errorf("failed to build istio-sidecar.rpm: %v", err)
 	}
 	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
 		return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
 	}
 	if err := util.CreateSha(path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
 		return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
+	}
+	return nil
+}
+
+// Rpm produces an rpm package for CentOS-7 just for the sidecar
+func Rpm7(manifest model.Manifest) error {
+	if err := util.RunMake(manifest, "istio", nil, "rpm-7/fpm"); err != nil {
+		return fmt.Errorf("failed to build istio-sidecar-centos-7.rpm: %v", err)
+	}
+	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar-centos-7.rpm"), path.Join(manifest.OutDir(), "rpm", "istio-sidecar-centos-7.rpm")); err != nil {
+		return fmt.Errorf("failed to package istio-sidecar-centos-7.rpm: %v", err)
+	}
+	if err := util.CreateSha(path.Join(manifest.OutDir(), "rpm", "istio-sidecar-centos-7.rpm")); err != nil {
+		return fmt.Errorf("failed to package istio-sidecar-centos-7.rpm: %v", err)
 	}
 	return nil
 }

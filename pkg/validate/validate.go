@@ -481,6 +481,9 @@ func TestRpm(info ReleaseInfo) error {
 	if !fileExists(filepath.Join(info.release, "rpm", "istio-sidecar.rpm")) {
 		return fmt.Errorf("rpm package not found")
 	}
+	if !fileExists(filepath.Join(info.release, "rpm", "istio-sidecar-centos-7.rpm")) {
+		return fmt.Errorf("rpm package for CentOS 7 not found")
+	}
 	return nil
 }
 
