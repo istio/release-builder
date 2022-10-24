@@ -66,6 +66,6 @@ go run main.go publish --release "${WORK_DIR}" \
 # Docker hub doesn't support Helm registries, so we also push these only to GCR.
 go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \
-    --helmhub "gcr.io/istio-release/charts" \
-    --dockerhub "gcr.io/istio-release" \
+    --helmhub "gcr.io/${HELM_BUCKET}/charts" \
+    --dockerhub "gcr.io/${DOCKER_HUB}" \
     --dockertags "${VERSION}"
