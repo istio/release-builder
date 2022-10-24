@@ -41,6 +41,7 @@ SOURCE_GCS_BUCKET=${SOURCE_GCS_BUCKET:-istio-prerelease/prerelease}
 GCS_BUCKET=${GCS_BUCKET:-istio-release/releases}
 HELM_BUCKET=${HELM_BUCKET:-istio-release/charts}
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
+DOCKER_HUB_RELEASE=${DOCKER_HUB:-gcr.io/istio-release}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 GITHUB_TOKEN_FILE=${GITHUB_TOKEN_FILE:-}
 GRAFANA_TOKEN_FILE=${GRAFANA_TOKEN_FILE:-}
@@ -66,6 +67,6 @@ go run main.go publish --release "${WORK_DIR}" \
 # Docker hub doesn't support Helm registries, so we also push these only to GCR.
 go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \
-    --helmhub "gcr.io/istio-release/charts" \
-    --dockerhub "gcr.io/istio-release" \
+    --helmhub "gcr.io/${HELM_BUCKET}" \
+    --dockerhub "${DOCKER_HUB_RELEASE}" \
     --dockertags "${VERSION}"
