@@ -44,7 +44,7 @@ func runRpm(manifest model.Manifest, envs []string, arch, output string) error {
 	if err := util.RunMake(manifest, "istio", envs, "rpm/fpm"); err != nil {
 		return fmt.Errorf("failed to build sidecar.rpm: %v", err)
 	}
-	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", output)); err != nil {
+	if err := util.CopyFile(path.Join(manifest.RepoArchOutDir("istio", arch), "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", output)); err != nil {
 		return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
 	}
 	if err := util.CreateSha(path.Join(manifest.OutDir(), "rpm", output)); err != nil {
