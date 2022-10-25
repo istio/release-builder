@@ -199,6 +199,11 @@ func (m Manifest) RepoOutDir(repo string) string {
 	return path.Join(m.Directory, "work", "src", "istio.io", repo, "out", "linux_amd64", "release")
 }
 
+// RepoOutDir is a helper to return the directory of Istio build arch output for repos the place outputs inside the repo
+func (m Manifest) RepoArchOutDir(repo string, arch string) string {
+	return path.Join(m.Directory, "work", "src", "istio.io", repo, "out", "linux_"+arch, "release")
+}
+
 // WorkDir is a help to return the work directory
 func (m Manifest) WorkDir() string {
 	return path.Join(m.Directory, "work")

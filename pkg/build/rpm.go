@@ -17,6 +17,7 @@ package build
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
@@ -24,14 +25,23 @@ import (
 
 // Rpm produces an rpm package just for the sidecar
 func Rpm(manifest model.Manifest) error {
-	if err := util.RunMake(manifest, "istio", nil, "rpm/fpm"); err != nil {
-		return fmt.Errorf("failed to build sidecar.rpm: %v", err)
-	}
-	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
-		return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
-	}
-	if err := util.CreateSha(path.Join(manifest.OutDir(), "rpm", "istio-sidecar.rpm")); err != nil {
-		return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
+	for _, plat := range manifest.Architectures {
+		_, arch, _ := strings.Cut(plat, "/")
+		envs := []string{"TARGET_ARCH=" + arch}
+		output := "istio-sidecar.rpm"
+		if arch != "amd64" {
+			output = fmt.Sprintf("istio-sidecar-%s.rpm", arch)
+		}
+
+		if err := util.RunMake(manifest, "istio", envs, "rpm/fpm"); err != nil {
+			return fmt.Errorf("failed to build sidecar.rpm: %v", err)
+		}
+		if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.rpm"), path.Join(manifest.OutDir(), "rpm", output)); err != nil {
+			return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
+		}
+		if err := util.CreateSha(path.Join(manifest.OutDir(), "rpm", output)); err != nil {
+			return fmt.Errorf("failed to package istio-sidecar.rpm: %v", err)
+		}
 	}
 	return nil
 }
