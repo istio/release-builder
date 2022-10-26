@@ -17,6 +17,7 @@ package build
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
@@ -24,13 +25,31 @@ import (
 
 // Debian produces a debian package just for the sidecar
 func Debian(manifest model.Manifest) error {
-	if err := util.RunMake(manifest, "istio", nil, "deb/fpm"); err != nil {
+	for _, plat := range manifest.Architectures {
+		_, arch, _ := strings.Cut(plat, "/")
+		envs := []string{"TARGET_ARCH=" + arch}
+		output := "istio-sidecar.deb"
+		if arch != "amd64" {
+			output = fmt.Sprintf("istio-sidecar-%s.deb", arch)
+		}
+
+		if err := runDeb(manifest, envs, arch, output); err != nil {
+			return fmt.Errorf("failed to run deb for arch %s: %v", arch, err)
+		}
+	}
+
+	return nil
+}
+
+func runDeb(manifest model.Manifest, envs []string, arch, output string) error {
+	if err := util.RunMake(manifest, "istio", envs, "deb/fpm"); err != nil {
 		return fmt.Errorf("failed to build sidecar.deb: %v", err)
 	}
-	if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), "istio-sidecar.deb"), path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
+
+	if err := util.CopyFile(path.Join(manifest.RepoArchOutDir("istio", arch), "istio-sidecar.deb"), path.Join(manifest.OutDir(), "deb", output)); err != nil {
 		return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 	}
-	if err := util.CreateSha(path.Join(manifest.OutDir(), "deb", "istio-sidecar.deb")); err != nil {
+	if err := util.CreateSha(path.Join(manifest.OutDir(), "deb", output)); err != nil {
 		return fmt.Errorf("failed to package istio-sidecar.deb: %v", err)
 	}
 	return nil
