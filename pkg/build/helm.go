@@ -162,6 +162,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 			}
 			contents := string(read)
 
+			//nolint
 			EOLTemplate := `
 {{- $EndOfLife := toDate "2006-01" "%s" | unixEpoch -}}
 {{- $Now := now | unixEpoch -}}
