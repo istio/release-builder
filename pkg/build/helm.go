@@ -154,6 +154,29 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 				return err
 			}
 		}
+
+		if fname == "NOTES.txt" {
+			read, err := os.ReadFile(p)
+			if err != nil {
+				return err
+			}
+			contents := string(read)
+
+			EOLTemplate := `
+{{- $EndOfLife := toDate "2006-01" "%s" | unixEpoch -}}
+{{- $Now := now | unixEpoch -}}
+
+{{- if ge $Now $EndOfLife}}
+
+WARNING: may be installing an EOL version: see https://istio.io/latest/docs/releases/supported-releases/ for supported releases
+{{ end }}
+`
+			contents = contents + fmt.Sprintf(EOLTemplate, manifest.EOLDate)
+			err = os.WriteFile(p, []byte(contents), 0)
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	}); err != nil {
 		return err
