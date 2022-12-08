@@ -162,7 +162,6 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 			}
 			contents := string(read)
 
-			//nolint
 			EOLTemplate := `
 {{- $EndOfLife := toDate "2006-01" "%s" | unixEpoch -}}
 {{- $Now := now | unixEpoch -}}
@@ -172,7 +171,7 @@ func sanitizeChart(manifest model.Manifest, s string) error {
 WARNING: may be installing an EOL version: see https://istio.io/latest/docs/releases/supported-releases/ for supported releases
 {{ end }}
 `
-			contents = contents + fmt.Sprintf(EOLTemplate, manifest.EOLDate)
+			contents += fmt.Sprintf(EOLTemplate, manifest.EOLDate)
 			err = os.WriteFile(p, []byte(contents), 0)
 			if err != nil {
 				return err
