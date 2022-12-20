@@ -37,7 +37,7 @@ if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
   PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
 fi
 
-VERSION="1.14.0-releasebuilder.$(git rev-parse --short HEAD)"
+VERSION="1.16.0-releasebuilder.$(git rev-parse --short HEAD)"
 
 WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
