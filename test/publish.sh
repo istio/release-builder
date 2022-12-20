@@ -27,11 +27,11 @@ else
   echo "No credential helpers found, push to docker may not function properly"
 fi
 
-GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
-HELM_BUCKET=${HELM_BUCKET:-istio-prerelease/charts}
+GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
+HELM_BUCKET=${HELM_BUCKET:-istio-build/test/charts}
 COSIGN_KEY=${COSIGN_KEY:-}
 GITHUB_ORG=${GITHUB_ORG:-istio}
-DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
+DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
 
 if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
   PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
