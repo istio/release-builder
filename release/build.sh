@@ -38,6 +38,7 @@ PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
 HELM_BUCKET=${HELM_BUCKET:-istio-prerelease/charts}
 COSIGN_KEY=${COSIGN_KEY:-}
+GITHUB_ORG=${GITHUB_ORG:-istio}
 
 if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
   PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
@@ -62,32 +63,32 @@ architectures: [linux/amd64, linux/arm64]
 dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
-    git: https://github.com/istio/istio
+    git: https://github.com/${GITHUB_ORG}/istio
     branch: master
   api:
-    git: https://github.com/istio/api
+    git: https://github.com/${GITHUB_ORG}/api
     auto: modules
   proxy:
-    git: https://github.com/istio/proxy
+    git: https://github.com/${GITHUB_ORG}/proxy
     auto: deps
   pkg:
-    git: https://github.com/istio/pkg
+    git: https://github.com/${GITHUB_ORG}/pkg
     auto: modules
   client-go:
-    git: https://github.com/istio/client-go
+    git: https://github.com/${GITHUB_ORG}/client-go
     branch: master
     goversionenabled: true
   test-infra:
-    git: https://github.com/istio/test-infra
+    git: https://github.com/${GITHUB_ORG}/test-infra
     branch: master
   tools:
-    git: https://github.com/istio/tools
+    git: https://github.com/${GITHUB_ORG}/tools
     branch: master
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
   release-builder:
-    git: https://github.com/istio/release-builder
+    git: https://github.com/${GITHUB_ORG}/release-builder
     branch: master
 EOD
 )}
@@ -118,7 +119,7 @@ directory: "${WORK_DIR}"
 architectures: [linux/amd64, linux/arm64]
 dependencies:
   istio:
-    git: https://github.com/istio/istio
+    git: https://github.com/${GITHUB_ORG}/istio
     branch: master
 EOF
 )
