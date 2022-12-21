@@ -105,7 +105,7 @@ EOF
 # "Temporary" hacks
 export PATH=${GOPATH}/bin:${PATH}
 
-if [ $BUILD_BASE_IMAGES = true ] ; then
+if [ "$BUILD_BASE_IMAGES" = true ] ; then
   # For build, don't use GITHUB_TOKEN_FILE env var set by preset-release-pipeline
   # which is pointing to the github token for istio-release-robot. Instead point to
   # the github token for istio-testing. The token is currently only used to create the
