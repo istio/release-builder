@@ -30,45 +30,54 @@ fi
 DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
 HELM_BUCKET=${HELM_BUCKET:-istio-build/test/charts}
-VERSION="1.14.0-releasebuilder.$(git rev-parse --short HEAD)"
+VERSION="1.17.0-releasebuilder.$(git rev-parse --short HEAD)"
 COSIGN_KEY=${COSIGN_KEY:-}
+GITHUB_ORG=${GITHUB_ORG:-istio}
+
+if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
+  PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
+fi
 
 WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
 
 MANIFEST=$(cat <<EOF
-version: ${VERSION}
-docker: ${DOCKER_HUB}
-directory: ${WORK_DIR}
+version: "${VERSION}"
+docker: "${DOCKER_HUB}"
+directory: "${WORK_DIR}"
+architectures: [linux/amd64, linux/arm64]
 dependencies:
+${DEPENDENCIES:-$(cat <<EOD
   istio:
-    git: https://github.com/istio/istio
+    git: https://github.com/${GITHUB_ORG}/istio
     branch: master
   api:
-    git: https://github.com/istio/api
+    git: https://github.com/${GITHUB_ORG}/api
     auto: modules
   proxy:
-    git: https://github.com/istio/proxy
+    git: https://github.com/${GITHUB_ORG}/proxy
     auto: deps
   pkg:
-    git: https://github.com/istio/pkg
+    git: https://github.com/${GITHUB_ORG}/pkg
     auto: modules
   client-go:
-    git: https://github.com/istio/client-go
+    git: https://github.com/${GITHUB_ORG}/client-go
     branch: master
     goversionenabled: true
   test-infra:
-    git: https://github.com/istio/test-infra
+    git: https://github.com/${GITHUB_ORG}/test-infra
     branch: master
   tools:
-    git: https://github.com/istio/tools
+    git: https://github.com/${GITHUB_ORG}/tools
     branch: master
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
   release-builder:
-    git: https://github.com/istio/release-builder
+    git: https://github.com/${GITHUB_ORG}/release-builder
     branch: master
+EOD
+)}
 dashboards:
   istio-extension-dashboard: 13277
   istio-mesh-dashboard: 7639
@@ -76,6 +85,7 @@ dashboards:
   istio-service-dashboard: 7636
   istio-workload-dashboard: 7630
   pilot-dashboard: 7645
+${PROXY_OVERRIDE:-}
 EOF
 )
 
