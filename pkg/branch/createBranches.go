@@ -34,7 +34,7 @@ func CreateBranches(manifest model.Manifest, release string, dryrun bool) error 
 		}
 		// test-infra does not use release branches and envoy repo should be manually branched
 		// from correct envoy commit
-		if repo == "test-infra" || repo == "envoy" {
+		if repo == "test-infra" {
 			log.Infof("Skipping repo: %v", repo)
 			continue
 		}
