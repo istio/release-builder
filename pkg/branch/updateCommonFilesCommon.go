@@ -18,6 +18,8 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"os"
+	"strings"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
@@ -62,6 +64,20 @@ func UpdateCommonFilesCommon(manifest model.Manifest, release string, dryrun boo
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to run command: %v", err)
 	}
+
+	log.Infof("***Updating CODEOWNERS %s from directory: %s", repo, manifest.RepoDir(repo))
+	cmd = util.VerboseCommand("echo", "* @istio/release-managers-"+strings.ReplaceAll(release, ".", "-"))
+	cmd.Dir = manifest.RepoDir(repo)
+	outFile, err := os.Create(cmd.Dir + "/CODEOWNERS")
+	if err != nil {
+		return fmt.Errorf("failed using CODEOWNERS: %v", err)
+	}
+	defer outFile.Close()
+	cmd.Stdout = outFile
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run echo command: %v", err)
+	}
+	log.Infof("*** CODEOWNERS updated")
 
 	log.Infof("*** common-files updated")
 	return nil
