@@ -44,6 +44,7 @@ func UpdateDependencies(manifest model.Manifest, dryrun bool) error {
 
 	// Also update the go-control plane
 	cmd = util.VerboseCommand("go", "get", "github.com/envoyproxy/go-control-plane@main")
+	cmd.Dir = manifest.RepoDir(repo)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to update go-control-plane: %v", err)
 	}
