@@ -42,9 +42,14 @@ func UpdateDependencies(manifest model.Manifest, dryrun bool) error {
 		return fmt.Errorf("failed to update dependencies during update_deps: %v", err)
 	}
 
+	// Also update the go-control plane
+	cmd = util.VerboseCommand("go get github.com/envoyproxy/go-control-plane@main")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to update dependencies during update_deps: %v", err)
+	}
+
 	// release_builder sets VERSION to the value in the manifest (ex: 1.9) and
 	// for this command we want the version unset (or what's in the Makefile.core.mk).
-
 	var out bytes.Buffer
 	grepCmd := exec.Command("grep", "export VERSION", "Makefile.core.mk")
 	grepCmd.Stdout = &out
