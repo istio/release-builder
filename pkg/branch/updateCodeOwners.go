@@ -35,8 +35,8 @@ func UpdateCodeOwners(manifest model.Manifest, release string, dryrun bool) erro
 			log.Infof("skipping missing dependency: %v", repo)
 			continue
 		}
-		// Skip particular repos
-		if repo == "test-infra" {
+		// Skip particular repos, pick up common-files in Step 5.
+		if repo == "test-infra" || repo == "common-files" {
 			log.Infof("Skipping repo: %v", repo)
 			continue
 		}
