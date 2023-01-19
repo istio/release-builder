@@ -46,8 +46,9 @@ func UpdateCommonFilesCommon(manifest model.Manifest, release string, dryrun boo
 	// In this command string we get the list of tags for the build-tools image,
 	// awk those containing release-<release> and not latest, and then sort in reverse
 	// order to get newest at the top. Tag is the first line.
+	// Need to also remove the amd64 and arm64 specific images
 	cmdString := "curl -sL https://gcr.io/v2/istio-testing/build-tools/tags/list | jq '.\"manifest\"[][\"tag\"]' | " +
-		" awk '/release-" + release + "/ && !/latest/' | sort -r | sed  -e s/[[:space:]]*\\\"// -e s/\\\".*//"
+		" awk '/release-" + release + "/ && !/latest/ && !/amd64/ && !/arm64/' | sort -r | sed -e s/[[:space:]]*\\\"// -e s/\\\".*//"
 	cmd = util.VerboseCommand("bash", "-c", cmdString)
 	cmd.Stdout = nil
 	cmd.Dir = manifest.RepoDir(repo)
