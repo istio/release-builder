@@ -19,9 +19,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v35/github"
 	"golang.org/x/oauth2"
@@ -85,12 +87,11 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 			user.Email = &emptyString
 		}
 		commit, err := w.Commit(commitString, &git.CommitOptions{
-			// Removed this to get commits created by git config author
-			// Author: &object.Signature{
-			// 	Name:  *user.Login,
-			// 	Email: *user.Email,
-			// 	When:  time.Now(),
-			//},
+			Author: &object.Signature{
+				Name:  *user.Name,
+				Email: *user.Email,
+				When:  time.Now(),
+			},
 		})
 		if err != nil {
 			return true, fmt.Errorf("failed to create commit: %v", err)
@@ -100,7 +101,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 		// Push to the upstream repo.
 		err = r.Push(&git.PushOptions{
 			Auth: &http.BasicAuth{
-				Username: *user.Login, // yes, this can be anything except an empty string
+				Username: *user.Name, // yes, this can be anything except an empty string
 				Password: githubToken,
 			},
 		})
