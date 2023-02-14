@@ -68,6 +68,6 @@ go run main.go publish --release "${WORK_DIR}" \
 # Docker hub doesn't support Helm registries, so we also push these only to GCR.
 go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \
-    --helmhub "${HELM_BUCKET_RELEASE}" \
+    --helmhub "${HELM_HUB_RELEASE}" \
     --dockerhub "${DOCKER_HUB_RELEASE}" \
     --dockertags "${VERSION}"
