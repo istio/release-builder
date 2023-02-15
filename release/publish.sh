@@ -40,7 +40,7 @@ VERSION="$(cat "${WD}/trigger-publish")"
 SOURCE_GCS_BUCKET=${SOURCE_GCS_BUCKET:-istio-prerelease/prerelease}
 GCS_BUCKET=${GCS_BUCKET:-istio-release/releases}
 HELM_BUCKET=${HELM_BUCKET:-istio-release/charts}
-HELM_BUCKET_RELEASE=${HELM_BUCKET:-gcr.io/istio-release/charts}
+HELM_HUB_RELEASE=${HELM_HUB_RELEASE:-gcr.io/istio-release/charts}
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 DOCKER_HUB_RELEASE=${DOCKER_HUB:-gcr.io/istio-release}
 GITHUB_ORG=${GITHUB_ORG:-istio}
@@ -68,6 +68,6 @@ go run main.go publish --release "${WORK_DIR}" \
 # Docker hub doesn't support Helm registries, so we also push these only to GCR.
 go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \
-    --helmhub "${HELM_BUCKET_RELEASE}" \
+    --helmhub "${HELM_HUB_RELEASE}" \
     --dockerhub "${DOCKER_HUB_RELEASE}" \
     --dockertags "${VERSION}"
