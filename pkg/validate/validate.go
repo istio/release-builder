@@ -294,12 +294,12 @@ func TestHelmChartVersions(r ReleaseInfo) error {
 		log.Infof("Skipping TestHelmChartVersions; not a valid semver")
 		return nil
 	}
-	expected := []string{
-		"cni",
-		"ztunnel",
-		"istiod",
-		"base",
-		"gateway",
+	expected := map[string]string{
+		"cni":     "global",
+		"ztunnel": "",
+		"istiod":  "global",
+		"base":    "global",
+		"gateway": "global",
 	}
 	for _, chart := range expected {
 		buf := bytes.Buffer{}
@@ -325,12 +325,18 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		"manifests/charts/gateways/istio-egress/values.yaml",
 		"manifests/charts/gateways/istio-ingress/values.yaml",
 		"manifests/charts/istio-cni/values.yaml",
-		"manifests/charts/ztunnel/values.yaml",
 		"manifests/charts/istio-control/istio-discovery/values.yaml",
 		"manifests/charts/istiod-remote/values.yaml",
 	}
+	topLevel := []string{"manifests/charts/ztunnel/values.yaml"}
 	for _, file := range manifestValues {
 		err := validateHubTagFromFile(r, file, "global")
+		if err != nil {
+			return err
+		}
+	}
+	for _, file := range topLevel {
+		err := validateHubTagFromFile(r, file, "")
 		if err != nil {
 			return err
 		}
