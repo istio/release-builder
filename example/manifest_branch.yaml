@@ -39,6 +39,9 @@ dependencies:
   proxy:
     git: https://github.com/istio/proxy
     branch: master
+  ztunnel:
+    git: https://github.com/istio/ztunnel
+    branch: master
   release-builder:
     git: https://github.com/istio/release-builder
     branch: master

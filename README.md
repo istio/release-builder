@@ -52,6 +52,9 @@ dependencies:
   proxy:
     git: https://github.com/istio/proxy
     auto: deps
+  ztunnel:
+    git: https://github.com/istio/ztunnel
+    auto: deps
   envoy:
     git: https://github.com/istio/envoy
     auto: proxy_workspace
@@ -137,7 +140,7 @@ directory in your current working directory. The `artifacts` directory will cont
 
 It's easiest to run test branches against an org with has all the istio repos defined in /release/branch.sh
 forked: istio, api, client-go, cni, common-files, envoy, pkg, proxy,
-release-builder,test-infra, tools. It's easier to close/remove things like PRs and branches in your own
+release-builder,test-infra, tools, ztunnel. It's easier to close/remove things like PRs and branches in your own
 repo. Note that these forks should be up to date as the code will be using them for things like determining
 the latest SHAs of commits.
 

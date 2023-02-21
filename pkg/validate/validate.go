@@ -197,7 +197,16 @@ func getValues(values []byte) (map[string]interface{}, error) {
 }
 
 func TestDocker(r ReleaseInfo) error {
-	expected := []string{"pilot-distroless", "pilot-debug", "install-cni-debug", "proxyv2-debug", "proxyv2-distroless", "operator-debug"}
+	expected := []string{
+		"pilot-distroless",
+		"pilot-debug",
+		"install-cni-debug",
+		"ztunnel-debug",
+		"ztunnel-distroless",
+		"proxyv2-debug",
+		"proxyv2-distroless",
+		"operator-debug",
+	}
 	found := map[string]struct{}{}
 	d, err := os.ReadDir(filepath.Join(r.release, "docker"))
 	if err != nil {
@@ -287,6 +296,7 @@ func TestHelmChartVersions(r ReleaseInfo) error {
 	}
 	expected := []string{
 		"cni",
+		"ztunnel",
 		"istiod",
 		"base",
 		"gateway",
@@ -315,6 +325,7 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		"manifests/charts/gateways/istio-egress/values.yaml",
 		"manifests/charts/gateways/istio-ingress/values.yaml",
 		"manifests/charts/istio-cni/values.yaml",
+		"manifests/charts/ztunnel/values.yaml",
 		"manifests/charts/istio-control/istio-discovery/values.yaml",
 		"manifests/charts/istiod-remote/values.yaml",
 	}
