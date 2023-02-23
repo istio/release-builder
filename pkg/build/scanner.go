@@ -100,10 +100,20 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		return fmt.Errorf("failed to set multi-arch as current builder instance: %v", err)
 	}
 
+	targetArchitecture := os.Getenv("ARCH")
+	if targetArchitecture == "" {
+		targetArchitecture = "linux/amd64,linux/arm64"
+	}
+
+	dockerHubs := os.Getenv("HUBS")
+	if dockerHubs == "" {
+		dockerHubs = "docker.io/istio gcr.io/istio-release"
+	}
+
 	// Run the script to create the base images
 	buildImageEnv := []string{
-		"DOCKER_ARCHITECTURES=linux/amd64,linux/arm64",
-		"HUBS=docker.io/istio gcr.io/istio-release",
+		"DOCKER_ARCHITECTURES=" + targetArchitecture,
+		"HUBS=" + dockerHubs,
 	}
 	if manifest.Version == "master" {
 		// Push :latest tag for master
