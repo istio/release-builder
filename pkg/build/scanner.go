@@ -103,6 +103,9 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	targetArchitecture := os.Getenv("ARCH")
 	if targetArchitecture == "" {
 		targetArchitecture = "linux/amd64,linux/arm64"
+	} else {
+		targetArchitecture = strings.Replace(targetArchitecture, "[", "", 1)
+		targetArchitecture = strings.Replace(targetArchitecture, "]", "", 1)
 	}
 
 	dockerHubs := os.Getenv("HUBS")
