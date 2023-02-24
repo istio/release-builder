@@ -58,6 +58,9 @@ ${DEPENDENCIES:-$(cat <<EOD
   proxy:
     git: https://github.com/${GITHUB_ORG}/proxy
     auto: deps
+  ztunnel:
+    git: https://github.com/${GITHUB_ORG}/ztunnel
+    auto: deps
   pkg:
     git: https://github.com/${GITHUB_ORG}/pkg
     auto: modules

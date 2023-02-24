@@ -197,7 +197,16 @@ func getValues(values []byte) (map[string]interface{}, error) {
 }
 
 func TestDocker(r ReleaseInfo) error {
-	expected := []string{"pilot-distroless", "pilot-debug", "install-cni-debug", "proxyv2-debug", "proxyv2-distroless", "operator-debug"}
+	expected := []string{
+		"pilot-distroless",
+		"pilot-debug",
+		"install-cni-debug",
+		"ztunnel-debug",
+		"ztunnel-distroless",
+		"proxyv2-debug",
+		"proxyv2-distroless",
+		"operator-debug",
+	}
 	found := map[string]struct{}{}
 	d, err := os.ReadDir(filepath.Join(r.release, "docker"))
 	if err != nil {
@@ -285,25 +294,26 @@ func TestHelmChartVersions(r ReleaseInfo) error {
 		log.Infof("Skipping TestHelmChartVersions; not a valid semver")
 		return nil
 	}
-	expected := []string{
-		"cni",
-		"istiod",
-		"base",
-		"gateway",
+	expected := map[string]string{
+		"cni":     "global",
+		"ztunnel": "",
+		"istiod":  "global",
+		"base":    "none",
+		"gateway": "none",
 	}
-	for _, chart := range expected {
+	for chart, path := range expected {
 		buf := bytes.Buffer{}
 		c := util.VerboseCommand("helm", "show", "values",
 			filepath.Join(r.release, "helm", fmt.Sprintf("%s-%s.tgz", chart, r.manifest.Version)))
 		c.Stdout = &buf
 		if err := c.Run(); err != nil {
-			return err
+			return fmt.Errorf("helm show: %v", err)
 		}
-		if chart == "gateway" || chart == "base" {
-			// Gateway has no hub/tag
+		if path == "none" {
+			// Chart no hub/tag
 			continue
 		}
-		if err := validateHubTag(r, buf.Bytes(), "global"); err != nil {
+		if err := validateHubTag(r, buf.Bytes(), path); err != nil {
 			return fmt.Errorf("%s: %v", chart, err)
 		}
 	}
@@ -318,8 +328,15 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		"manifests/charts/istio-control/istio-discovery/values.yaml",
 		"manifests/charts/istiod-remote/values.yaml",
 	}
+	topLevel := []string{"manifests/charts/ztunnel/values.yaml"}
 	for _, file := range manifestValues {
 		err := validateHubTagFromFile(r, file, "global")
+		if err != nil {
+			return err
+		}
+	}
+	for _, file := range topLevel {
+		err := validateHubTagFromFile(r, file, "")
 		if err != nil {
 			return err
 		}

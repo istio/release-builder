@@ -69,6 +69,9 @@ ${DEPENDENCIES:-$(cat <<EOD
   proxy:
     git: https://github.com/${REPO_ORG}/proxy
     branch: ${BASE_BRANCH}
+  ztunnel:
+    git: https://github.com/${REPO_ORG}/ztunnel
+    branch: ${BASE_BRANCH}
   release-builder:
     git: https://github.com/${REPO_ORG}/release-builder
     branch: ${BASE_BRANCH}
