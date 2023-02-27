@@ -106,6 +106,7 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	} else {
 		targetArchitecture = strings.Replace(targetArchitecture, "[", "", 1)
 		targetArchitecture = strings.Replace(targetArchitecture, "]", "", 1)
+		targetArchitecture = strings.Replace(targetArchitecture, " ", "", -1)
 	}
 
 	dockerHubs := os.Getenv("HUBS")
