@@ -47,7 +47,7 @@ MANIFEST=$(cat <<EOF
 version: "${VERSION}"
 docker: "${DOCKER_HUB}"
 directory: "${WORK_DIR}"
-architectures: "${ARCHS}"
+architectures: ${ARCHS}
 dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
