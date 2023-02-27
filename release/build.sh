@@ -39,7 +39,7 @@ GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
 HELM_BUCKET=${HELM_BUCKET:-istio-prerelease/charts}
 COSIGN_KEY=${COSIGN_KEY:-}
 GITHUB_ORG=${GITHUB_ORG:-istio}
-ARCH=${ARCH:-[linux/amd64, linux/arm64]}
+ARCH=${ARCH:-linux/amd64,linux/arm64}
 
 if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
   PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
@@ -60,7 +60,7 @@ MANIFEST=$(cat <<EOF
 version: "${VERSION}"
 docker: "${DOCKER_HUB}"
 directory: "${WORK_DIR}"
-architectures: ${ARCH}
+architectures: "[${ARCH}]"
 dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
@@ -120,7 +120,7 @@ if [ "$BUILD_BASE_IMAGES" = true ] ; then
 version: "${VERSION}"
 docker: "${DOCKER_HUB}"
 directory: "${WORK_DIR}"
-architectures: ${ARCH}
+architectures: "[${ARCH}]"
 dependencies:
   istio:
     git: https://github.com/${GITHUB_ORG}/istio
