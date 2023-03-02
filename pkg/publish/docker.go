@@ -91,7 +91,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 	// able to run 'cosign public-key <key>'.
 	cosignEnabled := false
 	if cosignkey != "" {
-		if err := util.VerboseCommand("cosign", "public-key", "--key", cosignkey).Run(); err != nil {
+		if err := util.VerboseCommand("cosign", "public-key", "--key", cosignkey, "-y").Run(); err != nil {
 			log.Errorf("Argument '--cosignkey' nonempty but unable to access key %v, disabling signing.", err)
 		} else {
 			cosignEnabled = true
@@ -145,7 +145,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 			// Sign images *after* push -- cosign only works against real
 			// repositories (not valid against tarballs)
 			if cosignEnabled {
-				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference(arch)).Run(); err != nil {
+				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference(arch), "-y").Run(); err != nil {
 					return fmt.Errorf("failed to sign image %v with key %v: %v", img.NewReference(arch), cosignkey, err)
 				}
 			}
@@ -158,7 +158,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 				return err
 			}
 			if cosignEnabled {
-				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference("")).Run(); err != nil {
+				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference(""), "-y").Run(); err != nil {
 					return fmt.Errorf("failed to sign image %v with key %v: %v", img.NewReference(""), cosignkey, err)
 				}
 			}
