@@ -27,8 +27,6 @@ import (
 )
 
 const (
-	sourceSpdx    string = "istio-source.spdx"
-	releaseSpdx   string = "istio-release.spdx"
 	sbomOutputURI string = "https://storage.googleapis.com/istio-release/releases"
 )
 
@@ -40,11 +38,11 @@ func GenerateBillOfMaterials(manifest model.Manifest) error {
 	if manifest.BillOfMaterialsURI != "" {
 		nameSpaceURI = manifest.BillOfMaterialsURI
 	}
-	sourceSbomFile := path.Join(manifest.OutDir(), sourceSpdx)
-	sourceSbomNamespace := path.Join(nameSpaceURI, manifest.Version, sourceSpdx)
+	sourceSbomFile := path.Join(manifest.OutDir(), fmt.Sprintf("istio-source-%s.spdx", manifest.Version))
+	sourceSbomNamespace := path.Join(nameSpaceURI, manifest.Version, fmt.Sprintf("istio-source-%s.spdx", manifest.Version))
 
-	releaseSbomFile := path.Join(manifest.OutDir(), releaseSpdx)
-	releaseSbomNamespace := path.Join(nameSpaceURI, manifest.Version, releaseSpdx)
+	releaseSbomFile := path.Join(manifest.OutDir(), fmt.Sprintf("istio-source-%s.spdx", manifest.Version))
+	releaseSbomNamespace := path.Join(nameSpaceURI, manifest.Version, fmt.Sprintf("istio-source-%s.spdx", manifest.Version))
 
 	// Run bom generator to generate the software bill of materials(SBOM) for istio.
 	log.Infof("Generating Software Bill of Materials for istio release artifacts")
