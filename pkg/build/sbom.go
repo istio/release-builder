@@ -26,21 +26,56 @@ import (
 	"istio.io/release-builder/pkg/util"
 )
 
-// Sbom generates Software Bill Of Materials for istio repo in an SPDX readable format.
+const (
+	sourceSpdx    string = "istio-source.spdx"
+	releaseSpdx   string = "istio-release.spdx"
+	sbomOutputURI string = "https://storage.googleapis.com/istio-release/releases"
+)
+
+// GenerateBillOfMaterials generates Software Bill Of Materials for istio repo in an SPDX readable format.
 func GenerateBillOfMaterials(manifest model.Manifest) error {
 	// Retrieve istio repository path to run the sbom generator
 	istioRepoDir := manifest.RepoDir("istio")
-	sourceSbomFile := path.Join(manifest.OutDir(), "istio-source.spdx")
-	sourceSbomNamespace := fmt.Sprintf("https://storage.googleapis.com/istio-release/releases/%s/istio-source.spdx",
-		manifest.Version)
-	releaseSbomFile := path.Join(manifest.OutDir(), "istio-release.spdx")
-	releaseSbomNamespace := fmt.Sprintf("https://storage.googleapis.com/istio-release/releases/%s/istio-release.spdx",
-		manifest.Version)
+	nameSpaceURI := sbomOutputURI
+	if manifest.BillOfMaterialsURI != "" {
+		nameSpaceURI = manifest.BillOfMaterialsURI
+	}
+	sourceSbomFile := path.Join(manifest.OutDir(), sourceSpdx)
+	sourceSbomNamespace := path.Join(nameSpaceURI, manifest.Version, sourceSpdx)
 
-	// construct all the docker image tarball names as bom currently cannot accept directory as input
-	dockerDir := path.Join(manifest.OutDir(), "docker")
-	dockerImages := []string{}
-	if err := filepath.Walk(dockerDir, func(path string, fi os.FileInfo, err error) error {
+	releaseSbomFile := path.Join(manifest.OutDir(), releaseSpdx)
+	releaseSbomNamespace := path.Join(nameSpaceURI, manifest.Version, releaseSpdx)
+
+	// Run bom generator to generate the software bill of materials(SBOM) for istio.
+	log.Infof("Generating Software Bill of Materials for istio release artifacts")
+	// For Docker output in 'context' mode we will not produce SBOM.
+	// `bom` can produce bill only for tar and remote images.
+	if manifest.DockerOutput == model.DockerOutputTar {
+		dockerDir := path.Join(manifest.OutDir(), "docker")
+		// construct all the docker image tarball names as bom currently cannot accept directory as input
+		dockerImages := DockerTarPaths(dockerDir)
+		if err := util.VerboseCommand("bom", "--log-level", "error",
+			"generate", "--name", "Istio Release "+manifest.Version,
+			"--namespace", releaseSbomNamespace, "--ignore", "licenses,'*.sha256',docker", "--dirs", manifest.OutDir(),
+			"--image-archive", strings.Join(dockerImages, ","), "--output", releaseSbomFile).Run(); err != nil {
+			return fmt.Errorf("couldn't generate sbom for istio release artifacts: %v", err)
+		}
+	}
+
+	// Run bom generator to generate the software bill of materials(SBOM) for istio.
+	log.Infof("Generating Software Bill of Materials for istio source code")
+	if err := util.VerboseCommand("bom", "--log-level", "error", "generate", "--name", "Istio Source "+manifest.Version,
+		"--namespace", sourceSbomNamespace, "--dirs", istioRepoDir, "--output", sourceSbomFile).Run(); err != nil {
+		return fmt.Errorf("couldn't generate sbom for istio source: %v", err)
+	}
+	return nil
+}
+
+// DockerTarPaths construct all the docker image tarball names as bom currently
+// cannot accept directory as input
+func DockerTarPaths(dockerDir string) []string {
+	var dockerImages []string
+	err := filepath.Walk(dockerDir, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -52,23 +87,9 @@ func GenerateBillOfMaterials(manifest model.Manifest) error {
 		}
 		dockerImages = append(dockerImages, path)
 		return nil
-	}); err != nil {
-		return fmt.Errorf("failed to walk directory %s: %v", dockerDir, err)
+	})
+	if err != nil {
+		return nil
 	}
-
-	// Run bom generator to generate the software bill of materials(SBOM) for istio.
-	log.Infof("Generating Software Bill of Materials for istio release artifacts")
-	if err := util.VerboseCommand("bom", "--log-level", "error", "generate", "--name", "Istio Release "+manifest.Version,
-		"--namespace", releaseSbomNamespace, "--ignore", "licenses,'*.sha256',docker", "--dirs", manifest.OutDir(),
-		"--image-archive", strings.Join(dockerImages, ","), "--output", releaseSbomFile).Run(); err != nil {
-		return fmt.Errorf("couldn't generate sbom for istio release artifacts: %v", err)
-	}
-
-	// Run bom generator to generate the software bill of materials(SBOM) for istio.
-	log.Infof("Generating Software Bill of Materials for istio source code")
-	if err := util.VerboseCommand("bom", "--log-level", "error", "generate", "--name", "Istio Source "+manifest.Version,
-		"--namespace", sourceSbomNamespace, "--dirs", istioRepoDir, "--output", sourceSbomFile).Run(); err != nil {
-		return fmt.Errorf("couldn't generate sbom for istio source: %v", err)
-	}
-	return nil
+	return dockerImages
 }
