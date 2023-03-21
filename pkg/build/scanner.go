@@ -60,7 +60,12 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	baseVersion := strings.TrimSpace(strings.Split(out.String(), " ")[2]) // Assumes line of the form BASE_VERSION ?= baseVersion
 
 	// Call image scanner passing in base image name. If request times out, retry the request
-	baseImageName := "istio/base:" + baseVersion
+	istioBaseRegistry := os.Getenv("ISTIO_BASE_REGISTRY")
+	if istioBaseRegistry == "" {
+		istioBaseRegistry = "istio"
+	}
+	baseImageName := istioBaseRegistry + "/base:" + baseVersion
+
 	trivyScanOutput, err := util.RunWithOutput("trivy", "image", "--ignore-unfixed", "--no-progress", "--exit-code", "2", baseImageName)
 	if err == nil {
 		log.Infof("Base image scan of %s was successful", baseImageName)
