@@ -173,6 +173,10 @@ func publishManifest(manifest string, images []string) error {
 	// Typically we could just use `docker manifest create manifest images...`. However, we need to actually
 	// push source images first. We want to push these without a tag, so users never use them. Docker cannot
 	// push directly by tag, so here we are...
+	manifestRef, err := name.ParseReference(manifest)
+	if err != nil {
+		return fmt.Errorf("failed to parse %v: %v", manifest, err)
+	}
 	craneImages := []v1.Image{}
 	for _, image := range images {
 		tagRef, err := name.ParseReference(image)
@@ -188,7 +192,7 @@ func publishManifest(manifest string, images []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to get digest for %v: %v", image, err)
 		}
-		digestRef, err := name.NewDigest(fmt.Sprintf("%s@%s", tagRef.Context(), digest.String()))
+		digestRef, err := name.NewDigest(fmt.Sprintf("%s@%s", manifestRef.Context(), digest.String()))
 		if err != nil {
 			return fmt.Errorf("failed to build digest reference for %v: %v", image, err)
 		}
@@ -237,10 +241,6 @@ func publishManifest(manifest string, images []string) error {
 				},
 			},
 		})
-	}
-	manifestRef, err := name.ParseReference(manifest)
-	if err != nil {
-		return fmt.Errorf("failed to parse %v: %v", manifestRef, err)
 	}
 	if err := remote.MultiWrite(map[name.Reference]remote.Taggable{manifestRef: index}, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
 		return fmt.Errorf("failed to push %v: %v", manifestRef, err)
