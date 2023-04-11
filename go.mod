@@ -54,7 +54,6 @@ require (
 	github.com/klauspost/compress v1.16.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
@@ -82,6 +81,7 @@ require (
 	google.golang.org/genproto v0.0.0-20230403163135-c38d8f061ccd // indirect
 	google.golang.org/grpc v1.54.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
