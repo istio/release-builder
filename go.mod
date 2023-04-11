@@ -6,13 +6,13 @@ require (
 	cloud.google.com/go/storage v1.30.1
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/go-git/go-git/v5 v5.6.1
-	github.com/google/go-containerregistry v0.13.0
+	github.com/google/go-containerregistry v0.14.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/rogpeppe/go-internal v1.10.0
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/oauth2 v0.7.0
 	google.golang.org/api v0.117.0
-	istio.io/pkg v0.0.0-20221021173746-562ca5333a70
+	istio.io/pkg v0.0.0-20230410162501-7a8a1efb0878
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -30,7 +30,7 @@ require (
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/docker/cli v23.0.1+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.24+incompatible // indirect
+	github.com/docker/docker v23.0.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
