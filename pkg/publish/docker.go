@@ -172,7 +172,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 
 // publishManifest packages each image in `images` into a single manifest, and pushes to `manifest`.
 func publishManifest(manifest string, images []string) ([]name.Digest, error) {
-	var digests map[string]name.Digest
+	var digests []name.Digest
 	log.Infof("creating manifest %v from %v", manifest, images)
 	// Typically we could just use `docker manifest create manifest images...`. However, we need to actually
 	// push source images first. We want to push these without a tag, so users never use them. Docker cannot
@@ -200,7 +200,7 @@ func publishManifest(manifest string, images []string) ([]name.Digest, error) {
 			return nil, fmt.Errorf("failed to push %v: %v", image, err)
 		}
 		craneImages = append(craneImages, img)
-		digests[image] = digestRef
+		digests = append(digests, digestRef)
 		log.Infof("pushed %v for manifest", digestRef)
 	}
 	// Now all the images are in the registry, build the manifest. We can't just utilize `docker manifest create`,
@@ -250,7 +250,7 @@ func publishManifest(manifest string, images []string) ([]name.Digest, error) {
 	if err := remote.MultiWrite(map[name.Reference]remote.Taggable{manifestRef: index}, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
 		return nil, fmt.Errorf("failed to push %v: %v", manifestRef, err)
 	}
-	return nil, nil
+	return digests, nil
 }
 
 // getImageNameVariant determines the name of the image (eg, pilot) and variant (eg, distroless).
