@@ -154,15 +154,13 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 			for _, arch := range archs {
 				localImages = append(localImages, img.OriginalReference(arch))
 			}
-			digests, err := publishManifest(img.NewReference(""), localImages)
+			digest, err := publishManifest(img.NewReference(""), localImages)
 			if err != nil {
 				return err
 			}
 			if cosignEnabled {
-				for _, digest := range digests {
-					if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, digest.String(), "-y").Run(); err != nil {
-						return fmt.Errorf("failed to sign image %v with key %v: %v", digest.String(), cosignkey, err)
-					}
+				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, digest.String(), "-y", "--recursive").Run(); err != nil {
+					return fmt.Errorf("failed to sign image %v with key %v: %v", digest.String(), cosignkey, err)
 				}
 			}
 		}
@@ -171,8 +169,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 }
 
 // publishManifest packages each image in `images` into a single manifest, and pushes to `manifest`.
-func publishManifest(manifest string, images []string) ([]name.Digest, error) {
-	var digests []name.Digest
+func publishManifest(manifest string, images []string) (name.Digest, error) {
 	log.Infof("creating manifest %v from %v", manifest, images)
 	// Typically we could just use `docker manifest create manifest images...`. However, we need to actually
 	// push source images first. We want to push these without a tag, so users never use them. Docker cannot
@@ -200,7 +197,6 @@ func publishManifest(manifest string, images []string) ([]name.Digest, error) {
 			return nil, fmt.Errorf("failed to push %v: %v", image, err)
 		}
 		craneImages = append(craneImages, img)
-		digests = append(digests, digestRef)
 		log.Infof("pushed %v for manifest", digestRef)
 	}
 	// Now all the images are in the registry, build the manifest. We can't just utilize `docker manifest create`,
@@ -250,7 +246,15 @@ func publishManifest(manifest string, images []string) ([]name.Digest, error) {
 	if err := remote.MultiWrite(map[name.Reference]remote.Taggable{manifestRef: index}, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
 		return nil, fmt.Errorf("failed to push %v: %v", manifestRef, err)
 	}
-	return digests, nil
+	newImg, err := remote.Image(manifestRef, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load %v: %v", manifestRef, err)
+	}
+	digest, err := newImg.Digest()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get digest for %v: %v", manifestRef, err)
+	}
+	return digest, nil
 }
 
 // getImageNameVariant determines the name of the image (eg, pilot) and variant (eg, distroless).
