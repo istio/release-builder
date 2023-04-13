@@ -91,7 +91,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 	// able to run 'cosign public-key <key>'.
 	cosignEnabled := false
 	if cosignkey != "" {
-		if err := util.VerboseCommand("cosign", "public-key", "--key", cosignkey, "-y").Run(); err != nil {
+		if err := util.VerboseCommand("cosign", "public-key", "--key", cosignkey).Run(); err != nil {
 			log.Errorf("Argument '--cosignkey' nonempty but unable to access key %v, disabling signing.", err)
 		} else {
 			cosignEnabled = true
