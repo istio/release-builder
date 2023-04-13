@@ -154,12 +154,15 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 			for _, arch := range archs {
 				localImages = append(localImages, img.OriginalReference(arch))
 			}
-			if err := publishManifest(img.NewReference(""), localImages); err != nil {
+			digests, err := publishManifest(img.NewReference(""), localImages)
+			if err != nil {
 				return err
 			}
 			if cosignEnabled {
-				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference(""), "-y").Run(); err != nil {
-					return fmt.Errorf("failed to sign image %v with key %v: %v", img.NewReference(""), cosignkey, err)
+				for _, digest := range digests {
+					if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, digest.String(), "-y").Run(); err != nil {
+						return fmt.Errorf("failed to sign image %v with key %v: %v", digest.String(), cosignkey, err)
+					}
 				}
 			}
 		}
@@ -168,7 +171,8 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 }
 
 // publishManifest packages each image in `images` into a single manifest, and pushes to `manifest`.
-func publishManifest(manifest string, images []string) error {
+func publishManifest(manifest string, images []string) ([]name.Digest, error) {
+	var digests map[string]name.Digest
 	log.Infof("creating manifest %v from %v", manifest, images)
 	// Typically we could just use `docker manifest create manifest images...`. However, we need to actually
 	// push source images first. We want to push these without a tag, so users never use them. Docker cannot
@@ -177,25 +181,26 @@ func publishManifest(manifest string, images []string) error {
 	for _, image := range images {
 		tagRef, err := name.ParseReference(image)
 		if err != nil {
-			return fmt.Errorf("failed to parse %v: %v", image, err)
+			return nil, fmt.Errorf("failed to parse %v: %v", image, err)
 		}
 		log.Infof("starting push of %v for manifest (without tag)", tagRef)
 		img, err := daemon.Image(tagRef)
 		if err != nil {
-			return fmt.Errorf("failed to load %v: %v", image, err)
+			return nil, fmt.Errorf("failed to load %v: %v", image, err)
 		}
 		digest, err := img.Digest()
 		if err != nil {
-			return fmt.Errorf("failed to get digest for %v: %v", image, err)
+			return nil, fmt.Errorf("failed to get digest for %v: %v", image, err)
 		}
 		digestRef, err := name.NewDigest(fmt.Sprintf("%s@%s", tagRef.Context(), digest.String()))
 		if err != nil {
-			return fmt.Errorf("failed to build digest reference for %v: %v", image, err)
+			return nil, fmt.Errorf("failed to build digest reference for %v: %v", image, err)
 		}
 		if err := remote.Write(digestRef, img, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-			return fmt.Errorf("failed to push %v: %v", image, err)
+			return nil, fmt.Errorf("failed to push %v: %v", image, err)
 		}
 		craneImages = append(craneImages, img)
+		digests[image] = digestRef
 		log.Infof("pushed %v for manifest", digestRef)
 	}
 	// Now all the images are in the registry, build the manifest. We can't just utilize `docker manifest create`,
@@ -206,21 +211,21 @@ func publishManifest(manifest string, images []string) error {
 	for _, img := range craneImages {
 		mt, err := img.MediaType()
 		if err != nil {
-			return fmt.Errorf("failed to get mediatype: %w", err)
+			return nil, fmt.Errorf("failed to get mediatype: %w", err)
 		}
 
 		h, err := img.Digest()
 		if err != nil {
-			return fmt.Errorf("failed to compute digest: %w", err)
+			return nil, fmt.Errorf("failed to compute digest: %w", err)
 		}
 
 		size, err := img.Size()
 		if err != nil {
-			return fmt.Errorf("failed to compute size: %w", err)
+			return nil, fmt.Errorf("failed to compute size: %w", err)
 		}
 		cfg, err := img.ConfigFile()
 		if err != nil {
-			return fmt.Errorf("failed to get config file: %w", err)
+			return nil, fmt.Errorf("failed to get config file: %w", err)
 		}
 		index = mutate.AppendManifests(index, mutate.IndexAddendum{
 			Add: img,
@@ -240,12 +245,12 @@ func publishManifest(manifest string, images []string) error {
 	}
 	manifestRef, err := name.ParseReference(manifest)
 	if err != nil {
-		return fmt.Errorf("failed to parse %v: %v", manifestRef, err)
+		return nil, fmt.Errorf("failed to parse %v: %v", manifestRef, err)
 	}
 	if err := remote.MultiWrite(map[name.Reference]remote.Taggable{manifestRef: index}, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-		return fmt.Errorf("failed to push %v: %v", manifestRef, err)
+		return nil, fmt.Errorf("failed to push %v: %v", manifestRef, err)
 	}
-	return nil
+	return nil, nil
 }
 
 // getImageNameVariant determines the name of the image (eg, pilot) and variant (eg, distroless).
