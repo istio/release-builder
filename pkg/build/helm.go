@@ -167,12 +167,37 @@ func HelmCharts(manifest model.Manifest) error {
 		return fmt.Errorf("failed to make destination directory %v: %v", dst, err)
 	}
 	for _, chart := range repoHelmCharts {
-		dir := path.Join(manifest.RepoDir("istio"), chart)
-		c := util.VerboseCommand("helm", "package", dir)
+		inDir := path.Join(manifest.RepoDir("istio"), chart)
+		outDir := path.Join(manifest.WorkDir(), "charts", chart)
+		if err := util.CopyDir(inDir, outDir); err != nil {
+			return err
+		}
+		if err := dropKustomize(outDir); err != nil {
+			return err
+		}
+		c := util.VerboseCommand("helm", "package", outDir)
 		c.Dir = dst
 		if err := c.Run(); err != nil {
 			return fmt.Errorf("package %v: %v", chart, err)
 		}
 	}
 	return nil
+}
+
+// Workaround for https://github.com/istio/istio/issues/44237. Eventually we will remove kustomize entirely,
+// but this is for backwards compat to remove it just from Helm charts.
+func dropKustomize(dir string) error {
+	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		// Check if the file name is "kustomization.yaml"
+		if info.Name() == "kustomization.yaml" {
+			// Delete the file
+			if err := os.Remove(path); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
