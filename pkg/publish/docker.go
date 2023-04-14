@@ -260,11 +260,7 @@ func publishManifest(manifest string, images []string) (string, error) {
 	if err := remote.MultiWrite(map[name.Reference]remote.Taggable{manifestRef: index}, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
 		return "", fmt.Errorf("failed to push %v: %v", manifestRef, err)
 	}
-	newImg, err := remote.Image(manifestRef, remote.WithAuthFromKeychain(authn.DefaultKeychain))
-	if err != nil {
-		return "", fmt.Errorf("failed to load %v: %v", manifestRef, err)
-	}
-	digest, err := newImg.Digest()
+	digest, err := index.Digest()
 	if err != nil {
 		return "", fmt.Errorf("failed to get digest for %v: %v", manifestRef, err)
 	}
