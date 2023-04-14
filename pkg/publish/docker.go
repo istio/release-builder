@@ -145,7 +145,21 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 			// Sign images *after* push -- cosign only works against real
 			// repositories (not valid against tarballs)
 			if cosignEnabled {
-				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference(arch), "-y").Run(); err != nil {
+				imgRef, err := name.ParseReference(img.NewReference(arch))
+				if err != nil {
+					return fmt.Errorf("failed to parse image reference %v: %v", img.NewReference(arch), err)
+				}
+				newImg, err := remote.Image(imgRef, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+				if err != nil {
+					return fmt.Errorf("failed to load %v: %v", imgRef, err)
+				}
+				digest, err := newImg.Digest()
+				if err != nil {
+					return fmt.Errorf("failed to get digest for %v: %v", imgRef, err)
+				}
+				// We need to return the digest of the manifest, not the image. This is because the manifest is what is signed.
+				// This should return something like `gcr.io/istio-testing/pilot@sha256:1234`
+				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, imgRef.Context().String()+"@"+digest.String(), "-y", "--recursive").Run(); err != nil {
 					return fmt.Errorf("failed to sign image %v with key %v: %v", img.NewReference(arch), cosignkey, err)
 				}
 			}
@@ -154,12 +168,13 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 			for _, arch := range archs {
 				localImages = append(localImages, img.OriginalReference(arch))
 			}
-			if err := publishManifest(img.NewReference(""), localImages); err != nil {
+			digest, err := publishManifest(img.NewReference(""), localImages)
+			if err != nil {
 				return err
 			}
 			if cosignEnabled {
-				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, img.NewReference(""), "-y").Run(); err != nil {
-					return fmt.Errorf("failed to sign image %v with key %v: %v", img.NewReference(""), cosignkey, err)
+				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, digest, "-y", "--recursive").Run(); err != nil {
+					return fmt.Errorf("failed to sign image %v with key %v: %v", digest, cosignkey, err)
 				}
 			}
 		}
@@ -168,7 +183,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 }
 
 // publishManifest packages each image in `images` into a single manifest, and pushes to `manifest`.
-func publishManifest(manifest string, images []string) error {
+func publishManifest(manifest string, images []string) (string, error) {
 	log.Infof("creating manifest %v from %v", manifest, images)
 	// Typically we could just use `docker manifest create manifest images...`. However, we need to actually
 	// push source images first. We want to push these without a tag, so users never use them. Docker cannot
@@ -177,23 +192,23 @@ func publishManifest(manifest string, images []string) error {
 	for _, image := range images {
 		tagRef, err := name.ParseReference(image)
 		if err != nil {
-			return fmt.Errorf("failed to parse %v: %v", image, err)
+			return "", fmt.Errorf("failed to parse %v: %v", image, err)
 		}
 		log.Infof("starting push of %v for manifest (without tag)", tagRef)
 		img, err := daemon.Image(tagRef)
 		if err != nil {
-			return fmt.Errorf("failed to load %v: %v", image, err)
+			return "", fmt.Errorf("failed to load %v: %v", image, err)
 		}
 		digest, err := img.Digest()
 		if err != nil {
-			return fmt.Errorf("failed to get digest for %v: %v", image, err)
+			return "", fmt.Errorf("failed to get digest for %v: %v", image, err)
 		}
 		digestRef, err := name.NewDigest(fmt.Sprintf("%s@%s", tagRef.Context(), digest.String()))
 		if err != nil {
-			return fmt.Errorf("failed to build digest reference for %v: %v", image, err)
+			return "", fmt.Errorf("failed to build digest reference for %v: %v", image, err)
 		}
 		if err := remote.Write(digestRef, img, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-			return fmt.Errorf("failed to push %v: %v", image, err)
+			return "", fmt.Errorf("failed to push %v: %v", image, err)
 		}
 		craneImages = append(craneImages, img)
 		log.Infof("pushed %v for manifest", digestRef)
@@ -206,21 +221,21 @@ func publishManifest(manifest string, images []string) error {
 	for _, img := range craneImages {
 		mt, err := img.MediaType()
 		if err != nil {
-			return fmt.Errorf("failed to get mediatype: %w", err)
+			return "", fmt.Errorf("failed to get mediatype: %w", err)
 		}
 
 		h, err := img.Digest()
 		if err != nil {
-			return fmt.Errorf("failed to compute digest: %w", err)
+			return "", fmt.Errorf("failed to compute digest: %w", err)
 		}
 
 		size, err := img.Size()
 		if err != nil {
-			return fmt.Errorf("failed to compute size: %w", err)
+			return "", fmt.Errorf("failed to compute size: %w", err)
 		}
 		cfg, err := img.ConfigFile()
 		if err != nil {
-			return fmt.Errorf("failed to get config file: %w", err)
+			return "", fmt.Errorf("failed to get config file: %w", err)
 		}
 		index = mutate.AppendManifests(index, mutate.IndexAddendum{
 			Add: img,
@@ -240,12 +255,18 @@ func publishManifest(manifest string, images []string) error {
 	}
 	manifestRef, err := name.ParseReference(manifest)
 	if err != nil {
-		return fmt.Errorf("failed to parse %v: %v", manifestRef, err)
+		return "", fmt.Errorf("failed to parse %v: %v", manifestRef, err)
 	}
 	if err := remote.MultiWrite(map[name.Reference]remote.Taggable{manifestRef: index}, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-		return fmt.Errorf("failed to push %v: %v", manifestRef, err)
+		return "", fmt.Errorf("failed to push %v: %v", manifestRef, err)
 	}
-	return nil
+	digest, err := index.Digest()
+	if err != nil {
+		return "", fmt.Errorf("failed to get digest for %v: %v", manifestRef, err)
+	}
+	// We need to return the digest of the manifest, not the image. This is because the manifest is what is signed.
+	// This should return something like `gcr.io/istio-testing/pilot@sha256:1234`
+	return manifestRef.Context().String() + "@" + digest.String(), nil
 }
 
 // getImageNameVariant determines the name of the image (eg, pilot) and variant (eg, distroless).
