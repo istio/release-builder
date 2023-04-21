@@ -134,7 +134,6 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 	var client *github.Client
 	var ctx context.Context
 	user := &github.User{} // default to empty user for PushCommit call
-	fmt.Printf("DEBUG user: %s", user)
 	if !dryrun {
 		ctx = context.Background()
 		ts := oauth2.StaticTokenSource(
@@ -145,6 +144,7 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 		var err error
 		user, _, err = client.Users.Get(ctx, "")
 		if err != nil {
+			fmt.Printf("DEBUG: There was an error in setting up the go-git objects - unable to authenticate user with token %s\n", githubToken)
 			return err
 		}
 	}
