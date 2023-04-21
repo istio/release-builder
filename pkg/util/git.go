@@ -86,6 +86,11 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 		if user.Email == nil {
 			user.Email = &emptyString
 		}
+		// Create a commit on that branch
+		// user.Email may be nil, so set to an empty string
+		if user.Name == nil {
+			user.Name = &emptyString
+		}
 		commit, err := w.Commit(commitString, &git.CommitOptions{
 			Author: &object.Signature{
 				Name:  *user.Name,
@@ -129,6 +134,7 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 	var client *github.Client
 	var ctx context.Context
 	user := &github.User{} // default to empty user for PushCommit call
+	fmt.Printf("DEBUG user: %s", user)
 	if !dryrun {
 		ctx = context.Background()
 		ts := oauth2.StaticTokenSource(
