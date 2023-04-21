@@ -86,11 +86,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 		if user.Email == nil {
 			user.Email = &emptyString
 		}
-		// Create a commit on that branch
-		// user.Email may be nil, so set to an empty string
-		if user.Name == nil {
-			user.Name = &emptyString
-		}
+
 		commit, err := w.Commit(commitString, &git.CommitOptions{
 			Author: &object.Signature{
 				Name:  *user.Name,
@@ -106,7 +102,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 		// Push to the upstream repo.
 		err = r.Push(&git.PushOptions{
 			Auth: &http.BasicAuth{
-				Username: *user.Name, // yes, this can be anything except an empty string
+				Username: *user.User, // yes, this can be anything except an empty string
 				Password: githubToken,
 			},
 		})
@@ -143,6 +139,7 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 		client = github.NewClient(tc)
 		var err error
 		user, _, err = client.Users.Get(ctx, "")
+		fmt.Printf("\n\nThe username returned from client.Users.Get() was %s\n\n", user)
 		if err != nil {
 			fmt.Printf("DEBUG: There was an error in setting up the go-git objects - unable to authenticate user with token %s\n", githubToken)
 			return err
