@@ -89,7 +89,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 
 		commit, err := w.Commit(commitString, &git.CommitOptions{
 			Author: &object.Signature{
-				Name:  *user.Name,
+				Name:  *user.Login,
 				Email: *user.Email,
 				When:  time.Now(),
 			},
@@ -102,7 +102,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 		// Push to the upstream repo.
 		err = r.Push(&git.PushOptions{
 			Auth: &http.BasicAuth{
-				Username: *user.Name, // yes, this can be anything except an empty string
+				Username: *user.Login, // yes, this can be anything except an empty string
 				Password: githubToken,
 			},
 		})
