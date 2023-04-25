@@ -139,9 +139,7 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 		client = github.NewClient(tc)
 		var err error
 		user, _, err = client.Users.Get(ctx, "")
-		fmt.Printf("\n\nThe username returned from client.Users.Get() was %s\n\n", user)
 		if err != nil {
-			fmt.Printf("DEBUG: There was an error in setting up the go-git objects - unable to authenticate user with token %s\n", githubToken)
 			return err
 		}
 	}
