@@ -23,7 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"istio.io/pkg/log"
+	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
 

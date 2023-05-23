@@ -27,7 +27,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"istio.io/pkg/log"
+	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
@@ -419,7 +419,7 @@ func TestOperatorProfiles(r ReleaseInfo) error {
 }
 
 func TestManifest(r ReleaseInfo) error {
-	for _, repo := range []string{"api", "client-go", "istio", "pkg", "proxy"} {
+	for _, repo := range []string{"api", "client-go", "istio", "proxy"} {
 		d, f := r.manifest.Dependencies.Get()[repo]
 		if d == nil {
 			return fmt.Errorf("missing dependency: %v", repo)

@@ -139,7 +139,7 @@ directory in your current working directory. The `artifacts` directory will cont
 ## Running the branch steps locally
 
 It's easiest to run test branches against an org with has all the istio repos defined in /release/branch.sh
-forked: istio, api, client-go, cni, common-files, envoy, pkg, proxy,
+forked: istio, api, client-go, cni, common-files, envoy, proxy,
 release-builder,test-infra, tools, ztunnel. It's easier to close/remove things like PRs and branches in your own
 repo. Note that these forks should be up to date as the code will be using them for things like determining
 the latest SHAs of commits.
