@@ -76,9 +76,6 @@ ${DEPENDENCIES:-$(cat <<EOD
   ztunnel:
     git: https://github.com/${GITHUB_ORG}/ztunnel
     auto: deps
-  pkg:
-    git: https://github.com/${GITHUB_ORG}/pkg
-    auto: modules
   client-go:
     git: https://github.com/${GITHUB_ORG}/client-go
     branch: master
