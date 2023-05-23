@@ -21,7 +21,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"sigs.k8s.io/yaml"
 
-	"istio.io/pkg/log"
+	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
 

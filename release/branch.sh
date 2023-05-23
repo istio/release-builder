@@ -63,9 +63,6 @@ ${DEPENDENCIES:-$(cat <<EOD
   envoy:
     git: https://github.com/${REPO_ORG}/envoy
     branch: ${BASE_BRANCH}
-  pkg:
-    git: https://github.com/${REPO_ORG}/pkg
-    branch: ${BASE_BRANCH}
   proxy:
     git: https://github.com/${REPO_ORG}/proxy
     branch: ${BASE_BRANCH}

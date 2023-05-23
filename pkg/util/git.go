@@ -28,7 +28,7 @@ import (
 	"github.com/google/go-github/v35/github"
 	"golang.org/x/oauth2"
 
-	"istio.io/pkg/log"
+	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
 

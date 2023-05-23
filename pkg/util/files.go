@@ -31,7 +31,7 @@ import (
 
 	"github.com/rogpeppe/go-internal/modfile"
 
-	"istio.io/pkg/log"
+	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
 

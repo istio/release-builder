@@ -28,7 +28,7 @@ import (
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/googleapi"
 
-	"istio.io/pkg/log"
+	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
 
