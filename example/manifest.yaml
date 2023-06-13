@@ -29,6 +29,7 @@ dependencies:
   api:
     git: https://github.com/istio/api
     auto: modules
+    goversionenabled: true
   proxy:
     git: https://github.com/istio/proxy
     auto: deps

@@ -70,6 +70,7 @@ ${DEPENDENCIES:-$(cat <<EOD
   api:
     git: https://github.com/${GITHUB_ORG}/api
     auto: modules
+    goversionenabled: true
   proxy:
     git: https://github.com/${GITHUB_ORG}/proxy
     auto: deps

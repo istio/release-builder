@@ -123,44 +123,48 @@ func GithubUploadReleaseAssets(ctx context.Context, manifest model.Manifest, cli
 func GithubTag(client *github.Client, org string, repo string, version string, goVersionEnabled bool, sha string) error {
 	ctx := context.Background()
 
+	versions := []string{version}
 	// append `v` in front of the Istio version number to comply with
 	// Go module versioning convention.
+	// Keep the standard version as well for backwards compat
 	if goVersionEnabled && !strings.HasPrefix(version, "v") {
 		if _, err := semver.StrictNewVersion(version); err != nil {
 			return fmt.Errorf("cannot tag %v with invalid semantic version %v: %v", repo, version, err)
 		}
-		version = fmt.Sprintf("v%s", version)
+		versions = append(versions, fmt.Sprintf("v%s", version))
 	}
 
-	// First, create a tag
-	msg := fmt.Sprintf("Istio release %s", version)
-	tagType := "commit"
-	tag, _, err := client.Git.CreateTag(ctx, org, repo, &github.Tag{
-		Tag:     &version,
-		Message: &msg,
-		Object: &github.GitObject{
-			Type: &tagType,
-			SHA:  &sha,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create tag: %v", err)
-	}
-	util.YamlLog("Tag", tag)
+	for _, version := range versions {
+		// First, create a tag
+		msg := fmt.Sprintf("Istio release %s", version)
+		tagType := "commit"
+		tag, _, err := client.Git.CreateTag(ctx, org, repo, &github.Tag{
+			Tag:     &version,
+			Message: &msg,
+			Object: &github.GitObject{
+				Type: &tagType,
+				SHA:  &sha,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create tag: %v", err)
+		}
+		util.YamlLog("Tag", tag)
 
-	// Then create a reference to the tag
-	ref := fmt.Sprintf("refs/tags/%s", version)
-	reference, _, err := client.Git.CreateRef(ctx, org, repo, &github.Reference{
-		Ref: &ref,
-		Object: &github.GitObject{
-			Type: &tagType,
-			SHA:  tag.SHA,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create tag reference: %v", err)
+		// Then create a reference to the tag
+		ref := fmt.Sprintf("refs/tags/%s", version)
+		reference, _, err := client.Git.CreateRef(ctx, org, repo, &github.Reference{
+			Ref: &ref,
+			Object: &github.GitObject{
+				Type: &tagType,
+				SHA:  tag.SHA,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create tag reference: %v", err)
+		}
+		util.YamlLog("Reference", reference)
 	}
-	util.YamlLog("Reference", reference)
 
 	return nil
 }
