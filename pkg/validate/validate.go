@@ -16,7 +16,6 @@ package validate
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -244,48 +243,22 @@ type DockerConfigConfig struct {
 }
 
 func TestProxyVersion(r ReleaseInfo) error {
-	image := filepath.Join(r.release, "docker", "proxyv2-debug.tar.gz")
-	if err := util.VerboseCommand("tar", "xvf", image, "-C", r.tmpDir).Run(); err != nil {
-		log.Warnf("failed to unpackage release archive")
+	archive := filepath.Join(r.release, "docker", "proxyv2-debug.tar.gz")
+	if err := util.VerboseCommand("docker", "load", "-i", archive).Run(); err != nil {
+		return fmt.Errorf("failed to load proxyv2-debug.tar.gz as docker image: %v", err)
+	}
+	buf := bytes.Buffer{}
+	image := fmt.Sprintf("%s:%s", "istio/proxyv2", r.manifest.Version)
+	cmd := util.VerboseCommand("docker", "run", "--rm", image, "version", "--short")
+	cmd.Stdout = &buf
+	if err := cmd.Run(); err != nil {
+		return err
 	}
 
-	manifestBytes, err := os.ReadFile(filepath.Join(r.tmpDir, "manifest.json"))
-	if err != nil {
-		return fmt.Errorf("couldn't read manifest: %v", err)
+	got := strings.TrimSpace(buf.String())
+	if got != r.manifest.Version {
+		return fmt.Errorf("expected proxy version to be %s, got %s", r.manifest.Version, got)
 	}
-	manifest := []DockerManifest{}
-	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
-		return fmt.Errorf("failed to unmarshal manifest: %v", err)
-	}
-
-	configBytes, err := os.ReadFile(filepath.Join(r.tmpDir, manifest[0].Config))
-	if err != nil {
-		return fmt.Errorf("couldn't read config: %v", err)
-	}
-	config := DockerConfig{}
-	if err := json.Unmarshal(configBytes, &config); err != nil {
-		return fmt.Errorf("failed to unmarshal config: %v", err)
-	}
-
-	found := false
-	for _, env := range config.Config.Env {
-		sp := strings.Split(env, "=")
-		if len(sp) != 2 {
-			return fmt.Errorf("invalid env: %v", env)
-		}
-
-		if sp[0] == "ISTIO_META_ISTIO_VERSION" {
-			found = true
-			if sp[1] != r.manifest.Version {
-				return fmt.Errorf("expected proxy version to be %v, got %v", r.manifest.Version, sp[1])
-			}
-		}
-	}
-
-	if !found {
-		return fmt.Errorf("did not find proxy version variable")
-	}
-
 	return nil
 }
 
