@@ -248,7 +248,7 @@ func TestProxyVersion(r ReleaseInfo) error {
 		return fmt.Errorf("failed to load proxyv2-debug.tar.gz as docker image: %v", err)
 	}
 	buf := bytes.Buffer{}
-	image := fmt.Sprintf("%s:%s", "istio/proxyv2", r.manifest.Version)
+	image := fmt.Sprintf("%s/%s:%s", r.manifest.Docker, "proxyv2", r.manifest.Version)
 	cmd := util.VerboseCommand("docker", "run", "--rm", image, "version", "--short")
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
