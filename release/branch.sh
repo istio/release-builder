@@ -83,7 +83,4 @@ EOD
 EOF
 )
 
-# "Temporary" hacks
-export PATH=${GOPATH}/bin:${PATH}
-
 go run main.go branch --manifest <(echo "${MANIFEST}") --step="${STEP}" --dryrun="${DRY_RUN}" --githubtoken "${GITHUB_TOKEN_FILE}"
