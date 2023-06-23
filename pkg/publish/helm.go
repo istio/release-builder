@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cloud.google.com/go/storage"
 	"sigs.k8s.io/yaml"
 
 	"istio.io/istio/pkg/log"
@@ -51,7 +50,7 @@ func Helm(manifest model.Manifest, bucket string, hub string) error {
 
 func publishHelmIndex(manifest model.Manifest, bucket string) error {
 	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
+	client, err := NewGCSClient(ctx)
 	if err != nil {
 		return err
 	}

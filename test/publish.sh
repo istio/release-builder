@@ -27,7 +27,39 @@ else
   echo "No credential helpers found, push to docker may not function properly"
 fi
 
-DOCKER_HUB=${DOCKER_HUB:-gcr.io/istio-testing}
+function cleanup() {
+  # shellcheck disable=SC2046
+  docker stop $(docker ps -a -q --filter label=istio-release-builder)
+}
+trap cleanup EXIT
+
+# Setup fake GCS and registry
+docker run -d  --rm  \
+  -p "7480:5000" --label istio-release-builder \
+  --name "release-builder-registry" \
+  gcr.io/istio-testing/registry:2
+docker run -d  --rm  \
+  -p "7481:7481" --label istio-release-builder \
+  --name "release-builder-gcs" \
+  gcr.io/istio-testing/fake-gcs-server:1.45.2 \
+  -scheme http -port 7481
+
+# Setup our bucket. Add retry since the registry may not be ready yet
+counter=0
+while : ; do
+  [[ "$counter" == 10 ]] && exit 1
+  curl -X POST \
+    -d '{"name":"istio-build"}' \
+    -H "content-type: application/json" \
+    -H "accept: application/json" \
+    'http://127.0.0.1:7481/storage/v1/b?alt=json&project=test&projection=full' && break
+   sleep 1
+   echo "Trying again... Try #$counter"
+   counter=$((counter+1))
+done
+
+DOCKER_HUB=${DOCKER_HUB:-"localhost:7480"}
+export GCS_HOST=${GCS_HOST-"http://localhost:7481"}
 GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
 HELM_BUCKET=${HELM_BUCKET:-istio-build/test/charts}
 VERSION="1.19.0-releasebuilder.$(git rev-parse --short HEAD)"
@@ -92,9 +124,6 @@ ${PROXY_OVERRIDE:-}
 EOF
 )
 
-# "Temporary" hacks
-export PATH=${GOPATH}/bin:${PATH}
-
 go run main.go build --manifest <(echo "${MANIFEST}")
 
 go run main.go validate --release "${WORK_DIR}/out"
@@ -107,5 +136,4 @@ go run main.go publish --release "${WORK_DIR}/out" \
   --gcsbucket "${GCS_BUCKET}" \
   --dockerhub "${DOCKER_HUB}" \
   --dockertags "${VERSION}"
-
 fi
