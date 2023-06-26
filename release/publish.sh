@@ -51,9 +51,6 @@ COSIGN_KEY=${COSIGN_KEY:-}
 WORK_DIR="$(mktemp -d)/release"
 mkdir -p "${WORK_DIR}"
 
-# "Temporary" hacks
-export PATH=${GOPATH}/bin:${PATH}
-
 gsutil -m cp -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}/*" "${WORK_DIR}"
 go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \

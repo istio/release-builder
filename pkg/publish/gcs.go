@@ -27,15 +27,26 @@ import (
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 
 	"istio.io/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
 
+func NewGCSClient(ctx context.Context) (*storage.Client, error) {
+	opts := []option.ClientOption{}
+	if host := os.Getenv("GCS_HOST"); host != "" {
+		// For testing
+		log.Infof("using custom GCS_HOST: %v", host)
+		opts = append(opts, option.WithEndpoint(host))
+	}
+	return storage.NewClient(ctx, opts...)
+}
+
 // GcsArchive publishes the final release archive to the given GCS bucket
 func GcsArchive(manifest model.Manifest, bucket string, aliases []string) error {
 	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
+	client, err := NewGCSClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
 		return err
