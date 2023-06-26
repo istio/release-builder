@@ -197,5 +197,8 @@ func GetGithubToken(file string) (string, error) {
 		}
 		return strings.TrimSpace(string(b)), nil
 	}
+	if t, f := os.LookupEnv("GH_TOKEN"); f {
+		return t, nil
+	}
 	return os.Getenv("GITHUB_TOKEN"), nil
 }

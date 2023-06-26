@@ -88,7 +88,7 @@ The automated `STEPS`:
 
 The following credentials are needed
 
-* Github token: as environment variable `GITHUB_TOKEN` or `--githubtoken file`.
+* Github token: as environment variable `GITHUB_TOKEN`, `GH_TOKEN`, or `--githubtoken file`.
 * Docker credentials (if publishing to docker) (TODO - how to set these).
 * GCP credentials (if publishing to GCS) (TODO - how to set these).
 * Grafana credentials (if publishing to grafana): as environment variable `GRAFANA_TOKEN` or `--grafanatoken file`.
