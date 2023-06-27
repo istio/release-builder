@@ -95,6 +95,10 @@ func SetupWorkDir(dir string) error {
 
 // TagRepo tags a given git repo with the version from the manifest.
 func TagRepo(manifest model.Manifest, repo string) error {
+	if manifest.Version == "" {
+		log.Warnf("skip tagging, version not set")
+		return nil
+	}
 	headSha, err := GetSha(repo, "HEAD")
 	if err != nil {
 		return fmt.Errorf("failed to get HEAD SHA: %v", err)
