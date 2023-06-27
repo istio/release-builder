@@ -48,6 +48,7 @@ WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
 
 MANIFEST=$(cat <<EOF
+version: "${VERSION}"
 directory: "${WORK_DIR}"
 dependencies:
   istio:
