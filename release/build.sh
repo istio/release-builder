@@ -23,7 +23,15 @@ cd "${ROOT}"
 
 set -eux
 
-if [[ -n "${DOCKER_CONFIG:-}" ]]; then
+if [[ -n "${DOCKER_CONFIG_DATA:-}" ]]; then
+  # Custom docker config as inline environment variable
+  mkdir ~/.docker
+  set +x
+  echo "${DOCKER_CONFIG_DATA}" > ~/.docker/config.json
+  set -x
+  export DOCKER_CONFIG=~/.docker
+  gcloud auth configure-docker -q
+elif [[ -n "${DOCKER_CONFIG:-}" ]]; then
   # If DOCKER_CONFIG is set, we are mounting a known docker config.
   # we will want to merge in gcloud options, so we can push to GCR *and* the other (docker hub) credentials.
   # However, DOCKER_CONFIG is a read only mount. So we copy it to somewhere writeable then merge in the GCR creds
