@@ -66,7 +66,16 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 	}
 	baseImageName := istioBaseRegistry + "/base:" + baseVersion
 
-	trivyScanOutput, err := util.RunWithOutput("trivy", "image", "--ignore-unfixed", "--no-progress", "--exit-code", "2", baseImageName)
+	trivyScanOutput, err := util.RunWithOutput(
+		"trivy",
+		"image",
+		"--security-checks", "vuln", // Disable secret scanning which is not relevant
+		"--ignore-unfixed",
+		"--no-progress",
+		"--exit-code",
+		"2",
+		baseImageName,
+	)
 	if err == nil {
 		log.Infof("Base image scan of %s was successful", baseImageName)
 		if alwaysGenerateBaseImage {
