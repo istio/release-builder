@@ -106,25 +106,6 @@ ${PROXY_OVERRIDE:-}
 EOF
 )
 
-if [[ "$BUILD_BASE_IMAGES" == "true" ]]; then
-  MANIFEST=$(cat <<EOF
-version: "${VERSION}"
-docker: "${DOCKER_HUB}"
-directory: "${WORK_DIR}"
-architectures: ${ARCHS}
-dependencies:
-  istio:
-    git: https://github.com/${GITHUB_ORG}/istio
-    branch: master
-EOF
-)
-  go run main.go build \
-    --manifest <(echo "${MANIFEST}") \
-    --githubtoken "${GITHUB_TOKEN_FILE:-}" \
-    --build-base-images
-  exit 0
-fi
-
 go run main.go build --manifest <(echo "${MANIFEST}")
 
 go run main.go validate --release "${WORK_DIR}/out"
