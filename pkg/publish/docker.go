@@ -150,11 +150,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 				}
 			}
 		} else {
-			localImages := []string{}
-			for _, arch := range archs {
-				localImages = append(localImages, img.OriginalReference(arch))
-			}
-			if err := publishManifest(img.NewReference(""), localImages); err != nil {
+			if err := publishManifest(img, archs); err != nil {
 				return err
 			}
 			if cosignEnabled {
@@ -167,33 +163,41 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 	return nil
 }
 
-// publishManifest packages each image in `images` into a single manifest, and pushes to `manifest`.
-func publishManifest(manifest string, images []string) error {
-	log.Infof("creating manifest %v from %v", manifest, images)
+// publishManifest packages a single manifest for a multi-architecture image.
+func publishManifest(img Image, architectures []string) error {
+	log.Infof("creating manifest %v for architectures %v", img, architectures)
 	// Typically we could just use `docker manifest create manifest images...`. However, we need to actually
 	// push source images first. We want to push these without a tag, so users never use them. Docker cannot
 	// push directly by tag, so here we are...
 	craneImages := []v1.Image{}
-	for _, image := range images {
-		tagRef, err := name.ParseReference(image)
+	for _, arch := range architectures {
+		origImage := img.OriginalReference(arch)
+		origTagRef, err := name.ParseReference(origImage)
 		if err != nil {
-			return fmt.Errorf("failed to parse %v: %v", image, err)
+			return fmt.Errorf("failed to parse %v: %v", origImage, err)
 		}
-		log.Infof("starting push of %v for manifest (without tag)", tagRef)
-		img, err := daemon.Image(tagRef)
+		newImage := img.NewReference(arch)
+		newTagRef, err := name.ParseReference(newImage)
 		if err != nil {
-			return fmt.Errorf("failed to load %v: %v", image, err)
+			return fmt.Errorf("failed to parse %v: %v", newImage, err)
+		}
+		log.Infof("starting push of %v for manifest (without tag)", origTagRef)
+		// We will load from OriginalReference, push to NewReference
+		img, err := daemon.Image(origTagRef)
+		if err != nil {
+			return fmt.Errorf("failed to load %v: %v", origImage, err)
 		}
 		digest, err := img.Digest()
 		if err != nil {
-			return fmt.Errorf("failed to get digest for %v: %v", image, err)
+			return fmt.Errorf("failed to get digest for %v: %v", origImage, err)
 		}
-		digestRef, err := name.NewDigest(fmt.Sprintf("%s@%s", tagRef.Context(), digest.String()))
+
+		digestRef, err := name.NewDigest(fmt.Sprintf("%s@%s", newTagRef.Context(), digest.String()))
 		if err != nil {
-			return fmt.Errorf("failed to build digest reference for %v: %v", image, err)
+			return fmt.Errorf("failed to build digest reference for %v: %v", newImage, err)
 		}
 		if err := remote.Write(digestRef, img, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-			return fmt.Errorf("failed to push %v: %v", image, err)
+			return fmt.Errorf("failed to push %v: %v", newImage, err)
 		}
 		craneImages = append(craneImages, img)
 		log.Infof("pushed %v for manifest", digestRef)
@@ -238,6 +242,8 @@ func publishManifest(manifest string, images []string) error {
 			},
 		})
 	}
+	// Get target name without arch suffix
+	manifest := img.NewReference("")
 	manifestRef, err := name.ParseReference(manifest)
 	if err != nil {
 		return fmt.Errorf("failed to parse %v: %v", manifestRef, err)
