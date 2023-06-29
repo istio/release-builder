@@ -103,30 +103,6 @@ ${PROXY_OVERRIDE:-}
 EOF
 )
 
-if [ "$BUILD_BASE_IMAGES" = true ] ; then
-  # For build, don't use GITHUB_TOKEN_FILE env var set by preset-release-pipeline
-  # which is pointing to the github token for istio-release-robot. Instead point to
-  # the github token for istio-testing. The token is currently only used to create the
-  # PR to update the build image.
-  GITHUB_TOKEN_FILE=/etc/github-token/oauth
-  MANIFEST=$(cat <<EOF
-version: "${VERSION}"
-docker: "${DOCKER_HUB}"
-directory: "${WORK_DIR}"
-architectures: [linux/amd64, linux/arm64]
-dependencies:
-  istio:
-    git: https://github.com/${GITHUB_ORG}/istio
-    branch: release-1.17
-EOF
-)
-  go run main.go build \
-    --manifest <(echo "${MANIFEST}") \
-    --githubtoken "${GITHUB_TOKEN_FILE}" \
-    --build-base-images
-  exit 0
-fi
-
 go run main.go build --manifest <(echo "${MANIFEST}")
 
 go run main.go validate --release "${WORK_DIR}/out"
