@@ -159,7 +159,7 @@ func createStandaloneIstioctl(arch string, manifest model.Manifest, out string) 
 			return fmt.Errorf("failed to tar istioctl: %v", err)
 		}
 	}
-	// Move file over to the output directory. We move the file becuase we may reuse the directory for
+	// Move file over to the output directory. We move the file because we may reuse the directory for
 	// another archive (in the case of created a non-arch named archive). Also add a log message.
 	archivePath := path.Join(out, "bin", istioctlArchive)
 	dest := path.Join(manifest.OutDir(), istioctlArchive)
