@@ -153,7 +153,7 @@ the latest SHAs of commits.
 1. Run `docker buildx inspect`. This will return the information about the current builder. If the current builder `Driver` is not `docker-container`, you need to create one:
 
     ```
-    docker buildx create --driver-opt network=host,image=gcr.io/istio-testing/buildkit:v0.11.0 --name istio-builder --driver docker-container --buildkitd-flags="--debug" --use
+    docker buildx create --driver-opt network=host,image=gcr.io/istio-testing/buildkit:v0.11.0 --name container-builder --driver docker-container --buildkitd-flags="--debug" --use
     ```
 
 1. Run `crane digest gcr.io/distroless/static-debian11`. If you see an error like:
