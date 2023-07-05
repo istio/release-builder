@@ -109,10 +109,6 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		"run", "--rm", "--privileged", "multiarch/qemu-user-static", "--reset", "-p", "yes").Run(); err != nil {
 		return fmt.Errorf("failed to run qemu-user-static container: %v", err)
 	}
-	if err := util.VerboseCommand("docker",
-		"buildx", "create", "--name", "multi-arch", "--platform", "linux/amd64,linux/arm64", "--use").Run(); err != nil {
-		return fmt.Errorf("failed to set multi-arch as current builder instance: %v", err)
-	}
 
 	targetArchitecture := os.Getenv("ARCH")
 	if targetArchitecture == "" {
