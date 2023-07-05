@@ -18,7 +18,9 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
+	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
@@ -32,7 +34,7 @@ func Archive(manifest model.Manifest) error {
 	}
 
 	// We build archives for each arch. These contain the same thing except arch specific istioctl
-	for _, arch := range []string{"linux-amd64", "linux-armv7", "linux-arm64", "osx", "osx-arm64", "win"} {
+	for _, arch := range []string{"linux-amd64", "linux-armv7", "linux-arm64", "osx-amd64", "osx-arm64", "win-amd64"} {
 		out := path.Join(manifest.Directory, "work", "archive", arch, fmt.Sprintf("istio-%s", manifest.Version))
 		if err := os.MkdirAll(out, 0o750); err != nil {
 			return err
@@ -91,8 +93,13 @@ func Archive(manifest model.Manifest) error {
 		// Copy the istioctl binary over
 		istioctlBinary := fmt.Sprintf("istioctl-%s", arch)
 		istioctlDest := "istioctl"
-		if arch == "win" {
-			istioctlBinary += ".exe"
+		// The istioctl binaries for MacOS and Windows do not have the `-amd64` so remove from name.
+		// Windows also needs the `.exe` added.
+		if arch == "osx-amd64" {
+			istioctlBinary = istioctlBinary[:strings.LastIndexByte(istioctlBinary, '-')]
+		}
+		if arch == "win-amd64" {
+			istioctlBinary = istioctlBinary[:strings.LastIndexByte(istioctlBinary, '-')] + ".exe"
 			istioctlDest += ".exe"
 		}
 		if err := util.CopyFile(path.Join(manifest.RepoOutDir("istio"), istioctlBinary), path.Join(out, "bin", istioctlDest)); err != nil {
@@ -117,6 +124,20 @@ func Archive(manifest model.Manifest) error {
 		if err := createStandaloneIstioctl(arch, manifest, out); err != nil {
 			return err
 		}
+
+		// Handle creating additional archives of the older deprecated names.
+		// This is slower than simply copying the files, but keeps the change in one location.
+		// TODO - When we no longer need the older archives we can remove this creation.
+		if arch == "osx-amd64" || arch == "win-amd64" {
+			additionalArch := arch[:strings.IndexByte(arch, '-')]
+			if err := createArchive(additionalArch, manifest, out); err != nil {
+				return err
+			}
+
+			if err := createStandaloneIstioctl(additionalArch, manifest, out); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -125,7 +146,7 @@ func createStandaloneIstioctl(arch string, manifest model.Manifest, out string) 
 	var istioctlArchive string
 	// Create a stand alone archive for istioctl
 	// Windows should use zip, linux and osx tar
-	if arch == "win" {
+	if strings.HasPrefix(arch, "win") {
 		istioctlArchive = fmt.Sprintf("istioctl-%s-%s.zip", manifest.Version, arch)
 		if err := util.ZipFolder(path.Join(out, "bin", "istioctl.exe"), path.Join(out, "bin", istioctlArchive)); err != nil {
 			return fmt.Errorf("failed to zip istioctl: %v", err)
@@ -138,10 +159,12 @@ func createStandaloneIstioctl(arch string, manifest model.Manifest, out string) 
 			return fmt.Errorf("failed to tar istioctl: %v", err)
 		}
 	}
-	// Copy files over to the output directory
+	// Move file over to the output directory. We move the file because we may reuse the directory for
+	// another archive (in the case of created a non-arch named archive). Also add a log message.
 	archivePath := path.Join(out, "bin", istioctlArchive)
 	dest := path.Join(manifest.OutDir(), istioctlArchive)
-	if err := util.CopyFile(archivePath, dest); err != nil {
+	log.Infof("Moving %v -> %v", archivePath, dest)
+	if err := os.Rename(archivePath, dest); err != nil {
 		return fmt.Errorf("failed to package %v release archive: %v", arch, err)
 	}
 
@@ -156,7 +179,7 @@ func createArchive(arch string, manifest model.Manifest, out string) error {
 	var archive string
 	// Create the archive from all the above files
 	// Windows should use zip, linux and osx tar
-	if arch == "win" {
+	if strings.HasPrefix(arch, "win") {
 		archive = fmt.Sprintf("istio-%s-%s.zip", manifest.Version, arch)
 		if err := util.ZipFolder(path.Join(out, "..", fmt.Sprintf("istio-%s", manifest.Version)), path.Join(out, "..", archive)); err != nil {
 			return fmt.Errorf("failed to zip istioctl: %v", err)
@@ -171,7 +194,7 @@ func createArchive(arch string, manifest model.Manifest, out string) error {
 	}
 
 	// Copy files over to the output directory
-	archivePath := path.Join(manifest.WorkDir(), "archive", arch, archive)
+	archivePath := path.Join(out, "..", archive)
 	dest := path.Join(manifest.OutDir(), archive)
 	if err := util.CopyFile(archivePath, dest); err != nil {
 		return fmt.Errorf("failed to package %v release archive: %v", arch, err)

@@ -1,7 +1,7 @@
 # Version specifies which version is being built
 # This is use for `--version`, metrics, and determining proxy capabilities.
 # Note that since this determines proxy capabilities, it is desirable to follow Istio semver
-version: 1.14.0-test
+version: 1.19.0-test
 
 # Some of the artifacts have a docker hub built in - currently this is the operator and Helm charts
 # The specified docker hub will be used there. Note - this does not effect where the images are published,
