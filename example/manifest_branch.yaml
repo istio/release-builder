@@ -1,6 +1,6 @@
 # Version specifies which version is being being branched
 # The new branch will be of the form release-${version}
-version: 1.8
+version: 1.19
 
 # We need to set the docker in the manifest so it can be used as HUB in
 # the release builder standard environment. HUB is required to be set for
