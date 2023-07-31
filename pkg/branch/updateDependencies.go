@@ -50,18 +50,17 @@ func UpdateDependencies(manifest model.Manifest, dryrun bool) error {
 	}
 
 	// release_builder sets VERSION to the value in the manifest (ex: 1.9) and
-	// for this command we want the version unset (or what's in the Makefile.core.mk).
+	// for this command we want the version in the VERSION file).
 	var out bytes.Buffer
-	grepCmd := exec.Command("grep", "export VERSION", "Makefile.core.mk")
-	grepCmd.Stdout = &out
-	grepCmd.Dir = manifest.RepoDir(repo)
-	err := grepCmd.Run()
+	catCmd := exec.Command("cat", "VERSION")
+	catCmd.Stdout = &out
+	catCmd.Dir = manifest.RepoDir(repo)
+	err := catCmd.Run()
 	if err != nil {
-		return fmt.Errorf("grep error: %v", err)
+		return fmt.Errorf("cat error: %v", err)
 	}
-	makefileVersion := strings.TrimSpace(strings.Split(out.String(), "?=")[1])
 
-	env = []string{"VERSION=" + makefileVersion}
+	env = []string{"VERSION=" + strings.TrimSpace(out.String())}
 	if err := util.RunMake(manifest, repo, env, "gen"); err != nil {
 		return fmt.Errorf("failed to update dependencies in make: %v", err)
 	}
