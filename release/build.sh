@@ -66,7 +66,7 @@ dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
     git: https://github.com/${GITHUB_ORG}/istio
-    branch: master
+    branch: release-1.19
   api:
     git: https://github.com/${GITHUB_ORG}/api
     auto: modules
@@ -79,20 +79,20 @@ ${DEPENDENCIES:-$(cat <<EOD
     auto: deps
   client-go:
     git: https://github.com/${GITHUB_ORG}/client-go
-    branch: master
+    branch: release-1.19
     goversionenabled: true
   test-infra:
     git: https://github.com/${GITHUB_ORG}/test-infra
     branch: master
   tools:
     git: https://github.com/${GITHUB_ORG}/tools
-    branch: master
+    branch: release-1.19
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
   release-builder:
     git: https://github.com/${GITHUB_ORG}/release-builder
-    branch: master
+    branch: release-1.19
 EOD
 )}
 dashboards:
