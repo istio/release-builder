@@ -8,8 +8,8 @@ require (
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/go-github/v35 v35.3.0
-	github.com/rogpeppe/go-internal v1.11.0
 	github.com/spf13/cobra v1.7.0
+	golang.org/x/mod v0.12.0
 	golang.org/x/oauth2 v0.12.0
 	google.golang.org/api v0.140.0
 	istio.io/istio v0.0.0-20230912165037-2ca5e40bc514
@@ -67,7 +67,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
-	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
