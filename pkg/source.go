@@ -107,7 +107,7 @@ func TagRepo(manifest model.Manifest, repo string) error {
 		}
 		return fmt.Errorf("tag %v already exists, retagging would move from %v to %v", manifest.Version, currentTagSha, headSha)
 	}
-	cmd := util.VerboseCommand("git", "tag", manifest.Version)
+	cmd := util.VerboseCommand("git", "tag", "--no-sign", manifest.Version)
 	cmd.Dir = repo
 	return cmd.Run()
 }
