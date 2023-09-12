@@ -29,7 +29,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rogpeppe/go-internal/modfile"
+	"golang.org/x/mod/modfile"
 
 	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
