@@ -60,9 +60,6 @@ ${DEPENDENCIES:-$(cat <<EOD
   enhancements:
     git: https://github.com/${REPO_ORG}/enhancements
     branch: ${BASE_BRANCH}
-  envoy:
-    git: https://github.com/${REPO_ORG}/envoy
-    branch: ${BASE_BRANCH}
   proxy:
     git: https://github.com/${REPO_ORG}/proxy
     branch: ${BASE_BRANCH}
