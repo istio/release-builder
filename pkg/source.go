@@ -48,13 +48,6 @@ func Sources(manifest model.Manifest) error {
 		}
 	}
 
-	// Clone envoy at the end. It needs proxy repo to determine its SHA.
-	if manifest.Dependencies.Envoy != nil {
-		if err := cloneRepo(manifest, "envoy", manifest.Dependencies.Envoy); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
