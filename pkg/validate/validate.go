@@ -309,7 +309,7 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		}
 	}
 	for _, file := range topLevel {
-		err := validateHubTagFromFile(r, file, "defaults.")
+		err := validateHubTagFromFile(r, file, "defaults")
 		if err != nil {
 			return err
 		}
@@ -330,7 +330,7 @@ func validateHubTag(r ReleaseInfo, valuesBytes []byte, paths string) error {
 	if err != nil {
 		return err
 	}
-	tagPath := []string{paths, "tag"}
+	tagPath := append(strings.Split(paths, "."), "tag")
 	if paths == "" {
 		tagPath = []string{"tag"}
 	}
@@ -341,7 +341,7 @@ func validateHubTag(r ReleaseInfo, valuesBytes []byte, paths string) error {
 	if tag != r.manifest.Version {
 		return fmt.Errorf("archive tag incorrect: got %v expected %v", tag, r.manifest.Version)
 	}
-	hubPath := []string{paths, "hub"}
+	hubPath := append(strings.Split(paths, "."), "hub")
 	if paths == "" {
 		hubPath = []string{"hub"}
 	}
@@ -357,7 +357,7 @@ func validateHubTag(r ReleaseInfo, valuesBytes []byte, paths string) error {
 
 func TestHelmOperatorManifest(r ReleaseInfo) error {
 	operatorManifestValues := "manifests/charts/istio-operator/values.yaml"
-	return validateHubTagFromFile(r, operatorManifestValues, "defaults.")
+	return validateHubTagFromFile(r, operatorManifestValues, "defaults")
 }
 
 func TestOperatorProfiles(r ReleaseInfo) error {
