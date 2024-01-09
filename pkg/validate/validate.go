@@ -268,9 +268,9 @@ func TestHelmChartVersions(r ReleaseInfo) error {
 		return nil
 	}
 	expected := map[string]string{
-		"cni":     "global",
-		"ztunnel": "",
-		"istiod":  "global",
+		"cni":     "defaults.global",
+		"ztunnel": "defaults",
+		"istiod":  "defaults.global",
 		"base":    "none",
 		"gateway": "none",
 	}
@@ -303,13 +303,13 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 	}
 	topLevel := []string{"manifests/charts/ztunnel/values.yaml"}
 	for _, file := range manifestValues {
-		err := validateHubTagFromFile(r, file, "global")
+		err := validateHubTagFromFile(r, file, "defaults.global")
 		if err != nil {
 			return err
 		}
 	}
 	for _, file := range topLevel {
-		err := validateHubTagFromFile(r, file, "")
+		err := validateHubTagFromFile(r, file, "defaults.")
 		if err != nil {
 			return err
 		}
@@ -357,7 +357,7 @@ func validateHubTag(r ReleaseInfo, valuesBytes []byte, paths string) error {
 
 func TestHelmOperatorManifest(r ReleaseInfo) error {
 	operatorManifestValues := "manifests/charts/istio-operator/values.yaml"
-	return validateHubTagFromFile(r, operatorManifestValues, "")
+	return validateHubTagFromFile(r, operatorManifestValues, "defaults.")
 }
 
 func TestOperatorProfiles(r ReleaseInfo) error {
