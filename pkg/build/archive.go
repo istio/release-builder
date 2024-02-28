@@ -71,9 +71,6 @@ func Archive(manifest model.Manifest) error {
 		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "charts"), manifestsDir); err != nil {
 			return err
 		}
-		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "examples"), manifestsDir); err != nil {
-			return err
-		}
 		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "manifests", "profiles"), manifestsDir); err != nil {
 			return err
 		}
