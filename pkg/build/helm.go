@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"strings"
 
+	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/yaml"
 
 	"istio.io/istio/pkg/log"
@@ -57,6 +58,7 @@ var (
 		"manifests/charts/istio-control/istio-discovery",
 		"manifests/charts/istio-operator",
 		"manifests/charts/istiod-remote",
+		"manifests/charts/ambient",
 	}
 
 	// repoHelmCharts contains all helm charts we will release to the helm repo. This is a subset of
@@ -67,12 +69,13 @@ var (
 		"manifests/charts/istio-cni",
 		"manifests/charts/ztunnel",
 		"manifests/charts/istio-control/istio-discovery",
+		"manifests/charts/ambient",
 	}
 )
 
 // Similar to sanitizeChart, but works on generic templates rather than only Helm charts.
 // This updates the hub and tag fields for a single file
-func sanitizeTemplate(manifest model.Manifest, p string) error {
+func updateValues(manifest model.Manifest, p string) error {
 	read, err := os.ReadFile(p)
 	if err != nil {
 		return err
@@ -108,56 +111,55 @@ func sanitizeTemplate(manifest model.Manifest, p string) error {
 // as it is required for both the helm charts and the archive
 func SanitizeAllCharts(manifest model.Manifest) error {
 	for _, chart := range helmCharts {
-		if err := sanitizeChart(manifest, path.Join(manifest.RepoDir("istio"), chart)); err != nil {
+		if err := stampChartForRelease(manifest, path.Join(manifest.RepoDir("istio"), chart)); err != nil {
 			return fmt.Errorf("failed to sanitize chart %v: %v", chart, err)
 		}
 	}
 	return nil
 }
 
-// In the final published charts, we need the version and tag to be set for the appropriate version
-// In order to do this, we simply replace the current version with the new one.
-func sanitizeChart(manifest model.Manifest, s string) error {
-	// TODO improve this to not use raw string handling of yaml
-	currentVersion, err := os.ReadFile(path.Join(s, "Chart.yaml"))
+// 1. Updates the chart versions to the release version
+// 2. Updates values.yaml files with publishable defaults (hub/tag/etc)
+func stampChartForRelease(manifest model.Manifest, s string) error {
+	chartPath := path.Join(s, "Chart.yaml")
+	currentVersion, err := os.ReadFile(chartPath)
 	if err != nil {
 		return err
 	}
 
-	chart := make(map[string]interface{})
-	if err := yaml.Unmarshal(currentVersion, &chart); err != nil {
+	chartFile := chart.Metadata{}
+	if err := yaml.Unmarshal(currentVersion, &chartFile); err != nil {
 		log.Errorf("unmarshal failed for Chart.yaml: %v", string(currentVersion))
 		return fmt.Errorf("failed to unmarshal chart: %v", err)
 	}
 
-	// Getting the current version is a bit of a hack, we should have a more explicit way to handle this
-	cv := chart["version"].(string)
-	if err := filepath.Walk(s, func(p string, info os.FileInfo, err error) error {
-		fname := path.Base(p)
-		if fname == "Chart.yaml" || fname == "values.yaml" || fname == "gen-istio.yaml" {
-			read, err := os.ReadFile(p)
-			if err != nil {
-				return err
-			}
-			contents := string(read)
-			// These fields contain the version, we swap out the placeholder with the correct version
-			for _, replacement := range []string{"version", "appVersion"} {
-				before := fmt.Sprintf("%s: %s", replacement, cv)
-				after := fmt.Sprintf("%s: %s", replacement, manifest.Version)
-				contents = strings.ReplaceAll(contents, before, after)
-			}
+	// Update versions
+	chartFile.Version = manifest.Version
+	chartFile.AppVersion = manifest.Version
 
-			err = os.WriteFile(p, []byte(contents), 0)
-			if err != nil {
-				return err
-			}
-
-			if err := sanitizeTemplate(manifest, p); err != nil {
-				return err
+	// if chart has "file://" local/dev subchart dependencies, update with release version refs
+	// note that we do not really need to update the repo refs to something other than `file://`,
+	// as the full deps will be bundled in the `.tgz` either way.
+	if len(chartFile.Dependencies) > 0 {
+		for _, dep := range chartFile.Dependencies {
+			if strings.Contains(dep.Repository, "file://") {
+				dep.Version = manifest.Version
 			}
 		}
-		return nil
-	}); err != nil {
+	}
+
+	// Write updated chart.yaml back out
+	contents, err := yaml.Marshal(chartFile)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(chartPath, contents, 0)
+	if err != nil {
+		return err
+	}
+
+	if err := updateValues(manifest, path.Join(s, "values.yaml")); err != nil {
 		return err
 	}
 	return nil
@@ -171,6 +173,15 @@ func HelmCharts(manifest model.Manifest) error {
 	for _, chart := range repoHelmCharts {
 		inDir := path.Join(manifest.RepoDir("istio"), chart)
 		outDir := path.Join(manifest.WorkDir(), "charts", chart)
+		// before copying, do dep update if needed
+		// Helm will skip for us if the chart has no deps
+		depCmd := util.VerboseCommand("helm", "dep", "update")
+		depCmd.Dir = inDir
+		if err := depCmd.Run(); err != nil {
+			return fmt.Errorf("dep update %v: %v", chart, err)
+		}
+
+		// Now the deps are updated/inlined, we can copy and package
 		if err := util.CopyDir(inDir, outDir); err != nil {
 			return err
 		}

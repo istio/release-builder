@@ -1,0 +1,4 @@
+# Hub to pull from. Image will be `Hub/Image:Tag-Variant`
+hub: gcr.io/istio-testing
+# Tag to pull from. Image will be `Hub/Image:Tag-Variant`
+tag: latest
