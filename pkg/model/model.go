@@ -131,6 +131,9 @@ type InputManifest struct {
 	Dependencies IstioDependencies `json:"dependencies"`
 	// Version specifies what version of Istio this release is
 	Version string `json:"version"`
+	// EOLDate specifies what is the date when this Istio version become EOL
+	// Should be in format "yyyy-mm"
+	EOLDate string `json:"eolDate"`
 	// Docker specifies the docker hub to use in the helm charts.
 	Docker string `json:"docker"`
 	// DockerOutput specifies where docker images are written.
@@ -160,6 +163,9 @@ type Manifest struct {
 	Dependencies IstioDependencies `json:"dependencies"`
 	// Version specifies what version of Istio this release is
 	Version string `json:"version"`
+	// EOLDate specifies what is the date when this Istio version become EOL
+	// Should be in format "yyyy-mm"
+	EOLDate string `json:"eolDate"`
 	// Docker specifies the docker hub to use in the helm charts.
 	Docker string `json:"docker"`
 	// DockerOutput specifies where docker images are written.

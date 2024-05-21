@@ -74,6 +74,7 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 	return model.Manifest{
 		Dependencies:                in.Dependencies,
 		Version:                     in.Version,
+		EOLDate:                     in.EOLDate,
 		Docker:                      in.Docker,
 		DockerOutput:                do,
 		Directory:                   wd,
