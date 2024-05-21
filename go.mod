@@ -12,6 +12,7 @@ require (
 	golang.org/x/mod v0.15.0
 	golang.org/x/oauth2 v0.17.0
 	google.golang.org/api v0.163.0
+	helm.sh/helm/v3 v3.14.0
 	istio.io/istio v0.0.0-20240130172517-33c71d1ef987
 	sigs.k8s.io/yaml v1.4.0
 )
