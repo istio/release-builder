@@ -173,6 +173,15 @@ func HelmCharts(manifest model.Manifest) error {
 	for _, chart := range repoHelmCharts {
 		inDir := path.Join(manifest.RepoDir("istio"), chart)
 		outDir := path.Join(manifest.WorkDir(), "charts", chart)
+		// before copying, do dep update if needed
+		// Helm will skip for us if the chart has no deps
+		depCmd := util.VerboseCommand("helm", "dep", "update")
+		depCmd.Dir = inDir
+		if err := depCmd.Run(); err != nil {
+			return fmt.Errorf("dep update %v: %v", chart, err)
+		}
+
+		// Now the deps are updated/inlined, we can copy and package
 		if err := util.CopyDir(inDir, outDir); err != nil {
 			return err
 		}
