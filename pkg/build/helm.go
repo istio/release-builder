@@ -47,9 +47,6 @@ var (
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
 	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
 
-	// The helm repo alias we use to point to the actual Helm repository.
-	releaseRepoAlias = "@istio-release"
-
 	// helmCharts contains all helm charts we will release
 	helmCharts = []string{
 		"manifests/charts/base",
@@ -140,12 +137,13 @@ func stampChartForRelease(manifest model.Manifest, s string) error {
 	chartFile.Version = manifest.Version
 	chartFile.AppVersion = manifest.Version
 
-	// if chart has "file://" local/dev subchart dependencies, update with release repo refs
+	// if chart has "file://" local/dev subchart dependencies, update with release version refs
+	// note that we do not really need to update the repo refs to something other than `file://`,
+	// as the full deps will be bundled in the `.tgz` either way.
 	if len(chartFile.Dependencies) > 0 {
 		for _, dep := range chartFile.Dependencies {
 			if strings.Contains(dep.Repository, "file://") {
 				dep.Version = manifest.Version
-				dep.Repository = releaseRepoAlias
 			}
 		}
 	}
