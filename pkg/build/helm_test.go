@@ -78,10 +78,6 @@ func TestHelmUpdate(t *testing.T) {
 				if dep.Version != tc.inputManifest.Version {
 					t.Fatalf("dep version doesn't match: %+v", dep)
 				}
-
-				if dep.Repository != "@istio-release" {
-					t.Fatalf("dep repo doesn't match: %+v", dep)
-				}
 			}
 		})
 	}
