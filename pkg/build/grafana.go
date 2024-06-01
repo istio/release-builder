@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
+	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
@@ -38,6 +40,10 @@ func Grafana(manifest model.Manifest) error {
 		return fmt.Errorf("failed to read dashboards: %v", err)
 	}
 	for _, dashboard := range dashboards {
+		if !strings.HasSuffix(dashboard.Name(), "-dashboard.json") && !strings.HasSuffix(dashboard.Name(), "-dashboard.gen.json") {
+			log.Infof("skipping non-dashboard file dashboard %v", dashboard.Name())
+			continue
+		}
 		if err := externalizeDashboard(manifest.Version, path.Join(path.Join(manifest.WorkDir(), "grafana", dashboard.Name()))); err != nil {
 			return fmt.Errorf("failed to process dashboard %v: %v", dashboard.Name(), err)
 		}
