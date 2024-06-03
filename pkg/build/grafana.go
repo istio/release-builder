@@ -39,6 +39,7 @@ func Grafana(manifest model.Manifest) error {
 	if err != nil {
 		return fmt.Errorf("failed to read dashboards: %v", err)
 	}
+
 	for _, dashboard := range dashboards {
 		if !strings.HasSuffix(dashboard.Name(), "-dashboard.json") && !strings.HasSuffix(dashboard.Name(), "-dashboard.gen.json") {
 			log.Infof("skipping non-dashboard file dashboard %v", dashboard.Name())
@@ -47,12 +48,14 @@ func Grafana(manifest model.Manifest) error {
 		if err := externalizeDashboard(manifest.Version, path.Join(path.Join(manifest.WorkDir(), "grafana", dashboard.Name()))); err != nil {
 			return fmt.Errorf("failed to process dashboard %v: %v", dashboard.Name(), err)
 		}
-	}
-	if err := util.CopyDir(
-		path.Join(manifest.WorkDir(), "grafana"),
-		path.Join(manifest.OutDir(), "grafana"),
-	); err != nil {
-		return err
+		// External does not care if it was generated or not
+		sanitized := strings.ReplaceAll(dashboard.Name(), ".gen.json", ".json")
+		if err := util.CopyFile(
+			path.Join(manifest.WorkDir(), "grafana", dashboard.Name()),
+			path.Join(manifest.OutDir(), "grafana", sanitized),
+		); err != nil {
+			return err
+		}
 	}
 	return nil
 }
