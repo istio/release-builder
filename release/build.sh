@@ -79,7 +79,7 @@ ${DEPENDENCIES:-$(cat <<EOD
     auto: deps
   client-go:
     git: https://github.com/${GITHUB_ORG}/client-go
-    branch: master
+    auto: modules
     goversionenabled: true
   test-infra:
     git: https://github.com/${GITHUB_ORG}/test-infra
@@ -102,6 +102,7 @@ dashboards:
   istio-service-dashboard: 7636
   istio-workload-dashboard: 7630
   pilot-dashboard: 7645
+  ztunnel-dashboard: 0
 ${PROXY_OVERRIDE:-}
 EOF
 )

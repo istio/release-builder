@@ -38,7 +38,7 @@ dependencies:
     auto: deps
   client-go:
     git: https://github.com/istio/client-go
-    branch: master
+    auto: modules
     goversionenabled: true
   test-infra:
     git: https://github.com/istio/test-infra
@@ -59,4 +59,5 @@ dashboards:
   istio-service-dashboard: 7636
   istio-workload-dashboard: 7630
   pilot-dashboard: 7645
+  ztunnel-dashboard: 0
 architectures: [linux/amd64, linux/arm64]

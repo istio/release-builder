@@ -38,14 +38,17 @@ GITHUB_ORG=${GITHUB_ORG:-istio}
 
 WORK_DIR="$(mktemp -d)/build"
 mkdir -p "${WORK_DIR}"
-
+BRANCH="master"
+if [[ "${VERSION}" != "master" ]]; then
+  BRANCH="release-${VERSION}"
+fi
 MANIFEST=$(cat <<EOF
 version: "${VERSION}"
 directory: "${WORK_DIR}"
 dependencies:
   istio:
     git: https://github.com/${GITHUB_ORG}/istio
-    branch: master
+    branch: "${BRANCH}"
 EOF
 )
 go run main.go build \
