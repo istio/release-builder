@@ -269,7 +269,7 @@ func TestHelmChartVersions(r ReleaseInfo) error {
 	}
 	expected := map[string]string{
 		"cni":     "defaults.global",
-		"ztunnel": "defaults",
+		"ztunnel": "defaults.global",
 		"istiod":  "defaults.global",
 		"base":    "none",
 		"gateway": "none",
