@@ -2,8 +2,6 @@ module istio.io/release-builder
 
 go 1.22.0
 
-toolchain go1.22.3
-
 require (
 	cloud.google.com/go/storage v1.37.0
 	github.com/Masterminds/semver/v3 v3.2.1
