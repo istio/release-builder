@@ -16,6 +16,7 @@ package validate
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -124,14 +125,22 @@ func CheckRelease(release string) ([]string, string, []error) {
 func TestIstioctlArchive(r ReleaseInfo) error {
 	// Check istioctl from archive
 	buf := &bytes.Buffer{}
-	cmd := util.VerboseCommand(filepath.Join(r.archive, "bin", "istioctl"), "version", "--remote=false", "--short")
+	cmd := util.VerboseCommand(filepath.Join(r.archive, "bin", "istioctl"), "version", "--remote=false", "--short", "-ojson")
 	cmd.Stdout = buf
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-	got := strings.TrimSpace(buf.String())
-	if got != r.manifest.Version {
-		return fmt.Errorf("istioctl version output incorrect, got %v expected %v", got, r.manifest.Version)
+	var v Version
+	if err := json.Unmarshal(buf.Bytes(), &v); err != nil {
+		return fmt.Errorf("failed to unmarshal version information: %v", err)
+	}
+
+	if v.ClientVersion == nil {
+		return fmt.Errorf("no client version found in version information")
+	}
+
+	if gotVersion := v.ClientVersion.Version; gotVersion != r.manifest.Version {
+		return fmt.Errorf("expected proxy version to be %s, got %s", r.manifest.Version, gotVersion)
 	}
 	return nil
 }
@@ -143,14 +152,22 @@ func TestIstioctlStandalone(r ReleaseInfo) error {
 		return err
 	}
 	buf := &bytes.Buffer{}
-	cmd := util.VerboseCommand(filepath.Join(r.tmpDir, "istioctl"), "version", "--remote=false", "--short")
+	cmd := util.VerboseCommand(filepath.Join(r.tmpDir, "istioctl"), "version", "--remote=false", "--short", "-ojson")
 	cmd.Stdout = buf
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-	got := strings.TrimSpace(buf.String())
-	if got != r.manifest.Version {
-		return fmt.Errorf("istioctl version output incorrect, got %v expected %v", got, r.manifest.Version)
+	var v Version
+	if err := json.Unmarshal(buf.Bytes(), &v); err != nil {
+		return fmt.Errorf("failed to unmarshal version information: %v", err)
+	}
+
+	if v.ClientVersion == nil {
+		return fmt.Errorf("no client version found in version information")
+	}
+
+	if gotVersion := v.ClientVersion.Version; gotVersion != r.manifest.Version {
+		return fmt.Errorf("expected proxy version to be %s, got %s", r.manifest.Version, gotVersion)
 	}
 	return nil
 }
@@ -242,6 +259,20 @@ type DockerConfigConfig struct {
 	Env []string `json:"Env"`
 }
 
+// BuildInfo describes version information about the binary build.
+type BuildInfo struct {
+	Version       string `json:"version"`
+	GitRevision   string `json:"revision"`
+	GolangVersion string `json:"golang_version"`
+	BuildStatus   string `json:"status"`
+	GitTag        string `json:"tag"`
+}
+
+// Version holds info for client and control plane versions
+type Version struct {
+	ClientVersion *BuildInfo `json:"clientVersion,omitempty" yaml:"clientVersion,omitempty"`
+}
+
 func TestProxyVersion(r ReleaseInfo) error {
 	archive := filepath.Join(r.release, "docker", "proxyv2-debug.tar.gz")
 	if err := util.VerboseCommand("docker", "load", "-i", archive).Run(); err != nil {
@@ -249,15 +280,23 @@ func TestProxyVersion(r ReleaseInfo) error {
 	}
 	buf := bytes.Buffer{}
 	image := fmt.Sprintf("%s/%s:%s", r.manifest.Docker, "proxyv2", r.manifest.Version)
-	cmd := util.VerboseCommand("docker", "run", "--rm", image, "version", "--short")
+	cmd := util.VerboseCommand("docker", "run", "--rm", image, "version", "--short", "-ojson")
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	got := strings.TrimSpace(buf.String())
-	if got != r.manifest.Version {
-		return fmt.Errorf("expected proxy version to be %s, got %s", r.manifest.Version, got)
+	var v Version
+	if err := json.Unmarshal(buf.Bytes(), &v); err != nil {
+		return fmt.Errorf("failed to unmarshal version information: %v", err)
+	}
+
+	if v.ClientVersion == nil {
+		return fmt.Errorf("no client version found in version information")
+	}
+
+	if gotVersion := v.ClientVersion.Version; gotVersion != r.manifest.Version {
+		return fmt.Errorf("expected proxy version to be %s, got %s", r.manifest.Version, gotVersion)
 	}
 	return nil
 }
