@@ -45,7 +45,7 @@ directory: "${WORK_DIR}"
 dependencies:
   istio:
     git: https://github.com/${GITHUB_ORG}/istio
-    branch: master
+    branch: release-1.22
 EOF
 )
 go run main.go build \
