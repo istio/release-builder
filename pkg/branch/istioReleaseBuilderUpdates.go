@@ -30,7 +30,7 @@ func IstioReleaseBuilderUpdates(manifest model.Manifest, release string, dryrun 
 
 	sedString := "$!N;/test-infra/! s/\\(.*\\n\\)\\(.*branch: \\)master/\\1\\2release-" + release + "/;P;D"
 	cmd := util.VerboseCommand("sed", "-i", sedString, "example/manifest.yaml",
-		"release/build.sh", "test/publish.sh")
+		"release/build.sh", "test/publish.sh", "release/build-base-images.sh")
 	cmd.Dir = manifest.RepoDir(repo)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to run command: %v", err)
