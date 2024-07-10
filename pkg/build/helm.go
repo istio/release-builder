@@ -69,6 +69,7 @@ var (
 		"manifests/charts/istio-cni",
 		"manifests/charts/ztunnel",
 		"manifests/charts/istio-control/istio-discovery",
+		"manifests/charts/istiod-remote",
 		"manifests/charts/ambient",
 	}
 )
