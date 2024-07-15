@@ -31,6 +31,7 @@ import (
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
+
 // Any charts in any subdirs below the publish root that should also be published
 var chartSubtypeDir = []string{
 	"samples",
