@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -47,7 +46,7 @@ var (
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
 	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
 
-	// helmCharts contains all helm charts we will release
+	// helmCharts contains all helm charts we will package and publish
 	helmCharts = []string{
 		"manifests/charts/base",
 		"manifests/charts/gateway",
@@ -61,8 +60,7 @@ var (
 		"manifests/sample-charts/ambient",
 	}
 
-	// repoHelmCharts contains all helm charts we will release to the helm repo. This is a subset of
-	// helmCharts as we want to only publish our fully supported charts.
+	// repoHelmCharts contains the "core" subset of the above helm charts we will release to the helm repo.
 	repoHelmCharts = []string{
 		"manifests/charts/base",
 		"manifests/charts/gateway",
@@ -70,6 +68,12 @@ var (
 		"manifests/charts/ztunnel",
 		"manifests/charts/istio-control/istio-discovery",
 		"manifests/charts/istiod-remote",
+	}
+
+	// repoSampleHelmCharts contains all helm charts we will release/publish as samples, rather than
+	// core charts
+	repoSampleHelmCharts = []string{
+		"manifests/sample-charts/ambient",
 	}
 )
 
@@ -167,29 +171,61 @@ func stampChartForRelease(manifest model.Manifest, s string) error {
 
 func HelmCharts(manifest model.Manifest) error {
 	dst := path.Join(manifest.OutDir(), "helm")
+	samplesDst := path.Join(dst, "samples")
+
 	if err := os.MkdirAll(path.Join(dst), 0o750); err != nil {
 		return fmt.Errorf("failed to make destination directory %v: %v", dst, err)
 	}
+
+	if err := os.MkdirAll(path.Join(samplesDst), 0o750); err != nil {
+		return fmt.Errorf("failed to make destination directory %v: %v", dst, err)
+	}
+
+	for _, chart := range repoSampleHelmCharts {
+		inDir := path.Join(manifest.RepoDir("istio"), chart)
+		outDir := path.Join(manifest.WorkDir(), "charts", "samples", chart)
+
+		if err := prepChartForPackaging(inDir, outDir); err != nil {
+			return err
+		}
+
+		c := util.VerboseCommand("helm", "package", outDir)
+		c.Dir = samplesDst
+		if err := c.Run(); err != nil {
+			return fmt.Errorf("package %v: %v", chart, err)
+		}
+	}
+
 	for _, chart := range repoHelmCharts {
 		inDir := path.Join(manifest.RepoDir("istio"), chart)
 		outDir := path.Join(manifest.WorkDir(), "charts", chart)
-		// before copying, do dep update if needed
-		// Helm will skip for us if the chart has no deps
-		depCmd := util.VerboseCommand("helm", "dep", "update")
-		depCmd.Dir = inDir
-		if err := depCmd.Run(); err != nil {
-			return fmt.Errorf("dep update %v: %v", chart, err)
-		}
 
-		// Now the deps are updated/inlined, we can copy and package
-		if err := util.CopyDir(inDir, outDir); err != nil {
+		if err := prepChartForPackaging(inDir, outDir); err != nil {
 			return err
 		}
+
 		c := util.VerboseCommand("helm", "package", outDir)
 		c.Dir = dst
 		if err := c.Run(); err != nil {
 			return fmt.Errorf("package %v: %v", chart, err)
 		}
 	}
+	return nil
+}
+
+func prepChartForPackaging(inDir, outDir string) error {
+	// before copying, do dep update if needed
+	// Helm will skip for us if the chart has no deps
+	depCmd := util.VerboseCommand("helm", "dep", "update")
+	depCmd.Dir = inDir
+	if err := depCmd.Run(); err != nil {
+		return fmt.Errorf("dep update %v: %v", inDir, err)
+	}
+
+	// Now the deps are updated/inlined, we can copy and package
+	if err := util.CopyDir(inDir, outDir); err != nil {
+		return err
+	}
+
 	return nil
 }
