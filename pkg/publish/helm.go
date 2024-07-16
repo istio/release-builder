@@ -24,12 +24,18 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cloud.google.com/go/storage"
 	"sigs.k8s.io/yaml"
 
 	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
+
+// Any charts in any subdirs below the publish root that should also be published
+var chartSubtypeDir = []string{
+	"samples",
+}
 
 // Helm publishes charts to the given GCS bucket
 func Helm(manifest model.Manifest, bucket string, hub string) error {
@@ -65,21 +71,25 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 	}
 	bkt := client.Bucket(bucketName)
 
-	helmDir := filepath.Join(manifest.Directory, "helm")
+	helmPublishRoot := filepath.Join(manifest.Directory, "helm")
 
 	// Pull down the index, update it, and push it back up.
 	// MutateObject ensures there are no races.
-	err = MutateObject(helmDir, bkt, objectPrefix, "index.yaml", func() error {
-		dumpIndexFile(filepath.Join(helmDir, "index.yaml"), "before")
+	//
+	// Note that `helm repo index` will index charts in subdirectories as well, which
+	// is desired behavior here - we will have to push them separately however,
+	// so the index matches the bucket contents.
+	err = MutateObject(helmPublishRoot, bkt, objectPrefix, "index.yaml", func() error {
+		dumpIndexFile(filepath.Join(helmPublishRoot, "index.yaml"), "before")
 		idxCmd := util.VerboseCommand("helm", "repo", "index", ".",
 			"--url", fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketName, objectPrefix),
 			"--merge", "index.yaml")
-		idxCmd.Dir = helmDir
+		idxCmd.Dir = helmPublishRoot
 		log.Infof("Running helm repo index with dir %v", idxCmd.Dir)
 		if err := idxCmd.Run(); err != nil {
 			return fmt.Errorf("index repo: %v", err)
 		}
-		dumpIndexFile(filepath.Join(helmDir, "index.yaml"), "after")
+		dumpIndexFile(filepath.Join(helmPublishRoot, "index.yaml"), "after")
 		return nil
 	})
 	if err != nil {
@@ -94,8 +104,23 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 		dumpIndex(liveObject, "live")
 	}
 
-	// Now push all our charts up
-	dirInfo, err := os.ReadDir(helmDir)
+	// Now push all the packaged charts in the helm root directory up
+	if err := publishHelmBucket(ctx, helmPublishRoot, objectPrefix, bucketName, bkt); err != nil {
+		return err
+	}
+
+	// For any packaged charts in "chart subtype" subdirectories ("samples" etc), push those up
+	for _, chartType := range chartSubtypeDir {
+		if err := publishHelmBucket(ctx, filepath.Join(helmPublishRoot, chartType), path.Join(objectPrefix, chartType), bucketName, bkt); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func publishHelmBucket(ctx context.Context, packagedChartOutputDir, publishPrefix, bName string, bkt *storage.BucketHandle) error {
+	dirInfo, err := os.ReadDir(packagedChartOutputDir)
 	if err != nil {
 		return err
 	}
@@ -104,10 +129,10 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 			log.Infof("skipping %v", f.Name())
 			continue
 		}
-		objName := path.Join(objectPrefix, f.Name())
+		objName := path.Join(publishPrefix, f.Name())
 		obj := bkt.Object(objName)
 		w := obj.NewWriter(ctx)
-		f, err := os.Open(filepath.Join(helmDir, f.Name()))
+		f, err := os.Open(filepath.Join(packagedChartOutputDir, f.Name()))
 		if err != nil {
 			return fmt.Errorf("failed to open %v: %v", f.Name(), err)
 		}
@@ -118,8 +143,9 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 		if err := w.Close(); err != nil {
 			return fmt.Errorf("failed to close bucket: %v", err)
 		}
-		log.Infof("Wrote %v to gs://%s/%s", f.Name(), bucketName, objName)
+		log.Infof("Wrote %v to gs://%s/%s", f.Name(), bName, objName)
 	}
+
 	return nil
 }
 
@@ -157,8 +183,25 @@ func dumpIndex(data []byte, context string) {
 }
 
 func publishHelmOCI(manifest model.Manifest, hub string) error {
-	helmDir := filepath.Join(manifest.Directory, "helm")
-	dirInfo, err := os.ReadDir(helmDir)
+	helmPublishRoot := filepath.Join(manifest.Directory, "helm")
+
+	// Now push all the packaged charts in the helm root directory up
+	if err := pushChartsInDirOCI(helmPublishRoot, hub); err != nil {
+		return err
+	}
+
+	// For any packaged charts in "chart subtype" subdirectories ("samples" etc), push those up
+	for _, chartType := range chartSubtypeDir {
+		if err := pushChartsInDirOCI(filepath.Join(helmPublishRoot, chartType), path.Join(hub, chartType)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func pushChartsInDirOCI(packagedChartOutputDir, hub string) error {
+	dirInfo, err := os.ReadDir(packagedChartOutputDir)
 	if err != nil {
 		return err
 	}
@@ -167,7 +210,7 @@ func publishHelmOCI(manifest model.Manifest, hub string) error {
 		if filepath.Ext(f.Name()) != ".tgz" {
 			continue
 		}
-		name := filepath.Join(helmDir, f.Name())
+		name := filepath.Join(packagedChartOutputDir, f.Name())
 		if err := util.VerboseCommand("helm", "push", name, "oci://"+hub).Run(); err != nil {
 			return fmt.Errorf("failed to load docker image %v: %v", f.Name(), err)
 		}

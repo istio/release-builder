@@ -58,7 +58,7 @@ var (
 			if err != nil {
 				return fmt.Errorf("failed to read manifest from release: %v", err)
 			}
-			manifest.Directory = path.Join(flags.release)
+			manifest.Directory = path.Clean(flags.release)
 			util.YamlLog("Manifest", manifest)
 
 			return Publish(manifest)
