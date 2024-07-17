@@ -19,6 +19,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"math/rand"
 
 	"sigs.k8s.io/yaml"
 
@@ -91,7 +92,7 @@ func Branch(manifest model.Manifest, step int, dryrun bool, token string) error 
 		if step > 2 {
 			prName = "[release-" + release + "] " + prName
 		}
-		if err := util.CreatePR(manifest, repo, "automatedBranchStep"+strconv.Itoa(step), prName, "", dryrun, token, "", "", []string{}); err != nil {
+		if err := util.CreatePR(manifest, repo, "automatedBranchStep"+strconv.Itoa(step)+"-"+strconv.Itoa(rand.Intn(100)), prName, "", dryrun, token, "", "", []string{}); err != nil {
 			return fmt.Errorf("failed PR creation: %v", err)
 		}
 	}
