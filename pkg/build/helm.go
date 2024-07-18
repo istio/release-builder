@@ -42,8 +42,6 @@ var (
 		regexp.MustCompile(`"tag": "latest"`),
 	}
 
-	operatorDeployRegex = regexp.MustCompile(`image: gcr.io/istio-testing/operator:.*`)
-
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
 	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
 
@@ -56,7 +54,6 @@ var (
 		"manifests/charts/istio-cni",
 		"manifests/charts/ztunnel",
 		"manifests/charts/istio-control/istio-discovery",
-		"manifests/charts/istio-operator",
 		"manifests/charts/istiod-remote",
 		"manifests/charts/ambient",
 	}
@@ -94,10 +91,6 @@ func updateValues(manifest model.Manifest, p string) error {
 	for _, quotedTagRegex := range quotedTagRegexes {
 		contents = quotedTagRegex.ReplaceAllString(contents, fmt.Sprintf("\"tag\": \"%s\"", manifest.Version))
 	}
-
-	// Some manifests have images directly embedded
-	// Rather than try to make a very generic regex, specifically enumerate these to avoid false positives
-	contents = operatorDeployRegex.ReplaceAllString(contents, fmt.Sprintf("image: %s/operator:%s", manifest.Docker, manifest.Version))
 
 	err = os.WriteFile(p, []byte(contents), 0)
 	if err != nil {

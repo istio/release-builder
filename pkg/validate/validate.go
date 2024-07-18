@@ -72,20 +72,19 @@ func CheckRelease(release string) ([]string, string, []error) {
 	}
 	r := NewReleaseInfo(release)
 	checks := map[string]ValidationFunction{
-		"IstioctlArchive":      TestIstioctlArchive,
-		"IstioctlStandalone":   TestIstioctlStandalone,
-		"TestDocker":           TestDocker,
-		"HelmVersionsIstio":    TestHelmVersionsIstio,
-		"HelmChartVersions":    TestHelmChartVersions,
-		"OperatorProfiles":     TestOperatorProfiles,
-		"HelmOperatorManifest": TestHelmOperatorManifest,
-		"Manifest":             TestManifest,
-		"Licenses":             TestLicenses,
-		"Grafana":              TestGrafana,
-		"CompletionFiles":      TestCompletionFiles,
-		"ProxyVersion":         TestProxyVersion,
-		"Debian":               TestDebian,
-		"Rpm":                  TestRpm,
+		"IstioctlArchive":    TestIstioctlArchive,
+		"IstioctlStandalone": TestIstioctlStandalone,
+		"TestDocker":         TestDocker,
+		"HelmVersionsIstio":  TestHelmVersionsIstio,
+		"HelmChartVersions":  TestHelmChartVersions,
+		"IstioctlProfiles":   TestIstioctlProfiles,
+		"Manifest":           TestManifest,
+		"Licenses":           TestLicenses,
+		"Grafana":            TestGrafana,
+		"CompletionFiles":    TestCompletionFiles,
+		"ProxyVersion":       TestProxyVersion,
+		"Debian":             TestDebian,
+		"Rpm":                TestRpm,
 	}
 	var errors []error
 	var success []string
@@ -221,7 +220,6 @@ func TestDocker(r ReleaseInfo) error {
 		"ztunnel-distroless",
 		"proxyv2-debug",
 		"proxyv2-distroless",
-		"operator-debug",
 	}
 	found := map[string]struct{}{}
 	d, err := os.ReadDir(filepath.Join(r.release, "docker"))
@@ -394,12 +392,7 @@ func validateHubTag(r ReleaseInfo, valuesBytes []byte, paths string) error {
 	return nil
 }
 
-func TestHelmOperatorManifest(r ReleaseInfo) error {
-	operatorManifestValues := "manifests/charts/istio-operator/values.yaml"
-	return validateHubTagFromFile(r, operatorManifestValues, "defaults")
-}
-
-func TestOperatorProfiles(r ReleaseInfo) error {
+func TestIstioctlProfiles(r ReleaseInfo) error {
 	operatorChecks := []string{
 		"manifests/profiles/default.yaml",
 	}
