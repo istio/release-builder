@@ -76,10 +76,7 @@ func Archive(manifest model.Manifest) error {
 		}
 
 		if err := updateValues(manifest, path.Join(out, "manifests/profiles/default.yaml")); err != nil {
-			return fmt.Errorf("failed to sanitize operator charts")
-		}
-		if err := util.CopyDir(path.Join(manifest.RepoDir("istio"), "operator", "samples"), path.Join(out, "samples/operator")); err != nil {
-			return err
+			return fmt.Errorf("failed to sanitize istioctl profiles: %v", err)
 		}
 
 		// Write manifest
