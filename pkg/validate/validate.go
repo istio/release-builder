@@ -305,9 +305,9 @@ func TestHelmChartVersions(r ReleaseInfo) error {
 		return nil
 	}
 	expected := map[string]string{
-		"cni":     "defaults.global",
-		"ztunnel": "defaults",
-		"istiod":  "defaults.global",
+		"cni":     "_internal_defaults_do_not_set.global",
+		"ztunnel": "_internal_defaults_do_not_set",
+		"istiod":  "_internal_defaults_do_not_set.global",
 		"base":    "none",
 		"gateway": "none",
 	}
@@ -340,13 +340,13 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 	}
 	topLevel := []string{"manifests/charts/ztunnel/values.yaml"}
 	for _, file := range manifestValues {
-		err := validateHubTagFromFile(r, file, "defaults.global")
+		err := validateHubTagFromFile(r, file, "_internal_defaults_do_not_set.global")
 		if err != nil {
 			return err
 		}
 	}
 	for _, file := range topLevel {
-		err := validateHubTagFromFile(r, file, "defaults")
+		err := validateHubTagFromFile(r, file, "_internal_defaults_do_not_set")
 		if err != nil {
 			return err
 		}
