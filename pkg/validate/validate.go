@@ -336,7 +336,6 @@ func TestHelmVersionsIstio(r ReleaseInfo) error {
 		"manifests/charts/gateways/istio-ingress/values.yaml",
 		"manifests/charts/istio-cni/values.yaml",
 		"manifests/charts/istio-control/istio-discovery/values.yaml",
-		"manifests/charts/istiod-remote/values.yaml",
 	}
 	topLevel := []string{"manifests/charts/ztunnel/values.yaml"}
 	for _, file := range manifestValues {

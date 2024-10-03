@@ -53,7 +53,6 @@ var (
 		"manifests/charts/istio-cni",
 		"manifests/charts/ztunnel",
 		"manifests/charts/istio-control/istio-discovery",
-		"manifests/charts/istiod-remote",
 		"manifests/sample-charts/ambient",
 	}
 
@@ -64,7 +63,6 @@ var (
 		"manifests/charts/istio-cni",
 		"manifests/charts/ztunnel",
 		"manifests/charts/istio-control/istio-discovery",
-		"manifests/charts/istiod-remote",
 	}
 
 	// repoSampleHelmCharts contains all helm charts we will release/publish as samples, rather than
