@@ -102,7 +102,7 @@ dashboards:
   istio-service-dashboard: 7636
   istio-workload-dashboard: 7630
   pilot-dashboard: 7645
-  ztunnel-dashboard: 0
+  ztunnel-dashboard: 21306
 ${PROXY_OVERRIDE:-}
 EOF
 )
