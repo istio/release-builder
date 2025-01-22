@@ -33,20 +33,26 @@ func UpdateDependencies(manifest model.Manifest, dryrun bool) error {
 	release := "master" // This is being done before branching
 	repo := "istio"
 
-	cmd := util.VerboseCommand("./bin/update_deps.sh")
+	// Also update the go-control plane
+	cmd := util.VerboseCommand("go", "get", "github.com/envoyproxy/go-control-plane/envoy@main")
+	cmd.Dir = manifest.RepoDir(repo)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to update go-control-plane/envoy: %v", err)
+	}
+
+	cmd = util.VerboseCommand("go", "get", "github.com/envoyproxy/go-control-plane/contrib@main")
+	cmd.Dir = manifest.RepoDir(repo)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to update go-control-plane/contrib: %v", err)
+	}
+
+	cmd = util.VerboseCommand("./bin/update_deps.sh")
 	cmd.Stdin = os.Stdin
 	cmd.Dir = manifest.RepoDir(repo)
 	env := []string{"UPDATE_BRANCH=" + release}
 	cmd.Env = append(os.Environ(), env...)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to update dependencies during update_deps: %v", err)
-	}
-
-	// Also update the go-control plane
-	cmd = util.VerboseCommand("go", "get", "github.com/envoyproxy/go-control-plane@main")
-	cmd.Dir = manifest.RepoDir(repo)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to update go-control-plane: %v", err)
 	}
 
 	// release_builder sets VERSION to the value in the manifest (ex: 1.9) and
