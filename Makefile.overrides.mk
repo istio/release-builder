@@ -14,3 +14,5 @@
 
 # this repo is on the container plan by default
 BUILD_WITH_CONTAINER ?= 1
+
+CONDITIONAL_HOST_MOUNTS = --mount type=bind,source=/tmp,destination=/tmp ${ADDITIONAL_CONDITIONAL_HOST_MOUNTS}
