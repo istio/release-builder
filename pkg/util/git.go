@@ -86,7 +86,12 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 		// fall back to global gitconfig, which may be an empty string
 		if user.Email == nil {
 			cfg, err := config.LoadConfig(config.GlobalScope)
-			user.Email = &cfg.User.Email
+			if err != nil {
+				emptyString := ""
+				user.Email = &emptyString
+			} else {
+				user.Email = &cfg.User.Email
+			}
 		}
 		commit, err := w.Commit(commitString, &git.CommitOptions{
 			Author: &object.Signature{
