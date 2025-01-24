@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -81,10 +82,16 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 		}
 
 		// Create a commit on that branch
-		// user.Email may be nil, so set to an empty string
-		emptyString := ""
+		// user.Email may be nil if set to private in GitHub,
+		// fall back to global gitconfig, which may be an empty string
 		if user.Email == nil {
-			user.Email = &emptyString
+			cfg, err := config.LoadConfig(config.GlobalScope)
+			if err != nil {
+				emptyString := ""
+				user.Email = &emptyString
+			} else {
+				user.Email = &cfg.User.Email
+			}
 		}
 		commit, err := w.Commit(commitString, &git.CommitOptions{
 			Author: &object.Signature{
