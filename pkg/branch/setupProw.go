@@ -29,7 +29,7 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating prow config for new branches.")
 	repo := "test-infra"
 
-	cmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "branch", release, "--skipGarTagging")
+	cmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "--skip-gar-tagging", "branch", release)
 	cmd.Dir = path.Join(manifest.RepoDir(repo), "tools/prowgen")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
