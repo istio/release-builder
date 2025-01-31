@@ -40,7 +40,7 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 
 	privateJobsProwConfigDir := path.Join(repo, "prow/config/istio-private_jobs")
 	privateCmd := util.VerboseCommand("go", "run", "main.go", "--input-dir="+privateJobsProwConfigDir, "branch", release)
-	cmd.Dir = path.Join(repo, "tools/generate-transform-jobs")
+	privateCmd.Dir = path.Join(repo, "tools/generate-transform-jobs")
 	if err := privateCmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new private prow config: %v", err)
 	}
