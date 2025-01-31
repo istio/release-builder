@@ -27,16 +27,19 @@ import (
 // config files for the new release.
 func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	log.Infof("*** Updating prow config for new branches.")
-	repo := "test-infra"
+	repo := manifest.RepoDir("test-infra")
+	prowGenInputDir := path.Join(repo, "prow/config/jobs")
+	prowGenOutputDir := path.Join(repo, "prow/cluster/jobs")
 
-	cmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "--skip-gar-tagging", "branch", release)
-	cmd.Dir = path.Join(manifest.RepoDir(repo), "tools/prowgen")
+	cmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "--skip-gar-tagging", "--input-dir="+prowGenInputDir, "--output-dir="+prowGenOutputDir, "branch", release)
+	cmd.Dir = path.Join(repo, "tools/prowgen")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
 	}
 
-	privateCmd := util.VerboseCommand("go", "run", "main.go", "branch", release)
-	cmd.Dir = path.Join(manifest.RepoDir(repo), "tools/generate-transform-jobs")
+	privateJobsProwConfigDir := path.Join(repo, "prow/config/istio-private_jobs")
+	privateCmd := util.VerboseCommand("go", "run", "main.go", "--input-dir="+privateJobsProwConfigDir, "branch", release)
+	cmd.Dir = path.Join(repo, "tools/generate-transform-jobs")
 	if err := privateCmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new private prow config: %v", err)
 	}
