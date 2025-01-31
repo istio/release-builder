@@ -31,7 +31,8 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	prowGenInputDir := path.Join(repo, "prow/config/jobs")
 	prowGenOutputDir := path.Join(repo, "prow/cluster/jobs")
 
-	cmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "--skip-gar-tagging", "--input-dir="+prowGenInputDir, "--output-dir="+prowGenOutputDir, "branch", release)
+	cmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "--skip-gar-tagging", "--input-dir="+prowGenInputDir,
+		"--output-dir="+prowGenOutputDir, "branch", release)
 	cmd.Dir = path.Join(repo, "tools/prowgen")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
