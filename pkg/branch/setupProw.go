@@ -31,11 +31,18 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 	prowGenInputDir := path.Join(repo, "prow/config/jobs")
 	prowGenOutputDir := path.Join(repo, "prow/cluster/jobs")
 
-	cmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "--skip-gar-tagging", "--input-dir="+prowGenInputDir,
-		"--output-dir="+prowGenOutputDir, "branch", release)
-	cmd.Dir = path.Join(repo, "tools/prowgen")
-	if err := cmd.Run(); err != nil {
+	branchCmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go", "--skip-gar-tagging", "--input-dir="+prowGenInputDir,
+		"branch", release)
+	branchCmd.Dir = path.Join(repo, "tools/prowgen")
+	if err := branchCmd.Run(); err != nil {
 		return fmt.Errorf("failed to generate new prow config: %v", err)
+	}
+
+	writeCmd := util.VerboseCommand("go", "run", "./cmd/prowgen/main.go",
+		"--input-dir="+prowGenInputDir, "--output-dir="+prowGenOutputDir, "write")
+	writeCmd.Dir = path.Join(repo, "tools/prowgen")
+	if err := writeCmd.Run(); err != nil {
+		return fmt.Errorf("failed to write new prow config: %v", err)
 	}
 
 	privateJobsProwConfigDir := path.Join(repo, "prow/config/istio-private_jobs")
