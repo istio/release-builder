@@ -52,6 +52,13 @@ func SetupProw(manifest model.Manifest, release string, dryrun bool) error {
 		return fmt.Errorf("failed to generate new private prow config: %v", err)
 	}
 
+	transCmd := util.VerboseCommand("go", "run", "./tools/prowtrans/cmd/prowtrans/main.go",
+		"--configs="+privateJobsProwConfigDir, "--input="+prowGenInputDir)
+	transCmd.Dir = path.Join(repo)
+	if err := transCmd.Run(); err != nil {
+		return fmt.Errorf("failed to transform new prow config: %v", err)
+	}
+
 	log.Infof("*** Prow config for new branches updated.")
 	return nil
 }
