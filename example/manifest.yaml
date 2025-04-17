@@ -25,7 +25,7 @@ directory: /tmp/istio-release
 dependencies:
   istio:
     git: https://github.com/istio/istio
-    branch: master
+    branch: release-1.26
   api:
     git: https://github.com/istio/api
     auto: modules
@@ -45,13 +45,13 @@ dependencies:
     branch: master
   tools:
     git: https://github.com/istio/tools
-    branch: master
+    branch: release-1.26
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
   release-builder:
     git: https://github.com/istio/release-builder
-    branch: master
+    branch: release-1.26
 dashboards:
   istio-extension-dashboard: 13277
   istio-mesh-dashboard: 7639
