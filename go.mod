@@ -7,7 +7,7 @@ toolchain go1.24.0
 require (
 	cloud.google.com/go/storage v1.46.0
 	github.com/Masterminds/semver/v3 v3.3.1
-	github.com/go-git/go-git/v5 v5.12.0
+	github.com/go-git/go-git/v5 v5.13.0
 	github.com/google/go-containerregistry v0.20.2
 	github.com/google/go-github/v35 v35.3.0
 	github.com/spf13/cobra v1.8.1
