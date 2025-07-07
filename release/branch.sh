@@ -22,6 +22,7 @@ set -eux
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 
 REPO_ORG=${REPO_ORG:-istio}
+PR_REPO_ORG=${PR_REPO_ORG:-${REPO_ORG}}
 
 DRY_RUN=${DRY_RUN:=true}
 VERSION=${VERSION:-"$(< "${WD}/trigger-branch" grep VERSION= | cut -d'=' -f2)"}
@@ -80,4 +81,4 @@ EOD
 EOF
 )
 
-go run main.go branch --manifest <(echo "${MANIFEST}") --step="${STEP}" --dryrun="${DRY_RUN}" --githubtoken "${GITHUB_TOKEN_FILE}"
+go run main.go branch --manifest <(echo "${MANIFEST}") --step="${STEP}" --dryrun="${DRY_RUN}" --githubtoken "${GITHUB_TOKEN_FILE}" --prRepoOrg="${PR_REPO_ORG}"

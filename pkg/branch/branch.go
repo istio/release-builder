@@ -31,7 +31,7 @@ import (
 // multiple items which can be done before another item has a dependency
 // on an intem in the given step.
 // This function assumes the working directory has been setup and sources resolved.
-func Branch(manifest model.Manifest, step int, dryrun bool, token string) error {
+func Branch(manifest model.Manifest, step int, dryrun bool, token string, prRepoOrg string) error {
 	if err := writeManifest(manifest, manifest.OutDir()); err != nil {
 		return fmt.Errorf("failed to write manifest: %v", err)
 	}
@@ -91,7 +91,7 @@ func Branch(manifest model.Manifest, step int, dryrun bool, token string) error 
 		if step > 2 {
 			prName = "[release-" + release + "] " + prName
 		}
-		if err := util.CreatePR(manifest, repo, "automatedBranchStep"+strconv.Itoa(step), prName, "", dryrun, token, "", "", []string{}); err != nil {
+		if err := util.CreatePR(manifest, repo, "automatedBranchStep"+strconv.Itoa(step), prName, "", dryrun, token, "", "", []string{}, prRepoOrg); err != nil {
 			return fmt.Errorf("failed PR creation: %v", err)
 		}
 	}
