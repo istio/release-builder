@@ -16,6 +16,7 @@ package branch
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"path"
 	"strconv"
@@ -91,7 +92,10 @@ func Branch(manifest model.Manifest, step int, dryrun bool, token string) error 
 		if step > 2 {
 			prName = "[release-" + release + "] " + prName
 		}
-		if err := util.CreatePR(manifest, repo, "automatedBranchStep"+strconv.Itoa(step), prName, "", dryrun, token, "", "", []string{}); err != nil {
+
+		// Disable linter G404: Use of weak random number generator
+		err := util.CreatePR(manifest, repo, "automatedBranchStep"+strconv.Itoa(step)+"-"+strconv.Itoa(rand.Intn(100)), prName, "", dryrun, token, "", "", []string{}) //nolint:all
+		if err != nil {
 			return fmt.Errorf("failed PR creation: %v", err)
 		}
 	}
