@@ -30,6 +30,7 @@ var (
 		dryrun          bool
 		step            int
 		githubTokenFile string
+		prRepoOrg       string
 	}{
 		manifest: "example/manifest_branch.yaml",
 		dryrun:   true, // Default to dry-run for now
@@ -68,7 +69,7 @@ var (
 				return err
 			}
 
-			if err := Branch(manifest, flags.step, flags.dryrun, token); err != nil {
+			if err := Branch(manifest, flags.step, flags.dryrun, token, flags.prRepoOrg); err != nil {
 				return fmt.Errorf("failed to branch: %v", err)
 			}
 
@@ -87,6 +88,8 @@ func init() {
 		"Which step to run.")
 	branchCmd.PersistentFlags().StringVar(&flags.githubTokenFile, "githubtoken", flags.githubTokenFile,
 		"The file containing a github token.")
+	branchCmd.PersistentFlags().StringVar(&flags.prRepoOrg, "prRepoOrg", flags.prRepoOrg,
+		"The GitHub organization for the PR.")
 }
 
 func GetBranchCommand() *cobra.Command {

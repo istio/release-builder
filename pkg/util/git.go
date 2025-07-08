@@ -122,7 +122,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 // CreatePR will look for changes. If changes exist, it will create a branch and push a commit with
 // the specified commit text, and then create a PR in the upstream repo.
 func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, description string, dryrun bool, githubToken, git, branch string,
-	labels []string,
+	labels []string, prRepoOrg string,
 ) error {
 	// Set git and branch from manifest if not passed in
 	if git == "" {
@@ -155,7 +155,7 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 		return err
 	}
 
-	if changes && !dryrun {
+	if changes {
 		newPR := &github.NewPullRequest{
 			Title:               &commitString,
 			Head:                &newBranchName,
@@ -168,6 +168,23 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 		l := len(repoStrings)
 		orgString := repoStrings[l-2]
 		repoString := repoStrings[l-1]
+
+		if prRepoOrg != "" && prRepoOrg != orgString {
+			log.Infof("create PR from a fork %s -> %s", orgString, prRepoOrg)
+			// The name of the branch where your changes are implemented.
+			// For cross-repository pull requests in the same network,
+			// namespace head with a user like this: username:branch.
+			head := fmt.Sprintf("%s:%s", orgString, newBranchName)
+			newPR.Head = &head
+			orgString = prRepoOrg
+		}
+
+		log.Infof("Creating PR, org: %s repo: %s base: %s head: %s",
+			orgString, repoString, *newPR.Base, *newPR.Head)
+		if dryrun {
+			log.Infof("Skipping, DRY_RUN=true")
+			return nil
+		}
 
 		pr, _, err := client.PullRequests.Create(ctx, orgString, repoString, newPR)
 		if err != nil {
@@ -189,8 +206,8 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 			}
 		}
 		log.Infof("Labels:\n%v", label)
-
 	}
+
 	return nil
 }
 
