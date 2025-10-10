@@ -141,7 +141,7 @@ func mutateObjectInner(outDir string, bkt *storage.BucketHandle, objectPrefix st
 			// Missing is fine
 			log.Warnf("existing file %v does not exist", filename)
 		} else {
-			return fmt.Errorf("failed to fetch attributes: %v", err)
+			return fmt.Errorf("failed to fetch attributes for object %s: %v", objName, err)
 		}
 	}
 	generation := int64(0)
