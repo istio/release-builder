@@ -69,7 +69,9 @@ func publishHelmIndex(manifest model.Manifest, bucket string) error {
 	if len(splitbucket) > 1 {
 		objectPrefix = splitbucket[1]
 	}
+	log.Infof("Using bucket %s and prefix %s", bucketName, objectPrefix)
 	bkt := client.Bucket(bucketName)
+	log.Infof("Using bucket %v", bkt)
 
 	helmPublishRoot := filepath.Join(manifest.Directory, "helm")
 
