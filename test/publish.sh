@@ -41,7 +41,7 @@ docker run -d  --rm  \
 docker run -d  --rm  \
   -p "7481:7481" --label istio-release-builder \
   --name "release-builder-gcs" \
-  gcr.io/istio-testing/fake-gcs-server:1.45.2 \
+  gcr.io/istio-testing/fake-gcs-server:1.52.3 \
   -scheme http -port 7481
 
 # Setup our bucket. Add retry since the registry may not be ready yet
