@@ -292,5 +292,5 @@ func getImageNameVariant(fname string) (name string, variant string, arch string
 		imageName = strings.TrimSuffix(imageName, "-debug")
 	}
 	name = imageName
-	return
+	return name, variant, arch
 }
