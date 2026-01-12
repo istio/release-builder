@@ -84,7 +84,7 @@ dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
     git: https://github.com/${GITHUB_ORG}/istio
-    branch: master
+    branch: release-1.29
   api:
     git: https://github.com/${GITHUB_ORG}/api
     auto: modules
@@ -104,13 +104,13 @@ ${DEPENDENCIES:-$(cat <<EOD
     branch: master
   tools:
     git: https://github.com/${GITHUB_ORG}/tools
-    branch: master
+    branch: release-1.29
   envoy:
     git: https://github.com/envoyproxy/envoy
     auto: proxy_workspace
   release-builder:
     git: https://github.com/${GITHUB_ORG}/release-builder
-    branch: master
+    branch: release-1.29
 EOD
 )}
 dashboards:
