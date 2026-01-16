@@ -44,7 +44,7 @@ func Branch(manifest model.Manifest, step int, dryrun bool, token string, prRepo
 			return fmt.Errorf("failed to update dependencies: %v", err)
 		}
 	case 2:
-		if err := CreateBranches(manifest, release, dryrun); err != nil {
+		if err := CreateBranches(manifest, release, dryrun, token); err != nil {
 			return fmt.Errorf("failed to create branches: %v", err)
 		}
 	case 3:
@@ -77,6 +77,7 @@ func Branch(manifest model.Manifest, step int, dryrun bool, token string, prRepo
 
 	// Determine if there are any changes in the repos and create PRs.
 	// CreatePR() will use dryrun to determine if PRs are created
+	branchSuffix := os.Getenv("BRANCH_SUFFIX")
 	for repo, dep := range manifest.Dependencies.Get() {
 		if dep == nil {
 			// Missing a dependency is not always a failure; many are optional dependencies just for
@@ -91,7 +92,8 @@ func Branch(manifest model.Manifest, step int, dryrun bool, token string, prRepo
 		if step > 2 {
 			prName = "[release-" + release + "] " + prName
 		}
-		if err := util.CreatePR(manifest, repo, "automatedBranchStep"+strconv.Itoa(step), prName, "", dryrun, token, "", "", []string{}, prRepoOrg); err != nil {
+		branchName := "automatedBranchStep" + strconv.Itoa(step) + branchSuffix
+		if err := util.CreatePR(manifest, repo, branchName, prName, "", dryrun, token, "", "", []string{}, prRepoOrg); err != nil {
 			return fmt.Errorf("failed PR creation: %v", err)
 		}
 	}

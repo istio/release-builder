@@ -25,6 +25,7 @@ REPO_ORG=${REPO_ORG:-istio}
 PR_REPO_ORG=${PR_REPO_ORG:-${REPO_ORG}}
 
 DRY_RUN=${DRY_RUN:=true}
+BRANCH_SUFFIX=${BRANCH_SUFFIX:-}
 VERSION=${VERSION:-"$(< "${WD}/trigger-branch" grep VERSION= | cut -d'=' -f2)"}
 STEP=${STEP:-"$(< "${WD}/trigger-branch" grep STEP= | cut -d'=' -f2)"}
 GITHUB_TOKEN_FILE=${GITHUB_TOKEN_FILE:-}
