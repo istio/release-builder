@@ -159,7 +159,8 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 		existingBranch, _, err := client.Repositories.GetBranch(ctx, orgString, repoString, newBranchName)
 		if err == nil && existingBranch != nil {
 			return fmt.Errorf(
-				"branch '%s' already exists in repository %s/%s. Please delete the existing branch or use a different branch name by using BRANCH_SUFFIX. Current branch: %s",
+				"branch '%s' already exists in %s/%s. "+
+					"Please delete it or use a different branch name with BRANCH_SUFFIX: %s",
 				newBranchName, orgString, repoString, newBranchName)
 		}
 		// If we get a 404 error, the branch doesn't exist (expected).
