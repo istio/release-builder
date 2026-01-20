@@ -69,6 +69,11 @@ var (
 				return err
 			}
 
+			// Validate GitHub token is set
+			if err := util.ValidateGithubToken(token); err != nil {
+				return err
+			}
+
 			if err := Branch(manifest, flags.step, flags.dryrun, token, flags.prRepoOrg); err != nil {
 				return fmt.Errorf("failed to branch: %v", err)
 			}

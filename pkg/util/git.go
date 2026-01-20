@@ -247,3 +247,19 @@ func GetGithubToken(file string) (string, error) {
 	}
 	return os.Getenv("GITHUB_TOKEN"), nil
 }
+
+// ValidateGithubToken checks if a GitHub token is available.
+// This provides early validation and clear error messages to users.
+func ValidateGithubToken(token string) error {
+	if token == "" {
+		return fmt.Errorf("GitHub token is required when dry-run is disabled.\n\n" +
+			"To set up authentication in the container, run:\n" +
+			"  GITHUB_TOKEN=$(gh auth token) make shell\n\n" +
+			"Alternative methods:\n" +
+			"  - Use --githubtoken flag to specify a token file\n" +
+			"  - Set the GH_TOKEN environment variable\n" +
+			"  - Set the GITHUB_TOKEN environment variable")
+	}
+
+	return nil
+}

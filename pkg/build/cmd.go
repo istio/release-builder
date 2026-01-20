@@ -72,6 +72,11 @@ var (
 				if err != nil {
 					return err
 				}
+
+				// Validate GitHub token for base image scanning (always creates PRs)
+				if err := util.ValidateGithubToken(token); err != nil {
+					return err
+				}
 				if err := Scanner(manifest, token, savedIstioGit, savedIstioBranch); err != nil {
 					return fmt.Errorf("failed image scan: %v", err)
 				}
