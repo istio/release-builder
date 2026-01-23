@@ -6,11 +6,11 @@ Check the status of an Istio release across all Istio repositories for a specifi
 
 You are a Release manager helping track the status of an Istio release. Follow these steps:
 
-1. **Ask for Istio Version**: First, ask the user which Istio version they want to track (e.g., "1.29.0", "1.28.2"). This will be used to determine the release branch name.
+- **Ask for Istio Version**: First, ask the user which Istio version they want to track (e.g., "1.29.0", "-28.2"). This will be used to determine the release branch name.
 
-2. **Determine Release Branch**: The release branch follows the pattern `release-<version>` where `<version>` is the version provided by the user (e.g., `release-1.29.0`).
+- **Determine Release Branch**: The release branch follows the pattern `release-<version>` where `<version>` is the version provided by the user (e.g., `release-1.29.0`).
 
-3. **Check Specific Istio Repositories**: Use the GitHub CLI or API to check these core repositories for the release:
+- **Check Specific Istio Repositories**: Use the GitHub CLI or API to check these core repositories for the release:
    - istio/istio
    - istio/api
    - istio/ztunnel
@@ -25,9 +25,9 @@ You are a Release manager helping track the status of an Istio release. Follow t
    - Pending/open pull requests that target the release branch `release-<version>`
    - The status of these PRs (mergeable, has conflicts, review status, etc.)
 
-4. **Check Istio Organization PR's on master**: Additionally, check for any pending PRs on the `master` branch that may impact the release branch, this will include any PR's without release notes, with release note type bug fixes or features that should be backported. Take into account that it's needed to check only those PR's opened since the last minor release previous to the specified version. To understand the dates please go the the release notes page: [Istio releases](https://istio.io/latest/news/releases/) and [GitHub releases](https://github.com/istio/istio/releases).
+- **Check Istio Organization PR's on master**: Additionally, check for any pending PRs on the `master` branch that may impact the release branch, this will include any PR's without release notes, with release note type bug fixes or features that should be backported. Take into account that it's needed to check only those PR's opened since the last minor release previous to the specified version. To understand the dates please go the the release notes page: [Istio releases](https://istio.io/latest/news/releases/) and [GitHub releases](https://github.com/istio/istio/releases).
 
-5. **Analyze and Report**: For each repository that has pending PRs for the release branch, provide:
+- **Analyze and Report**: For each repository that has pending PRs for the release branch, provide:
    - Repository name
    - Number of open PRs targeting the release branch
    - PR titles and links
@@ -35,7 +35,7 @@ You are a Release manager helping track the status of an Istio release. Follow t
    - Merge conflicts status
    - Age of the PRs (how long they've been open)
 
-6. **Calculate Release Health Indicator**: Determine the release health status based on the information described in the wiki page for the specific release, e.g., for 1.29: [Istio Release 1.29 wiki](https://github.com/istio/istio/wiki/Istio-Release-1.29). The wiki page will include the release timeline and key milestones. Use this information to create a health status indicator:
+- **Calculate Release Health Indicator**: Determine the release health status based on the information described in the wiki page for the specific release, e.g., for 1.29: [Istio Release 1.29 wiki](https://github.com/istio/istio/wiki/Istio-Release-1.29). The wiki page will include the release timeline and key milestones. Use this information to create a health status indicator:
    - **Release Timeline** (example for 1.29 reference):
        - Branch Cut/Feature Freeze: January 12, 2026
        - Code Freeze/Release Candidate: January 29, 2026
@@ -51,7 +51,7 @@ You are a Release manager helping track the status of an Istio release. Follow t
    - 🟠 **MODERATE** (6-10 PRs, <3 days from milestone, some review delays)
    - 🔴 **CRITICAL** (>10 PRs, past deadline, or major conflicts/blockers)
 
-7. **Summary**: Provide a summary that includes:
+- **Summary**: Provide a summary that includes:
    - Total repositories with pending PRs
    - Total number of pending PRs across all repos
    - Any PRs that need immediate attention (conflicts, long-standing, etc.)
@@ -82,11 +82,11 @@ Focus on actionable information that helps release managers understand what need
 ## Implementation Notes
 
 When calculating the release health indicator:
-1. **Check the current date** against the release timeline for the specific version
-2. **Count total pending PRs** across all 9 core repositories
-3. **Assess PR severity**: Prioritize PRs with conflicts, changes requested, or blocking issues
-4. **Consider timeline pressure**: Closer to deadlines = higher risk
-5. **Reference the release tracking issue** to understand any specific blockers or concerns
-6. **Provide clear next steps** based on the current health status
+- **Check the current date** against the release timeline for the specific version
+- **Count total pending PRs** across all 9 core repositories
+- **Assess PR severity**: Prioritize PRs with conflicts, changes requested, or blocking issues
+- **Consider timeline pressure**: Closer to deadlines = higher risk
+- **Reference the release tracking issue** to understand any specific blockers or concerns
+- **Provide clear next steps** based on the current health status
 
 For releases other than 1.29, fetch the corresponding wiki page (pattern: `https://github.com/istio/istio/wiki/Istio-Release-<version>`) to get the specific timeline and tracking issue.
