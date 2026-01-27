@@ -123,6 +123,11 @@ func Publish(manifest model.Manifest) error {
 		if err != nil {
 			return err
 		}
+
+		// Validate GitHub token for publishing (always creates tags and releases)
+		if err := util.ValidateGithubToken(token); err != nil {
+			return err
+		}
 		if err := Github(manifest, flags.github, token); err != nil {
 			return fmt.Errorf("failed to publish to github: %v", err)
 		}

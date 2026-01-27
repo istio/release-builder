@@ -17,14 +17,18 @@ package branch
 import (
 	"fmt"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
+
 	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 	"istio.io/release-builder/pkg/util"
 )
 
 // CreateBranches goes to each repo and creates the branches
-func CreateBranches(manifest model.Manifest, release string, dryrun bool) error {
-	log.Infof("*** Creating release branches")
+func CreateBranches(manifest model.Manifest, release string, dryrun bool, githubToken string) error {
+	log.Infof("*** Creating release branches for release: %s", release)
 	for repo, dep := range manifest.Dependencies.Get() {
 		if dep == nil {
 			// Missing a dependency is not always a failure; many are optional dependencies just for
@@ -38,20 +42,74 @@ func CreateBranches(manifest model.Manifest, release string, dryrun bool) error 
 			log.Infof("Skipping repo: %v", repo)
 			continue
 		}
+
+		branchName := "release-" + release
+		branchExists, err := remoteBranchExists(manifest.RepoDir(repo), branchName, githubToken)
+		if err != nil {
+			log.Warnf("Failed to check if branch %s exists in repo %s: %v", branchName, repo, err)
+		} else if branchExists {
+			log.Warnf("Branch %s already exists in repo %s. This may cause issues; please verify and delete it if needed.", branchName, repo)
+		}
+
 		log.Infof("*** Creating a release branch %s for %s from directory: %s", release, repo, manifest.RepoDir(repo))
-		cmd := util.VerboseCommand("git", "checkout", "-b", "release-"+release)
+		cmd := util.VerboseCommand("git", "checkout", "-b", branchName)
 		cmd.Dir = manifest.RepoDir(repo)
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("failed to checkout release: %v", err)
 		}
 		if !dryrun {
-			cmd = util.VerboseCommand("git", "push", "--set-upstream", "origin", "release-"+release)
-			cmd.Dir = manifest.RepoDir(repo)
-			if err := cmd.Run(); err != nil {
+			r, err := git.PlainOpen(manifest.RepoDir(repo))
+			if err != nil {
+				return fmt.Errorf("failed to open repository %s: %v", repo, err)
+			}
+			err = r.Push(&git.PushOptions{
+				RemoteName: "origin",
+				Auth: &http.BasicAuth{
+					Username: "git",
+					Password: githubToken,
+				},
+				RefSpecs: []config.RefSpec{
+					config.RefSpec("refs/heads/" + branchName + ":refs/heads/" + branchName),
+				},
+			})
+			if err != nil {
 				log.Warnf("failed to push branch to repo: %v. Ignoring as it may already exist.", err)
 			}
 		}
 	}
 	log.Infof("*** Release branches created")
 	return nil
+}
+
+func remoteBranchExists(repoDir, branchName, githubToken string) (bool, error) {
+	r, err := git.PlainOpen(repoDir)
+	if err != nil {
+		return false, fmt.Errorf("failed to open repository %s: %v", repoDir, err)
+	}
+
+	remote, err := r.Remote("origin")
+	if err != nil {
+		return false, fmt.Errorf("failed to get origin remote: %v", err)
+	}
+
+	listOptions := &git.ListOptions{}
+	if githubToken != "" {
+		listOptions.Auth = &http.BasicAuth{
+			Username: "git",
+			Password: githubToken,
+		}
+	}
+
+	refs, err := remote.List(listOptions)
+	if err != nil {
+		return false, fmt.Errorf("failed to list remote branches: %v", err)
+	}
+
+	targetRef := "refs/heads/" + branchName
+	for _, ref := range refs {
+		if ref.Name().String() == targetRef {
+			return true, nil
+		}
+	}
+	return false, nil
 }

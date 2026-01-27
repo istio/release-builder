@@ -113,7 +113,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 			},
 		})
 		if err != nil {
-			return true, fmt.Errorf("failed to push: %v", err)
+			return true, fmt.Errorf("failed to push branch '%s' to repository '%s': %v", branch, repo, err)
 		}
 	}
 	return true, nil
@@ -147,6 +147,27 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 		user, _, err = client.Users.Get(ctx, "")
 		if err != nil {
 			return err
+		}
+
+		// Check if the branch already exists remotely before attempting to push
+		repoStrings := strings.Split(git, "/")
+		l := len(repoStrings)
+		orgString := repoStrings[l-2]
+		repoString := repoStrings[l-1]
+
+		log.Infof("Checking if branch '%s' already exists in %s/%s", newBranchName, orgString, repoString)
+		existingBranch, _, err := client.Repositories.GetBranch(ctx, orgString, repoString, newBranchName)
+		if err == nil && existingBranch != nil {
+			return fmt.Errorf(
+				"branch '%s' already exists in %s/%s. "+
+					"Please delete it or use a different branch name with BRANCH_SUFFIX: %s",
+				newBranchName, orgString, repoString, newBranchName)
+		}
+		// If we get a 404 error, the branch doesn't exist (expected).
+		if err != nil && !strings.Contains(err.Error(), "404") {
+			log.Warnf("Could not check if branch '%s' exists (proceeding anyway): %v", newBranchName, err)
+		} else if err != nil {
+			log.Infof("Branch '%s' does not exist (as expected), proceeding with PR creation", newBranchName)
 		}
 	}
 
@@ -225,4 +246,20 @@ func GetGithubToken(file string) (string, error) {
 		return t, nil
 	}
 	return os.Getenv("GITHUB_TOKEN"), nil
+}
+
+// ValidateGithubToken checks if a GitHub token is available.
+// This provides early validation and clear error messages to users.
+func ValidateGithubToken(token string) error {
+	if token == "" {
+		return fmt.Errorf("GitHub token is required when dry-run is disabled.\n\n" +
+			"To set up authentication in the container, run:\n" +
+			"  GITHUB_TOKEN=$(gh auth token) make shell\n\n" +
+			"Alternative methods:\n" +
+			"  - Use --githubtoken flag to specify a token file\n" +
+			"  - Set the GH_TOKEN environment variable\n" +
+			"  - Set the GITHUB_TOKEN environment variable")
+	}
+
+	return nil
 }
