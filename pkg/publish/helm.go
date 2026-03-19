@@ -207,13 +207,20 @@ func pushChartsInDirOCI(packagedChartOutputDir, hub string) error {
 	if err != nil {
 		return err
 	}
+	// Use --plain-http for localhost registries (e.g. dry-run tests).
+	// Helm v4 no longer treats localhost as insecure by default.
+	args := []string{"push"}
+	if strings.HasPrefix(hub, "localhost") || strings.HasPrefix(hub, "127.0.0.1") {
+		args = append(args, "--plain-http")
+	}
 	// Publish as OCI artifacts
 	for _, f := range dirInfo {
 		if filepath.Ext(f.Name()) != ".tgz" {
 			continue
 		}
 		name := filepath.Join(packagedChartOutputDir, f.Name())
-		if err := util.VerboseCommand("helm", "push", name, "oci://"+hub).Run(); err != nil {
+		cmdArgs := append(args, name, "oci://"+hub)
+		if err := util.VerboseCommand("helm", cmdArgs...).Run(); err != nil {
 			return fmt.Errorf("failed to load docker image %v: %v", f.Name(), err)
 		}
 	}
