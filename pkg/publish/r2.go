@@ -65,6 +65,9 @@ func ArchiveR2(manifest model.Manifest, bucket string, aliases []string) error {
 			Key:    ptr.String(objName),
 			Body:   f,
 		})
+		if err != nil {
+			return fmt.Errorf("failed to put object %v: %v", objName, err)
+		}
 		log.Infof("Wrote %v to r2://%s/%s", p, bucketName, objName)
 		return nil
 	}); err != nil {
@@ -122,84 +125,3 @@ func MutateObjectR2(outDir string, client *s3.Client, bkt *string, objectPrefix 
 	}
 	return nil
 }
-
-// func mutateObjectInnerS3(outDir string, client *s3.Client, bkt *string, objectPrefix string, filename string, f func() error) error {
-// 	objName := filepath.Join(objectPrefix, filename)
-// 	outFile := filepath.Join(outDir, filename)
-// 	// attr, err := client.HeadObject(context.Background(), &s3.HeadObjectInput{
-// 	// 	Bucket: bkt,
-// 	// 	Key:    ptr.String(objName),
-// 	// })
-// 	// if err != nil {
-// 	// 	// if errors.Is(err, s) {
-// 	// 	// 	// Missing is fine
-// 	// 	// 	log.Warnf("existing file %v does not exist", filename)
-// 	// 	// } else {
-// 	// 	return fmt.Errorf("failed to fetch attributes for object %s: %v", objName, err)
-// 	// 	// }
-// 	// }
-// 	// generation := int64(0)
-// 	// if attr != nil {
-// 	// 	generation = attr.LastModified.Unix()
-// 	// 	log.Infof("Object %v currently has generation %d", objName, generation)
-//
-// 	// 	r, err := obj.NewReader(context.Background())
-// 	// 	if err != nil {
-// 	// 		if err == storage.ErrObjectNotExist {
-// 	// 			// This may be fine if we are publishing for the first time. Helm will allow us to `--merge non-existing-file.yaml`.
-// 	// 			log.Warnf("existing file %v does not exist", filename)
-// 	// 			return nil
-// 	// 		}
-// 	// 		return err
-// 	// 	}
-// 	// 	idx, err := io.ReadAll(r)
-// 	// 	if err != nil {
-// 	// 		return err
-// 	// 	}
-// 	// 	if err := os.WriteFile(outFile, idx, 0o644); err != nil {
-// 	// 		return err
-// 	// 	}
-// 	// 	r.Close()
-// 	// 	log.Infof("Wrote %v", outFile)
-// 	// }
-// 	//
-// 	// Run our action
-// 	if err := f(); err != nil {
-// 		return fmt.Errorf("action failed: %v", err)
-// 	}
-//
-// 	// // Now we want to (try to) write it
-// 	// o := obj
-// 	// if generation > 0 {
-// 	// 	o = o.If(storage.Conditions{GenerationMatch: generation})
-// 	// }
-// 	// w := o.NewWriter(context.Background())
-// 	//
-// 	// // Ensure we do not cache. This would be fine for normal users reading, but it ends up making the release process
-// 	// // break if we have multiple releases too quickly (default cache is 1hr).
-// 	// w.CacheControl = "no-cache, max-age=0, no-transform"
-// 	//
-// 	// // https://helm.sh/docs/topics/chart_repository/#ordinary-web-servers
-// 	// w.ContentType = "text/yaml"
-// 	//
-// 	// res, err := os.Open(outFile)
-// 	// if err != nil {
-// 	// 	return fmt.Errorf("failed to open %v: %v", res.Name(), err)
-// 	// }
-// 	// if _, err := io.Copy(w, bufio.NewReader(res)); err != nil {
-// 	// 	return fmt.Errorf("failed writing %v: %v", res.Name(), err)
-// 	// }
-// 	// if err := w.Close(); err != nil {
-// 	// 	gerr, ok := err.(*googleapi.Error)
-// 	// 	if ok && gerr.Code == 412 {
-// 	// 		return ErrIndexOutOfDate
-// 	// 	}
-// 	// 	return fmt.Errorf("failed to close bucket: %v", err)
-// 	// }
-// 	// if attr, err := obj.Attrs(context.Background()); err != nil {
-// 	// 	log.Errorf("failed to get attributes: %v", err)
-// 	// } else {
-// 	// 	log.Infof("Object %v now has generation %d", objName, attr.Generation)
-// 	// }
-// 	// return nil
-// }

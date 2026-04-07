@@ -79,11 +79,11 @@ func init() {
 	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
 		"The gcs bucket to publish binaries to. Example: istio-release/releases.")
 	publishCmd.PersistentFlags().StringVar(&flags.r2bucket, "r2bucket", flags.r2bucket,
-		"The gcs bucket to publish binaries to. Example: istio-release/releases.")
+		"The Cloudflare R2 bucket to publish binaries to. Example: istio-release/releases.")
 	publishCmd.PersistentFlags().StringVar(&flags.helmbucket, "helmbucket", flags.helmbucket,
 		"The gcs bucket to publish helm to. Example: istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.r2helmbucket, "r2helmbucket", flags.r2helmbucket,
-		"The gcs bucket to publish helm to. Example: istio-release/charts.")
+		"The Cloudflare R2 bucket to publish helm to. Example: istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.helmhub, "helmhub", flags.helmhub,
 		"The oci registry to publish helm to. Example: gcr.io/istio-release/charts.")
 	publishCmd.PersistentFlags().StringSliceVar(&flags.gcsaliases, "gcsaliases", flags.gcsaliases,

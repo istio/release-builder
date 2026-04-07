@@ -198,14 +198,6 @@ func publishHelmIndexS3(manifest model.Manifest, bucket string) error {
 		return fmt.Errorf("helm publish: %v", err)
 	}
 
-	// // Add extra logging for the actual object in GCS to ensure its written correctly
-	// liveObject, err := FetchObject(bkt, objectPrefix, "index.yaml")
-	// if err != nil {
-	// 	log.Warnf("failed to get live index.yaml: %v", err)
-	// } else {
-	// 	dumpIndex(liveObject, "live")
-	// }
-
 	// Now push all the packaged charts in the helm root directory up
 	if err := publishHelmBucketS3(ctx, helmPublishRoot, objectPrefix, bucketName, client); err != nil {
 		return err
