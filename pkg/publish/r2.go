@@ -35,7 +35,6 @@ func NewS3Client() *s3.Client {
 	return s3.New(options)
 }
 
-// FIXME: aliases does nothing.
 func ArchiveR2(manifest model.Manifest, bucket string, aliases []string) error {
 	ctx := context.Background()
 	client := NewS3Client()
@@ -72,6 +71,21 @@ func ArchiveR2(manifest model.Manifest, bucket string, aliases []string) error {
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed to walk directory: %v", err)
+	}
+
+	// Add alias objects that contain the version string, pointing to the latest version
+	for _, alias := range aliases {
+		aliasKey := path.Join(objectPrefix, alias)
+		_, err := client.PutObject(ctx, &s3.PutObjectInput{
+			Bucket:      ptr.String(bucketName),
+			Key:         ptr.String(aliasKey),
+			Body:        strings.NewReader(manifest.Version),
+			ContentType: ptr.String("text/plain"),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to write alias %v: %v", alias, err)
+		}
+		log.Infof("Wrote alias %v to r2://%s/%s", alias, bucketName, aliasKey)
 	}
 
 	return nil
