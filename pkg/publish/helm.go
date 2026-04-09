@@ -224,15 +224,10 @@ func publishHelmBucketS3(ctx context.Context, packagedChartOutputDir, publishPre
 			continue
 		}
 		objName := path.Join(publishPrefix, f.Name())
-		// obj := bkt.Object(objName)
-		// w := obj.NewWriter(ctx)
 		f, err := os.Open(filepath.Join(packagedChartOutputDir, f.Name()))
 		if err != nil {
 			return fmt.Errorf("failed to open %v: %v", f.Name(), err)
 		}
-		// if _, err := io.Copy(w, r); err != nil {
-		// 	return fmt.Errorf("failed writing %v: %v", f.Name(), err)
-		// }
 		_, err = client.PutObject(ctx, &s3.PutObjectInput{
 			Bucket: ptr.String(bName),
 			Key:    ptr.String(objName),

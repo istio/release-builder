@@ -17,8 +17,8 @@ import (
 )
 
 func NewS3Client() *s3.Client {
-	accountId := os.Getenv("CF_ACCOUNT_ID")
-	if accountId == "" {
+	accountID := os.Getenv("CF_ACCOUNT_ID")
+	if accountID == "" {
 		panic("CF_ACCOUNT_ID environment variable is not set")
 	}
 	creds := credentials.NewStaticCredentialsProvider(
@@ -28,7 +28,7 @@ func NewS3Client() *s3.Client {
 	)
 	options := s3.Options{
 		Region:       "auto",
-		BaseEndpoint: ptr.String(fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountId)),
+		BaseEndpoint: ptr.String(fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountID)),
 		Credentials:  creds,
 	}
 
