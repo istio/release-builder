@@ -47,7 +47,7 @@ if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
 fi
 
 # We shouldn't push here right now, this is just which version to embed in the Helm charts
-DOCKER_HUB=${DOCKER_HUB:-registry.istio.io/release}
+DOCKER_HUB=${DOCKER_HUB:-registry.istio.io/testing}
 
 # When set, we skip the actual build, scan base images, and create and push new ones if needed.
 BUILD_BASE_IMAGES=${BUILD_BASE_IMAGES:=false}
@@ -110,3 +110,11 @@ EOF
 go run main.go build --manifest <(echo "${MANIFEST}")
 
 go run main.go validate --release "${WORK_DIR}/out"
+
+go run main.go publish --release "${WORK_DIR}/out" \
+  --cosignkey "${COSIGN_KEY:-}" \
+  --gcsbucket "${GCS_BUCKET}" \
+  --helmbucket "${HELM_BUCKET}" \
+  --helmhub "${PRERELEASE_DOCKER_HUB}/charts" \
+  --dockerhub "${PRERELEASE_DOCKER_HUB}" \
+  --dockertags "${VERSION}"
