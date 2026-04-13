@@ -41,7 +41,7 @@ var (
 		regexp.MustCompile(`"tag": "latest"`),
 	}
 
-	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
+	// Currently tags are set as `gcr.io/istio-testing`, `gcr.io/istio-release`, `registry.istio.io/testing`, or `registry.istio.io/release`
 	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release", "registry.istio.io/testing", "registry.istio.io/release"}
 
 	// helmCharts contains all helm charts we will package and publish
