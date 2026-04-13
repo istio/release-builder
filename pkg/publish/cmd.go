@@ -34,9 +34,12 @@ var (
 		dockerhub    string
 		dockertags   []string
 		gcsbucket    string
+		r2bucket     string
 		helmbucket   string
+		r2helmbucket string
 		helmhub      string
 		gcsaliases   []string
+		r2aliases    []string
 		github       string
 		githubtoken  string
 		grafanatoken string
@@ -75,12 +78,18 @@ func init() {
 		"The tags to apply to docker images. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
 		"The gcs bucket to publish binaries to. Example: istio-release/releases.")
+	publishCmd.PersistentFlags().StringVar(&flags.r2bucket, "r2bucket", flags.r2bucket,
+		"The Cloudflare R2 bucket to publish binaries to. Example: istio-release/releases.")
 	publishCmd.PersistentFlags().StringVar(&flags.helmbucket, "helmbucket", flags.helmbucket,
 		"The gcs bucket to publish helm to. Example: istio-release/charts.")
+	publishCmd.PersistentFlags().StringVar(&flags.r2helmbucket, "r2helmbucket", flags.r2helmbucket,
+		"The Cloudflare R2 bucket to publish helm to. Example: istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.helmhub, "helmhub", flags.helmhub,
 		"The oci registry to publish helm to. Example: gcr.io/istio-release/charts.")
 	publishCmd.PersistentFlags().StringSliceVar(&flags.gcsaliases, "gcsaliases", flags.gcsaliases,
 		"Alias to publish to gcs. Example: latest")
+	publishCmd.PersistentFlags().StringSliceVar(&flags.r2aliases, "r2aliases", flags.r2aliases,
+		"Alias to publish to cloudflare r2. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
 		"The Github org to trigger a release, and tag, for. Example: istio.")
 	publishCmd.PersistentFlags().StringVar(&flags.githubtoken, "githubtoken", flags.githubtoken,
@@ -113,8 +122,13 @@ func Publish(manifest model.Manifest) error {
 			return fmt.Errorf("failed to publish to gcs: %v", err)
 		}
 	}
-	if flags.helmbucket != "" || flags.helmhub != "" {
-		if err := Helm(manifest, flags.helmbucket, flags.helmhub); err != nil {
+	if flags.r2bucket != "" {
+		if err := ArchiveR2(manifest, flags.r2bucket, flags.r2aliases); err != nil {
+			return fmt.Errorf("failed to publish to cloudflare r2: %v", err)
+		}
+	}
+	if flags.helmbucket != "" || flags.helmhub != "" || flags.r2helmbucket != "" {
+		if err := Helm(manifest, flags.helmbucket, flags.helmhub, flags.r2helmbucket); err != nil {
 			return fmt.Errorf("failed to publish to helm charts: %v", err)
 		}
 	}

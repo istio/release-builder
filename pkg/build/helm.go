@@ -42,7 +42,7 @@ var (
 	}
 
 	// Currently tags are set as `gcr.io/istio-testing` or `gcr.io/istio-release`
-	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release"}
+	hubs = []string{"gcr.io/istio-testing", "gcr.io/istio-release", "registry.istio.io/testing", "registry.istio.io/release"}
 
 	// helmCharts contains all helm charts we will package and publish
 	helmCharts = []string{
