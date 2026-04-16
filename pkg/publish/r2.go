@@ -37,7 +37,7 @@ func NewS3Client() *s3.Client {
 	}
 	creds := credentials.NewStaticCredentialsProvider(
 		os.Getenv("CF_ACCESS_KEY_ID"),
-		os.Getenv("CF_SECRET_ACCESS_KEY"),
+		os.Getenv("CF_ACCESS_KEY_SECRET"),
 		"",
 	)
 	options := s3.Options{
