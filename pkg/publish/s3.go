@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go/ptr"
 
@@ -30,28 +30,29 @@ import (
 	"istio.io/release-builder/pkg/model"
 )
 
-func NewS3Client() *s3.Client {
-	accountID := os.Getenv("CF_ACCOUNT_ID")
-	if accountID == "" {
-		panic("CF_ACCOUNT_ID environment variable is not set")
-	}
-	creds := credentials.NewStaticCredentialsProvider(
-		os.Getenv("CF_ACCESS_KEY_ID"),
-		os.Getenv("CF_ACCESS_KEY_SECRET"),
-		os.Getenv("CF_SESSION_TOKEN"),
-	)
-	options := s3.Options{
-		Region:       "auto",
-		BaseEndpoint: ptr.String(fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountID)),
-		Credentials:  creds,
+func NewS3Client() (*s3.Client, error) {
+	options := []func(*config.LoadOptions) error{}
+
+	if flags.s3BaseEndpoint == "" {
+		log.Warnf("No custom S3 endpoint provided, using AWS S3 by default")
+	} else {
+		options = append(options, config.WithBaseEndpoint(flags.s3BaseEndpoint))
 	}
 
-	return s3.New(options)
+	cfg, err := config.LoadDefaultConfig(context.TODO(), options...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load AWS config: %v", err)
+	}
+
+	return s3.NewFromConfig(cfg), nil
 }
 
-func ArchiveR2(manifest model.Manifest, bucket string, aliases []string) error {
+func ArchiveS3(manifest model.Manifest, bucket string, aliases []string) error {
 	ctx := context.Background()
-	client := NewS3Client()
+	client, err := NewS3Client()
+	if err != nil {
+		return err
+	}
 
 	splitbucket := strings.SplitN(bucket, "/", 2)
 	bucketName := splitbucket[0]
@@ -105,11 +106,11 @@ func ArchiveR2(manifest model.Manifest, bucket string, aliases []string) error {
 	return nil
 }
 
-// MutateObjectR2 pulls a file from R2, mutates it, then pushes it back up.
+// MutateObjectS3 pulls a file from S3, mutates it, then pushes it back up.
 // It uses ETag-based conditional writes to retry if the object was modified concurrently.
-func MutateObjectR2(outDir string, client *s3.Client, bkt *string, objectPrefix string, filename string, f func() error) error {
+func MutateObjectS3(outDir string, client *s3.Client, bkt *string, objectPrefix string, filename string, f func() error) error {
 	for i := 0; i < 10; i++ {
-		err := mutateObjectR2Inner(outDir, client, bkt, objectPrefix, filename, f)
+		err := mutateObjectS3Inner(outDir, client, bkt, objectPrefix, filename, f)
 		if err == ErrIndexOutOfDate {
 			log.Warnf("Write conflict, trying again")
 			continue
@@ -119,7 +120,7 @@ func MutateObjectR2(outDir string, client *s3.Client, bkt *string, objectPrefix 
 	return fmt.Errorf("max conflicts attempted")
 }
 
-func mutateObjectR2Inner(outDir string, client *s3.Client, bkt *string, objectPrefix string, filename string, f func() error) error {
+func mutateObjectS3Inner(outDir string, client *s3.Client, bkt *string, objectPrefix string, filename string, f func() error) error {
 	objName := filepath.Join(objectPrefix, filename)
 	outFile := filepath.Join(outDir, filename)
 	ctx := context.Background()
