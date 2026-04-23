@@ -30,20 +30,21 @@ import (
 
 var (
 	flags = struct {
-		release      string
-		dockerhub    string
-		dockertags   []string
-		gcsbucket    string
-		r2bucket     string
-		helmbucket   string
-		r2helmbucket string
-		helmhub      string
-		gcsaliases   []string
-		r2aliases    []string
-		github       string
-		githubtoken  string
-		grafanatoken string
-		cosignkey    string
+		release        string
+		dockerhub      string
+		dockertags     []string
+		gcsbucket      string
+		s3bucket       string
+		helmbucket     string
+		s3helmbucket   string
+		helmhub        string
+		gcsaliases     []string
+		s3aliases      []string
+		s3BaseEndpoint string
+		github         string
+		githubtoken    string
+		grafanatoken   string
+		cosignkey      string
 	}{}
 	publishCmd = &cobra.Command{
 		Use:          "publish",
@@ -78,18 +79,18 @@ func init() {
 		"The tags to apply to docker images. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
 		"The gcs bucket to publish binaries to. Example: istio-release/releases.")
-	publishCmd.PersistentFlags().StringVar(&flags.r2bucket, "r2bucket", flags.r2bucket,
-		"The Cloudflare R2 bucket to publish binaries to. Example: istio-release/releases.")
+	publishCmd.PersistentFlags().StringVar(&flags.s3bucket, "s3bucket", flags.s3bucket,
+		"The S3 bucket to publish binaries to. Example: istio-release/releases.")
 	publishCmd.PersistentFlags().StringVar(&flags.helmbucket, "helmbucket", flags.helmbucket,
 		"The gcs bucket to publish helm to. Example: istio-release/charts.")
-	publishCmd.PersistentFlags().StringVar(&flags.r2helmbucket, "r2helmbucket", flags.r2helmbucket,
-		"The Cloudflare R2 bucket to publish helm to. Example: istio-release/charts.")
+	publishCmd.PersistentFlags().StringVar(&flags.s3helmbucket, "s3helmbucket", flags.s3helmbucket,
+		"The S3 bucket to publish helm to. Example: istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.helmhub, "helmhub", flags.helmhub,
 		"The oci registry to publish helm to. Example: gcr.io/istio-release/charts.")
 	publishCmd.PersistentFlags().StringSliceVar(&flags.gcsaliases, "gcsaliases", flags.gcsaliases,
 		"Alias to publish to gcs. Example: latest")
-	publishCmd.PersistentFlags().StringSliceVar(&flags.r2aliases, "r2aliases", flags.r2aliases,
-		"Alias to publish to cloudflare r2. Example: latest")
+	publishCmd.PersistentFlags().StringSliceVar(&flags.s3aliases, "s3aliases", flags.s3aliases,
+		"Alias to publish to s3. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
 		"The Github org to trigger a release, and tag, for. Example: istio.")
 	publishCmd.PersistentFlags().StringVar(&flags.githubtoken, "githubtoken", flags.githubtoken,
@@ -98,6 +99,8 @@ func init() {
 		"The file containing a grafana.com API token.")
 	publishCmd.PersistentFlags().StringVar(&flags.cosignkey, "cosignkey", flags.cosignkey,
 		"A key for signing images, as passed to cosign using 'cosign sign --key <x>'")
+	publishCmd.PersistentFlags().StringVar(&flags.s3BaseEndpoint, "s3-base-endpoint", flags.s3BaseEndpoint,
+		"S3 base endpoint when publishing to S3 compatible storage. Example: https://<account_id>.r2.cloudflarestorage.com")
 }
 
 func GetPublishCommand() *cobra.Command {
@@ -122,13 +125,13 @@ func Publish(manifest model.Manifest) error {
 			return fmt.Errorf("failed to publish to gcs: %v", err)
 		}
 	}
-	if flags.r2bucket != "" {
-		if err := ArchiveR2(manifest, flags.r2bucket, flags.r2aliases); err != nil {
-			return fmt.Errorf("failed to publish to cloudflare r2: %v", err)
+	if flags.s3bucket != "" {
+		if err := ArchiveS3(manifest, flags.s3bucket, flags.s3aliases); err != nil {
+			return fmt.Errorf("failed to publish to s3 : %v", err)
 		}
 	}
-	if flags.helmbucket != "" || flags.helmhub != "" || flags.r2helmbucket != "" {
-		if err := Helm(manifest, flags.helmbucket, flags.helmhub, flags.r2helmbucket); err != nil {
+	if flags.helmbucket != "" || flags.helmhub != "" || flags.s3helmbucket != "" {
+		if err := Helm(manifest, flags.helmbucket, flags.helmhub, flags.s3helmbucket); err != nil {
 			return fmt.Errorf("failed to publish to helm charts: %v", err)
 		}
 	}
