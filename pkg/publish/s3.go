@@ -39,6 +39,12 @@ func NewS3Client() (*s3.Client, error) {
 		options = append(options, config.WithBaseEndpoint(flags.s3BaseEndpoint))
 	}
 
+	// This will read
+	// * AWS_REGION
+	// * AWS_ACCESS_KEY_ID
+    // * AWS_SECRET_ACCESS_KEY
+    // * AWS_SESSION_TOKEN
+	// from the environment
 	cfg, err := config.LoadDefaultConfig(context.TODO(), options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %v", err)
