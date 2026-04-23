@@ -42,8 +42,8 @@ func NewS3Client() (*s3.Client, error) {
 	// This will read
 	// * AWS_REGION
 	// * AWS_ACCESS_KEY_ID
-    // * AWS_SECRET_ACCESS_KEY
-    // * AWS_SESSION_TOKEN
+	// * AWS_SECRET_ACCESS_KEY
+	// * AWS_SESSION_TOKEN
 	// from the environment
 	cfg, err := config.LoadDefaultConfig(context.TODO(), options...)
 	if err != nil {
