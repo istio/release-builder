@@ -21,6 +21,7 @@ set -eu
 
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
+R2_BUCKET=${R2_BUCKET:-istio-prerelease/prerelease}
 
 VERSION="$(cat "${WD}/trigger-build")"
 
@@ -38,6 +39,7 @@ Build information
 =================
 Version: ${VERSION}
 Staging GCS Bucket: ${GCS_BUCKET}
+Staging R2 Bucket: ${R2_BUCKET}
 Staging Docker Hub: ${PRERELEASE_DOCKER_HUB}
 EOF
 

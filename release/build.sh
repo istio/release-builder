@@ -21,7 +21,8 @@ ROOT=$(dirname "$WD")
 # Ensure we are running from the repo root
 cd "${ROOT}"
 
-set -eux
+set -eu
+set +x
 
 if [[ -n "${DOCKER_CONFIG:-}" ]]; then
   # If DOCKER_CONFIG is set, we are mounting a known docker config.
@@ -34,9 +35,12 @@ if [[ -n "${DOCKER_CONFIG:-}" ]]; then
 fi
 # No else needed - the prow entrypoint already runs configure-docker for standard cases
 
+# Where to push images
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
+R2_BUCKET=${R2_BUCKET:-istio-prerelease/prerelease}
 HELM_BUCKET=${HELM_BUCKET:-istio-prerelease/charts}
+R2_HELM_BUCKET=${R2_HELM_BUCKET:-istio-prerelease/charts}
 COSIGN_KEY=${COSIGN_KEY:-}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 ARCH=${ARCH:-linux/amd64,linux/arm64}
@@ -46,7 +50,7 @@ if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
   PROXY_OVERRIDE="proxyOverride: ${ISTIO_ENVOY_BASE_URL}"
 fi
 
-# We shouldn't push here right now, this is just which version to embed in the Helm charts
+# this is just which version to embed in the Helm charts
 DOCKER_HUB=${DOCKER_HUB:-registry.istio.io/release}
 
 # When set, we skip the actual build, scan base images, and create and push new ones if needed.
@@ -111,10 +115,21 @@ go run main.go build --manifest <(echo "${MANIFEST}")
 
 go run main.go validate --release "${WORK_DIR}/out"
 
+ENDPOINT="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.endpoint' | tr -d '\n')"
+AWS_ACCESS_KEY_ID="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.access_key' | tr -d '\n')" \
+AWS_SECRET_ACCESS_KEY="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.secret_key' | tr -d '\n')" \
+AWS_REGION="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.region' | tr -d '\n')" \
+AWS_SESSION_TOKEN="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.session_token' | tr -d '\n')" \
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION AWS_SESSION_TOKEN
+
+# We build to both r2 and gcs, but the publish action uses r2 as the source.
 go run main.go publish --release "${WORK_DIR}/out" \
   --cosignkey "${COSIGN_KEY:-}" \
   --gcsbucket "${GCS_BUCKET}" \
+  --s3bucket "${R2_BUCKET}" \
   --helmbucket "${HELM_BUCKET}" \
+  --s3helmbucket "${R2_HELM_BUCKET}" \
   --helmhub "${PRERELEASE_DOCKER_HUB}/charts" \
   --dockerhub "${PRERELEASE_DOCKER_HUB}" \
-  --dockertags "${VERSION}"
+  --dockertags "${VERSION}" \
+  --s3-base-endpoint "${ENDPOINT}"
