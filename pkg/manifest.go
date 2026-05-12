@@ -81,6 +81,7 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 		ProxyOverride:               in.ProxyOverride,
 		GrafanaDashboards:           in.GrafanaDashboards,
 		SkipGenerateBillOfMaterials: in.SkipGenerateBillOfMaterials,
+		BillOfMaterialsURI:          in.BillOfMaterialsURI,
 		Architectures:               arch,
 	}, nil
 }

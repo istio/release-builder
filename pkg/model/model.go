@@ -125,7 +125,7 @@ const (
 	DockerOutputContext DockerOutput = "context"
 )
 
-// Manifest defines what is in a release
+// InputManifest defines what is in a release
 type InputManifest struct {
 	// Dependencies declares all git repositories used to build this release
 	Dependencies IstioDependencies `json:"dependencies"`
@@ -149,9 +149,11 @@ type InputManifest struct {
 	BuildOutputs []string `json:"outputs"`
 	// GrafanaDashboards defines a mapping of dashboard name -> ID of the dashboard on grafana.com
 	GrafanaDashboards map[string]int `json:"dashboards"`
-	// BillOfMaterials flag determines if a Bill of Materials should be produced
-	// by the build.
+	// SkipGenerateBillOfMaterials flag determines if a Bill of Materials should
+	// be produced by the build.
 	SkipGenerateBillOfMaterials bool `json:"skipGenerateBillOfMaterials"`
+	// BillOfMaterialsURI flag sets URI for bill of materials.
+	BillOfMaterialsURI string `json:"billOfMaterialsURI"`
 }
 
 // Manifest defines what is in a release
@@ -179,9 +181,11 @@ type Manifest struct {
 	// GrafanaDashboards defines a mapping of dashboard name -> ID of the dashboard on grafana.com
 	// Note: this tool is not yet smart enough to create dashboards that do not already exist, it can only update dashboards.
 	GrafanaDashboards map[string]int `json:"dashboards"`
-	// BillOfMaterials flag determines if a Bill of Materials should be produced
-	// by the build.
+	// SkipGenerateBillOfMaterials flag determines if a Bill of Materials should
+	// be produced by the build.
 	SkipGenerateBillOfMaterials bool `json:"skipGenerateBillOfMaterials"`
+	// BillOfMaterialsURI flag sets URI for bill of materials.
+	BillOfMaterialsURI string `json:"billOfMaterialsURI"`
 }
 
 // RepoDir is a helper to return the working directory for a repo

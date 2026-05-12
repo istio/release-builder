@@ -36,6 +36,7 @@ fi
 
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
 GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
+SBOM_OUTPUT_URI="https://storage.googleapis.com/${GCS_BUCKET}/releases"
 HELM_BUCKET=${HELM_BUCKET:-istio-prerelease/charts}
 COSIGN_KEY=${COSIGN_KEY:-}
 GITHUB_ORG=${GITHUB_ORG:-istio}
@@ -62,6 +63,7 @@ version: "${VERSION}"
 docker: "${DOCKER_HUB}"
 directory: "${WORK_DIR}"
 architectures: ${ARCHS}
+billOfMaterialsURI: ${SBOM_OUTPUT_URI}
 dependencies:
 ${DEPENDENCIES:-$(cat <<EOD
   istio:
