@@ -111,6 +111,8 @@ ${PROXY_OVERRIDE:-}
 EOF
 )
 
+# This command will will invoke istio make rules that parse the CF_CREDENTIALS env var and use them to authenticate to S3 endpoints.
+# Useful when PROXY_OVERRIDE is set to s3://...
 go run main.go build --manifest <(echo "${MANIFEST}")
 
 go run main.go validate --release "${WORK_DIR}/out"
