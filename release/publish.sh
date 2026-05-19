@@ -21,7 +21,8 @@ ROOT=$(dirname "$WD")
 # Ensure we are running from the repo root
 cd "${ROOT}"
 
-set -eux
+set -eu
+set +x
 
 if [[ -n "${DOCKER_CONFIG:-}" ]]; then
   # If DOCKER_CONFIG is set, we are mounting a known docker config.
@@ -37,10 +38,13 @@ fi
 
 VERSION="$(cat "${WD}/trigger-publish")"
 
-SOURCE_GCS_BUCKET=${SOURCE_GCS_BUCKET:-istio-prerelease/prerelease}
+SOURCE_R2_BUCKET=${SOURCE_R2_BUCKET:-istio-prerelease/prerelease}
 GCS_BUCKET=${GCS_BUCKET:-istio-release/releases}
+R2_BUCKET=${R2_BUCKET:-istio-release/releases}
 HELM_BUCKET=${HELM_BUCKET:-istio-release/charts}
+R2_HELM_BUCKET=${R2_HELM_BUCKET:-istio-release/charts}
 HELM_HUB_RELEASE=${HELM_HUB_RELEASE:-gcr.io/istio-release/charts}
+# We actually push to these hubs. This doesn't affect the default hub in Helm charts
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 DOCKER_HUB_MIRROR=${DOCKER_HUB_MIRROR:-gcr.io/istio-release}
 GITHUB_ORG=${GITHUB_ORG:-istio}
@@ -51,14 +55,28 @@ COSIGN_KEY=${COSIGN_KEY:-}
 WORK_DIR="$(mktemp -d)/release"
 mkdir -p "${WORK_DIR}"
 
-gsutil -m cp -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}/*" "${WORK_DIR}"
-go run main.go publish --release "${WORK_DIR}" \
+ENDPOINT="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.endpoint' | tr -d '\n')"
+AWS_ACCESS_KEY_ID="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.access_key' | tr -d '\n')" \
+    AWS_SECRET_ACCESS_KEY="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.secret_key' | tr -d '\n')" \
+    AWS_REGION="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.region' | tr -d '\n')" \
+    AWS_SESSION_TOKEN="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.session_token' | tr -d '\n')" \
+    aws s3 cp --recursive "s3://${SOURCE_R2_BUCKET}/${VERSION}/" "${WORK_DIR}/" --endpoint-url "${ENDPOINT}"
+
+ENDPOINT="$(echo "${CF_CREDENTIALS}" | jq -r '.endpoint' | tr -d '\n')"
+AWS_ACCESS_KEY_ID="$(echo "${CF_CREDENTIALS}" | jq -r '.access_key' | tr -d '\n')" \
+    AWS_SECRET_ACCESS_KEY="$(echo "${CF_CREDENTIALS}" | jq -r '.secret_key' | tr -d '\n')" \
+    AWS_REGION="$(echo "${CF_CREDENTIALS}" | jq -r '.region' | tr -d '\n')" \
+    AWS_SESSION_TOKEN="$(echo "${CF_CREDENTIALS}" | jq -r '.session_token' | tr -d '\n')" \
+    go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \
     --gcsbucket "${GCS_BUCKET}" \
+    --s3bucket "${R2_BUCKET}" \
     --helmbucket "${HELM_BUCKET}" \
+    --s3helmbucket "${R2_HELM_BUCKET}" \
     --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \
-    --grafanatoken "${GRAFANA_TOKEN_FILE}"
+    --grafanatoken "${GRAFANA_TOKEN_FILE}" \
+    --s3-base-endpoint "${ENDPOINT}"
 
 # Also push images to a GCR repo, in case of dockerhub rate limiting issues for
 # large clusters (see https://docs.docker.com/docker-hub/download-rate-limit/).

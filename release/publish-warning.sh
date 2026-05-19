@@ -18,13 +18,22 @@ WD=$(dirname "$0")
 WD=$(cd "$WD"; pwd)
 
 set -eu
+set +x
 
-SOURCE_GCS_BUCKET=${SOURCE_GCS_BUCKET:-istio-prerelease/prerelease}
+SOURCE_R2_BUCKET=${SOURCE_R2_BUCKET:-istio-prerelease/prerelease}
+R2_BUCKET=${R2_BUCKET:-istio-release/releases}
 GCS_BUCKET=${GCS_BUCKET:-istio-release/releases}
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 
 VERSION="$(cat "${WD}/trigger-publish")"
+
+ENDPOINT="$(echo "${CF_CREDENTIALS}" | jq -r '.endpoint' | tr -d '\n')"
+AWS_ACCESS_KEY_ID="$(echo "${CF_CREDENTIALS}" | jq -r '.access_key' | tr -d '\n')"
+AWS_SECRET_ACCESS_KEY="$(echo "${CF_CREDENTIALS}" | jq -r '.secret_key' | tr -d '\n')"
+AWS_REGION="$(echo "${CF_CREDENTIALS}" | jq -r '.region' | tr -d '\n')"
+AWS_SESSION_TOKEN="$(echo "${CF_CREDENTIALS}" | jq -r '.session_token' | tr -d '\n')"
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION AWS_SESSION_TOKEN
 
 cat <<EOF
 WARNING
@@ -41,12 +50,14 @@ Build information
 Version: ${VERSION}
 
 GCS Bucket: ${GCS_BUCKET}
+R2 Bucket: ${R2_BUCKET}
 Docker Hub: ${DOCKER_HUB}
 Github Org: ${GITHUB_ORG}
-Source: ${SOURCE_GCS_BUCKET}/${VERSION}
-Contents:
-$(gsutil cat "gs://${SOURCE_GCS_BUCKET}/${VERSION}/manifest.yaml")
-$(gsutil ls -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}")
+Source: ${SOURCE_R2_BUCKET}/${VERSION}
+
+R2 Contents (will publish to GCS and R2 from this):
+$(aws --endpoint-url "${ENDPOINT}" s3 cp "s3://${SOURCE_R2_BUCKET}/${VERSION}/manifest.yaml" -)
+$(aws --endpoint-url "${ENDPOINT}" s3 ls "s3://${SOURCE_R2_BUCKET}/${VERSION}/" --recursive)
 EOF
 
 exit 2
