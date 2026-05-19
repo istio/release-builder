@@ -21,7 +21,7 @@ import (
 	"regexp"
 	"strings"
 
-	"helm.sh/helm/v3/pkg/chart"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
 	"sigs.k8s.io/yaml"
 
 	"istio.io/istio/pkg/log"
