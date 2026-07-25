@@ -51,7 +51,7 @@ if [[ -n ${ISTIO_ENVOY_BASE_URL:-} ]]; then
 fi
 
 # this is just which version to embed in the Helm charts
-DOCKER_HUB=${DOCKER_HUB:-registry.istio.io/release}
+DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 
 # When set, we skip the actual build, scan base images, and create and push new ones if needed.
 BUILD_BASE_IMAGES=${BUILD_BASE_IMAGES:=false}
