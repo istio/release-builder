@@ -41,10 +41,9 @@ VERSION="$(cat "${WD}/trigger-publish")"
 SOURCE_R2_BUCKET=${SOURCE_R2_BUCKET:-istio-prerelease/prerelease}
 R2_BUCKET=${R2_BUCKET:-istio-release/releases}
 R2_HELM_BUCKET=${R2_HELM_BUCKET:-istio-release/charts}
-HELM_HUB_RELEASE=${HELM_HUB_RELEASE:-docker.io/istio/charts}
+HELM_HUB_RELEASE=${HELM_HUB_RELEASE:-ghcr.io/istio/release/charts}
 # We actually push to these hubs. This doesn't affect the default hub in Helm charts
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
-DOCKER_HUB_MIRROR=${DOCKER_HUB_MIRROR:-gcr.io/istio-release}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 GITHUB_TOKEN_FILE=${GITHUB_TOKEN_FILE:-}
 GRAFANA_TOKEN_FILE=${GRAFANA_TOKEN_FILE:-}
