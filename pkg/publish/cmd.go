@@ -37,6 +37,7 @@ var (
 		s3bucket       string
 		helmbucket     string
 		s3helmbucket   string
+		s3helmurl      string
 		helmhub        string
 		gcsaliases     []string
 		s3aliases      []string
@@ -85,6 +86,8 @@ func init() {
 		"The gcs bucket to publish helm to. Example: istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.s3helmbucket, "s3helmbucket", flags.s3helmbucket,
 		"The S3 bucket to publish helm to. Example: istio-release/charts.")
+	publishCmd.PersistentFlags().StringVar(&flags.s3helmurl, "s3helmurl", flags.s3helmurl,
+		"The public base URL for Helm charts published to S3. Example: https://blob.istio.io/istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.helmhub, "helmhub", flags.helmhub,
 		"The oci registry to publish helm to. Example: gcr.io/istio-release/charts.")
 	publishCmd.PersistentFlags().StringSliceVar(&flags.gcsaliases, "gcsaliases", flags.gcsaliases,
@@ -131,7 +134,7 @@ func Publish(manifest model.Manifest) error {
 		}
 	}
 	if flags.helmbucket != "" || flags.helmhub != "" || flags.s3helmbucket != "" {
-		if err := Helm(manifest, flags.helmbucket, flags.helmhub, flags.s3helmbucket); err != nil {
+		if err := Helm(manifest, flags.helmbucket, flags.helmhub, flags.s3helmbucket, flags.s3helmurl); err != nil {
 			return fmt.Errorf("failed to publish to helm charts: %v", err)
 		}
 	}

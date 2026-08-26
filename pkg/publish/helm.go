@@ -40,7 +40,7 @@ var chartSubtypeDir = []string{
 }
 
 // Helm publishes charts to the given GCS bucket
-func Helm(manifest model.Manifest, bucket string, hub string, r2bucket string) error {
+func Helm(manifest model.Manifest, bucket string, hub string, r2bucket string, r2URL string) error {
 	if bucket != "" {
 		if err := publishHelmIndex(manifest, bucket); err != nil {
 			return err
@@ -48,7 +48,7 @@ func Helm(manifest model.Manifest, bucket string, hub string, r2bucket string) e
 	}
 
 	if r2bucket != "" {
-		if err := publishHelmIndexS3(manifest, r2bucket); err != nil {
+		if err := publishHelmIndexS3(manifest, r2bucket, r2URL); err != nil {
 			return err
 		}
 	}
@@ -159,7 +159,11 @@ func publishHelmBucket(ctx context.Context, packagedChartOutputDir, publishPrefi
 	return nil
 }
 
-func publishHelmIndexS3(manifest model.Manifest, bucket string) error {
+func publishHelmIndexS3(manifest model.Manifest, bucket string, publicURL string) error {
+	if publicURL == "" {
+		return fmt.Errorf("public Helm URL is required when publishing to S3")
+	}
+
 	ctx := context.Background()
 	client, err := NewS3Client()
 	if err != nil {
@@ -187,7 +191,7 @@ func publishHelmIndexS3(manifest model.Manifest, bucket string) error {
 	err = MutateObjectS3(helmPublishRoot, client, &bucketName, objectPrefix, "index.yaml", func() error {
 		dumpIndexFile(filepath.Join(helmPublishRoot, "index.yaml"), "before")
 		idxCmd := util.VerboseCommand("helm", "repo", "index", ".",
-			"--url", fmt.Sprintf("https://pub-cce2c73c70cd4021836b91b9aa11e85d.r2.dev/%s", objectPrefix),
+			"--url", strings.TrimSuffix(publicURL, "/"),
 			"--merge", "index.yaml")
 		idxCmd.Dir = helmPublishRoot
 		log.Infof("Running helm repo index with dir %v", idxCmd.Dir)
