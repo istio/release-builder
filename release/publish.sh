@@ -29,6 +29,7 @@ VERSION="$(cat "${WD}/trigger-publish")"
 SOURCE_R2_BUCKET=${SOURCE_R2_BUCKET:-istio-prerelease/prerelease}
 R2_BUCKET=${R2_BUCKET:-istio-release/releases}
 R2_HELM_BUCKET=${R2_HELM_BUCKET:-istio-release/charts}
+R2_HELM_URL=${R2_HELM_URL:-https://blob.istio.io/istio-release/charts}
 # We actually push to these hubs. This doesn't affect the default hub in Helm charts
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 HELM_HUB_RELEASE=${HELM_HUB_RELEASE:-ghcr.io/istio/release/charts}
@@ -56,6 +57,7 @@ AWS_ACCESS_KEY_ID="$(echo "${CF_CREDENTIALS}" | jq -r '.access_key' | tr -d '\n'
     --cosignkey "${COSIGN_KEY:-}" \
     --s3bucket "${R2_BUCKET}" \
     --s3helmbucket "${R2_HELM_BUCKET}" \
+    --s3helmurl "${R2_HELM_URL}" \
     --helmhub "${HELM_HUB_RELEASE}" \
     --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \

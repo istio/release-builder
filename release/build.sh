@@ -28,6 +28,7 @@ set +x
 PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-ghcr.io/istio/prerelease-testing}
 R2_BUCKET=${R2_BUCKET:-istio-prerelease/prerelease}
 R2_HELM_BUCKET=${R2_HELM_BUCKET:-istio-prerelease/charts}
+R2_HELM_URL=${R2_HELM_URL:-https://blob.istio.io/istio-prerelease/charts}
 COSIGN_KEY=${COSIGN_KEY:-}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 ARCH=${ARCH:-linux/amd64,linux/arm64}
@@ -116,6 +117,7 @@ go run main.go publish --release "${WORK_DIR}/out" \
   --cosignkey "${COSIGN_KEY:-}" \
   --s3bucket "${R2_BUCKET}" \
   --s3helmbucket "${R2_HELM_BUCKET}" \
+  --s3helmurl "${R2_HELM_URL}" \
   --helmhub "${PRERELEASE_DOCKER_HUB}/charts" \
   --dockerhub "${PRERELEASE_DOCKER_HUB}" \
   --dockertags "${VERSION}" \
