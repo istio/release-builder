@@ -114,7 +114,6 @@ go run main.go validate --release "${WORK_DIR}/out"
 go run main.go publish --release "${WORK_DIR}/out" \
   --cosignkey "${COSIGN_KEY:-}" \
   --gcsbucket "${GCS_BUCKET}" \
-  --helmbucket "${HELM_BUCKET}" \
   --helmhub "${PRERELEASE_DOCKER_HUB}/charts" \
   --dockerhub "${PRERELEASE_DOCKER_HUB}" \
   --dockertags "${VERSION}"
