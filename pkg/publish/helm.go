@@ -25,6 +25,8 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/smithy-go/ptr"
 	"sigs.k8s.io/yaml"
 
 	"istio.io/istio/pkg/log"
@@ -38,9 +40,15 @@ var chartSubtypeDir = []string{
 }
 
 // Helm publishes charts to the given GCS bucket
-func Helm(manifest model.Manifest, bucket string, hub string) error {
+func Helm(manifest model.Manifest, bucket string, hub string, r2bucket string, r2URL string) error {
 	if bucket != "" {
 		if err := publishHelmIndex(manifest, bucket); err != nil {
+			return err
+		}
+	}
+
+	if r2bucket != "" {
+		if err := publishHelmIndexS3(manifest, r2bucket, r2URL); err != nil {
 			return err
 		}
 	}
@@ -146,6 +154,96 @@ func publishHelmBucket(ctx context.Context, packagedChartOutputDir, publishPrefi
 			return fmt.Errorf("failed to close bucket: %v", err)
 		}
 		log.Infof("Wrote %v to gs://%s/%s", f.Name(), bName, objName)
+	}
+
+	return nil
+}
+
+func publishHelmIndexS3(manifest model.Manifest, bucket string, publicURL string) error {
+	if publicURL == "" {
+		return fmt.Errorf("public Helm URL is required when publishing to S3")
+	}
+
+	ctx := context.Background()
+	client, err := NewS3Client()
+	if err != nil {
+		return err
+	}
+
+	// Allow the caller to pass a reference like bucket/folder/subfolder, but split this to
+	// bucket, and folder/subfolder prefix
+	splitbucket := strings.SplitN(bucket, "/", 2)
+	bucketName := splitbucket[0]
+	objectPrefix := ""
+	if len(splitbucket) > 1 {
+		objectPrefix = splitbucket[1]
+	}
+	log.Infof("Using bucket %s and prefix %s", bucketName, objectPrefix)
+
+	helmPublishRoot := filepath.Join(manifest.Directory, "helm")
+
+	// Pull down the index, update it, and push it back up.
+	// MutateObject ensures there are no races.
+	//
+	// Note that `helm repo index` will index charts in subdirectories as well, which
+	// is desired behavior here - we will have to push them separately however,
+	// so the index matches the bucket contents.
+	err = MutateObjectS3(helmPublishRoot, client, &bucketName, objectPrefix, "index.yaml", func() error {
+		dumpIndexFile(filepath.Join(helmPublishRoot, "index.yaml"), "before")
+		idxCmd := util.VerboseCommand("helm", "repo", "index", ".",
+			"--url", strings.TrimSuffix(publicURL, "/"),
+			"--merge", "index.yaml")
+		idxCmd.Dir = helmPublishRoot
+		log.Infof("Running helm repo index with dir %v", idxCmd.Dir)
+		if err := idxCmd.Run(); err != nil {
+			return fmt.Errorf("index repo: %v", err)
+		}
+		dumpIndexFile(filepath.Join(helmPublishRoot, "index.yaml"), "after")
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("helm publish: %v", err)
+	}
+
+	// Now push all the packaged charts in the helm root directory up
+	if err := publishHelmBucketS3(ctx, helmPublishRoot, objectPrefix, bucketName, client); err != nil {
+		return err
+	}
+
+	// For any packaged charts in "chart subtype" subdirectories ("samples" etc), push those up
+	for _, chartType := range chartSubtypeDir {
+		if err := publishHelmBucketS3(ctx, filepath.Join(helmPublishRoot, chartType), path.Join(objectPrefix, chartType), bucketName, client); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func publishHelmBucketS3(ctx context.Context, packagedChartOutputDir, publishPrefix, bName string, client *s3.Client) error {
+	dirInfo, err := os.ReadDir(packagedChartOutputDir)
+	if err != nil {
+		return err
+	}
+	for _, f := range dirInfo {
+		if filepath.Ext(f.Name()) != ".tgz" {
+			log.Infof("skipping %v", f.Name())
+			continue
+		}
+		objName := path.Join(publishPrefix, f.Name())
+		f, err := os.Open(filepath.Join(packagedChartOutputDir, f.Name()))
+		if err != nil {
+			return fmt.Errorf("failed to open %v: %v", f.Name(), err)
+		}
+		_, err = client.PutObject(ctx, &s3.PutObjectInput{
+			Bucket: ptr.String(bName),
+			Key:    ptr.String(objName),
+			Body:   f,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to put object %v: %v", objName, err)
+		}
+		log.Infof("Wrote %v to r2://%s/%s", f.Name(), bName, objName)
 	}
 
 	return nil
