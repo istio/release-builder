@@ -55,11 +55,9 @@ gsutil -m cp -r "gs://${SOURCE_GCS_BUCKET}/${VERSION}/*" "${WORK_DIR}"
 go run main.go publish --release "${WORK_DIR}" \
     --cosignkey "${COSIGN_KEY:-}" \
     --gcsbucket "${GCS_BUCKET}" \
-    --helmbucket "${HELM_BUCKET}" \
     --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \
     --grafanatoken "${GRAFANA_TOKEN_FILE}"
-
 # Also push images to a GCR repo, in case of dockerhub rate limiting issues for
 # large clusters (see https://docs.docker.com/docker-hub/download-rate-limit/).
 # Docker hub doesn't support Helm registries, so we also push these only to GCR.
