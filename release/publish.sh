@@ -21,7 +21,8 @@ ROOT=$(dirname "$WD")
 # Ensure we are running from the repo root
 cd "${ROOT}"
 
-set -eux
+set -eu
+set +x
 
 if [[ -n "${DOCKER_CONFIG:-}" ]]; then
   # If DOCKER_CONFIG is set, we are mounting a known docker config.
