@@ -19,49 +19,44 @@ WD=$(cd "$WD"; pwd)
 
 set -eux
 
-if [[ $(command -v gcloud) ]]; then
-  gcloud auth configure-docker -q
-elif [[ $(command -v docker-credential-gcr) ]]; then
-  docker-credential-gcr configure-docker
-else
-  echo "No credential helpers found, push to docker may not function properly"
-fi
-
 function cleanup() {
   # shellcheck disable=SC2046
   docker stop $(docker ps -a -q --filter label=istio-release-builder)
 }
 trap cleanup EXIT
 
-# Setup fake GCS and registry
+# Setup local registry and S3-compatible storage.
 docker run -d  --rm  \
   -p "7480:5000" --label istio-release-builder \
   --name "release-builder-registry" \
-  gcr.io/istio-testing/registry:2
+  registry.istio.io/testing/registry:2
 docker run -d  --rm  \
-  -p "7481:7481" --label istio-release-builder \
-  --name "release-builder-gcs" \
-  gcr.io/istio-testing/fake-gcs-server:1.52.3 \
-  -scheme http -port 7481
+  -p "7481:9000" --label istio-release-builder \
+  --name "release-builder-s3" \
+  -e MINIO_ROOT_USER=minioadmin \
+  -e MINIO_ROOT_PASSWORD=minioadmin \
+  -e MINIO_DOMAIN=localhost \
+  quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z \
+  server /data --address ":9000"
 
-# Setup our bucket. Add retry since the registry may not be ready yet
+# Setup the local S3 bucket. Add retries while MinIO starts.
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_REGION=us-east-1
+S3_ENDPOINT=${S3_ENDPOINT:-http://localhost:7481}
 counter=0
 while : ; do
   [[ "$counter" == 10 ]] && exit 1
-  curl -X POST \
-    -d '{"name":"istio-build"}' \
-    -H "content-type: application/json" \
-    -H "accept: application/json" \
-    'http://127.0.0.1:7481/storage/v1/b?alt=json&project=test&projection=full' && break
+  aws s3api create-bucket --bucket istio-build --endpoint-url "${S3_ENDPOINT}" && break
    sleep 1
    echo "Trying again... Try #$counter"
    counter=$((counter+1))
 done
 
 DOCKER_HUB=${DOCKER_HUB:-"localhost:7480"}
-export GCS_HOST=${GCS_HOST-"http://localhost:7481"}
-GCS_BUCKET=${GCS_BUCKET:-istio-build/test}
-HELM_BUCKET=${HELM_BUCKET:-istio-build/test/charts}
+S3_BUCKET=${S3_BUCKET:-istio-build/test}
+S3_HELM_BUCKET=${S3_HELM_BUCKET:-istio-build/test/charts}
+S3_HELM_URL=${S3_HELM_URL:-${S3_ENDPOINT/localhost/istio-build.localhost}/test/charts}
 VERSION="1.19.0-releasebuilder.$(git rev-parse --short HEAD)"
 COSIGN_KEY=${COSIGN_KEY:-}
 GITHUB_ORG=${GITHUB_ORG:-istio}
@@ -132,9 +127,11 @@ go run main.go validate --release "${WORK_DIR}/out"
 if [[ -z "${DRY_RUN:-}" ]]; then
 go run main.go publish --release "${WORK_DIR}/out" \
   --cosignkey "${COSIGN_KEY:-}" \
-  --helmbucket "${HELM_BUCKET}" \
   --helmhub "${DOCKER_HUB}/charts" \
-  --gcsbucket "${GCS_BUCKET}" \
+  --s3bucket "${S3_BUCKET}" \
+  --s3helmbucket "${S3_HELM_BUCKET}" \
+  --s3helmurl "${S3_HELM_URL}" \
+  --s3-base-endpoint "${S3_ENDPOINT}" \
   --dockerhub "${DOCKER_HUB}" \
   --dockertags "${VERSION}"
 fi
