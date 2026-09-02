@@ -19,8 +19,7 @@ WD=$(cd "$WD"; pwd)
 
 set -eu
 
-PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
-GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
+PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-registry.istio.io/prerelease-testing}
 R2_BUCKET=${R2_BUCKET:-istio-prerelease/prerelease}
 
 VERSION="$(cat "${WD}/trigger-build")"
@@ -38,7 +37,6 @@ If this is expected, this message can be ignored.
 Build information
 =================
 Version: ${VERSION}
-Staging GCS Bucket: ${GCS_BUCKET}
 Staging R2 Bucket: ${R2_BUCKET}
 Staging Docker Hub: ${PRERELEASE_DOCKER_HUB}
 EOF

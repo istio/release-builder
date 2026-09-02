@@ -57,7 +57,7 @@ func UpdateCommonFilesCommon(manifest model.Manifest, release string, dryrun boo
 	if tagBytes, err = cmd.Output(); err != nil {
 		return fmt.Errorf("failed to run command: %v", err)
 	}
-	tag, _, _ := (bufio.NewReader(bytes.NewReader(tagBytes))).ReadLine()
+	tag, _, _ := bufio.NewReader(bytes.NewReader(tagBytes)).ReadLine()
 
 	sedString = "s/IMAGE_VERSION=.*/IMAGE_VERSION=" + string(tag) + "/"
 	cmd = util.VerboseCommand("sed", "-i", sedString, "files/common/scripts/setup_env.sh")
