@@ -39,6 +39,9 @@ func NewGCSClient(ctx context.Context) (*storage.Client, error) {
 		// For testing
 		log.Infof("using custom GCS_HOST: %v", host)
 		opts = append(opts, option.WithEndpoint(host))
+		if strings.Contains(host, "localhost") || strings.Contains(host, "127.0.0.1") {
+			opts = append(opts, option.WithoutAuthentication())
+		}
 	}
 	return storage.NewClient(ctx, opts...)
 }
