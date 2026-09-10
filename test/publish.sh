@@ -37,11 +37,11 @@ trap cleanup EXIT
 docker run -d  --rm  \
   -p "7480:5000" --label istio-release-builder \
   --name "release-builder-registry" \
-  gcr.io/istio-testing/registry:2
+  registry.istio.io/testing/registry:2
 docker run -d  --rm  \
   -p "7481:7481" --label istio-release-builder \
   --name "release-builder-gcs" \
-  gcr.io/istio-testing/fake-gcs-server:1.52.3 \
+  registry.istio.io/testing/fake-gcs-server:1.52.3 \
   -scheme http -port 7481
 
 # Setup our bucket. Add retry since the registry may not be ready yet
