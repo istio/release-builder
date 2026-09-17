@@ -39,8 +39,9 @@ directory: /tmp/istio-release
 #   git: specifies the git source to pull from
 #     branch: branch to pull from git
 #     sha: sha to pull from git
-#     auto: rather than a static branch/sha, determine the sha to use from istio/istio.
-#           possible values are `deps` to check istio.deps, and `modules` to check go.mod
+#     auto: rather than a static branch/sha, determine the sha to use from related repository metadata.
+#           possible values are `deps` to check istio.deps, `modules` to check go.mod, and
+#           `proxy_workspace` to check proxy's MODULE.bazel for the Envoy revision
 dependencies:
   istio:
     git: https://github.com/istio/istio

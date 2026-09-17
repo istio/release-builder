@@ -241,14 +241,14 @@ func fetchAutoDeps(repo string, dep *model.Dependency, dest string) error {
 }
 
 func fetchAutoProxyWorkspace(dep *model.Dependency, dest string) error {
-	wsFile, err := os.ReadFile(path.Join(dest, "../proxy/WORKSPACE"))
+	moduleFile, err := os.ReadFile(path.Join(dest, "../proxy/MODULE.bazel"))
 	if err != nil {
 		return err
 	}
-	// ENVOY_SHA is declared in proxy workspace file.
+	// ENVOY_SHA is declared in the proxy Bazel module.
 	esReg := regexp.MustCompile("ENVOY_SHA = \"([a-z0-9]{40})\"")
 	var sha string
-	if found := esReg.FindStringSubmatch(string(wsFile)); len(found) == 2 {
+	if found := esReg.FindStringSubmatch(string(moduleFile)); len(found) == 2 {
 		sha = found[1]
 	}
 

@@ -37,7 +37,7 @@ const (
 	Deps string = "deps"
 	// Modules will resolve by looking at the go.mod file in istio/istio
 	Modules string = "modules"
-	// ProxyWorkspace will resolve by looking at the WORKSPACE file in istio/proxy.
+	// ProxyWorkspace will resolve by looking at the MODULE.bazel file in istio/proxy.
 	// This should only be used to resolve Envoy dep SHA.
 	ProxyWorkspace string = "proxy_workspace"
 )
