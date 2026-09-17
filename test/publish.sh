@@ -25,6 +25,10 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+# MinIO receives virtual-hosted S3 requests, so map the test bucket hostname
+# to the local port-forward from the build-tools container.
+echo "127.0.0.1 istio-build.localhost" >> /etc/hosts
+
 # Setup local registry and S3-compatible storage.
 docker run -d  --rm  \
   -p "7480:5000" --label istio-release-builder \
