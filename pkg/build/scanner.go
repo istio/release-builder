@@ -117,7 +117,7 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 
 	dockerHubs := os.Getenv("HUBS")
 	if dockerHubs == "" {
-		dockerHubs = "docker.io/istio gcr.io/istio-release"
+		dockerHubs = "docker.io/istio"
 	}
 
 	// Run the script to create the base images
