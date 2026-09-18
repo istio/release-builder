@@ -60,19 +60,19 @@ dependencies:
     git: https://github.com/istio/envoy
     auto: proxy_workspace
 # proxyOverride specifies an alternative URL to pull Envoy binary from
-proxyOverride: https://storage.googleapis.com/istio-build/proxy
+proxyOverride: https://blob.istio.io/istio-build/proxy
 ```
 
 ## Publish
 
 The publish step takes in the build artifacts as an input, and publishes them to a variety of places:
 
-* Copy artifacts to GCS
+* Copy artifacts to R2
 * Push docker images
 * Tag all Github source repositories
 * Publish a Github release
 
-All of these steps can be done in isolation. For example, a daily build will first publish to a staging GCS and dockerhub, then once testing has completed publish again to all locations.
+All of these steps can be done in isolation. For example, a daily build will first publish to staging R2 and a container registry, then once testing has completed publish again to all locations.
 
 ## Branch
 
@@ -84,7 +84,7 @@ The automated `STEPS`:
 
 * (Automation step=1) Update dependencies
 * (Automation step=2) Create the release branches
-* (Automation step=3) Set up prow on release branches (requires GCR credentials)
+* (Automation step=3) Set up Prow on release branches (requires registry credentials)
 * (Automation step=4) Updates istio/tools to create new build image, common-file update prep, CODEOWNERS
 * (Automation step=5) Update common-files with image from step=4.
 
@@ -99,15 +99,15 @@ GITHUB_TOKEN=$(gh auth token) make shell
 ```
 
 * Docker credentials (if publishing to docker) (TODO - how to set these).
-* GCP credentials (if publishing to GCS) (TODO - how to set these).
+* Cloudflare R2 credentials (if publishing to R2) (TODO - how to set these).
 * Grafana credentials (if publishing to grafana): as environment variable `GRAFANA_TOKEN` or `--grafanatoken file`.
 
 ## Running a build locally
 
 To build locally and ensure a consistent environment, you need to have Docker installed and run the build in a docker container using a
-`gcr.io/istio-testing/build-tools` image. The exact config used, including the specific docker tag, for Istio builds can be found at
+`registry.istio.io/testing/build-tools` image. The exact config used, including the specific docker tag, for Istio builds can be found at
 <https://github.com/istio/test-infra/blob/master/prow/config/jobs/release-builder.yaml>. For example, the specified image might be
-`gcr.io/istio-testing/build-tools:master-2020-11-12T22-29-05`. In this case, one could set IMAGE_VERSION=master-2020-11-12T22-29-05.
+`registry.istio.io/testing/build-tools:master-2020-11-12T22-29-05`. In this case, one could set IMAGE_VERSION=master-2020-11-12T22-29-05.
 
 Next, create a manifest to use for the builds. A good starting point is the `example/manifest.yaml`.
 
@@ -159,7 +159,7 @@ the latest SHAs of commits.
 1. Run `docker buildx inspect`. This will return the information about the current builder. If the current builder `Driver` is not `docker-container`, you need to create one:
 
     ```
-    docker buildx create --driver-opt network=host,image=gcr.io/istio-testing/buildkit:v0.11.0 --name container-builder --driver docker-container --buildkitd-flags="--debug" --use
+    docker buildx create --driver-opt network=host,image=registry.istio.io/testing/buildkit:v0.11.0 --name container-builder --driver docker-container --buildkitd-flags="--debug" --use
     ```
 
 1. Run `crane digest gcr.io/distroless/static-debian11`. If you see an error like:
