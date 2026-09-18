@@ -19,8 +19,7 @@ WD=$(cd "$WD"; pwd)
 
 set -eu
 
-PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-gcr.io/istio-prerelease-testing}
-GCS_BUCKET=${GCS_BUCKET:-istio-prerelease/prerelease}
+PRERELEASE_DOCKER_HUB=${PRERELEASE_DOCKER_HUB:-ghcr.io/istio/prerelease-testing}
 R2_BUCKET=${R2_BUCKET:-istio-prerelease/prerelease}
 
 VERSION="$(cat "${WD}/trigger-build")"

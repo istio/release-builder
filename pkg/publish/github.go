@@ -68,7 +68,7 @@ func Github(manifest model.Manifest, githubOrg string, githubToken string) error
 func GithubRelease(manifest model.Manifest, client *github.Client, githuborg string) error {
 	ctx := context.Background()
 
-	body := fmt.Sprintf(`[Artifacts](http://gcsweb.istio.io/gcs/istio-release/releases/%s/)
+	body := fmt.Sprintf(`[Artifacts](https://blob.istio.io/istio-release/releases/%s/)
 [Release Notes](https://istio.io/news/releases/%s/announcing-%s/)`,
 		manifest.Version, manifest.Version[:strings.LastIndex(manifest.Version, ".")]+".x", manifest.Version)
 

@@ -3,7 +3,7 @@ export GOPROXY ?= https://proxy.golang.org
 
 include common/Makefile.common.mk
 
-MARKDOWN_LINT_ALLOWLIST = https://storage.googleapis.com/istio-build/proxy
+MARKDOWN_LINT_ALLOWLIST = https://blob.istio.io/istio-build/proxy
 
 .PHONY: lint
 lint: lint-all

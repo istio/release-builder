@@ -33,13 +33,10 @@ var (
 		release        string
 		dockerhub      string
 		dockertags     []string
-		gcsbucket      string
 		s3bucket       string
-		helmbucket     string
 		s3helmbucket   string
 		s3helmurl      string
 		helmhub        string
-		gcsaliases     []string
 		s3aliases      []string
 		s3BaseEndpoint string
 		github         string
@@ -78,20 +75,14 @@ func init() {
 		"The docker hub to push images to. Example: docker.io/istio.")
 	publishCmd.PersistentFlags().StringSliceVar(&flags.dockertags, "dockertags", flags.dockertags,
 		"The tags to apply to docker images. Example: latest")
-	publishCmd.PersistentFlags().StringVar(&flags.gcsbucket, "gcsbucket", flags.gcsbucket,
-		"The gcs bucket to publish binaries to. Example: istio-release/releases.")
 	publishCmd.PersistentFlags().StringVar(&flags.s3bucket, "s3bucket", flags.s3bucket,
 		"The S3 bucket to publish binaries to. Example: istio-release/releases.")
-	publishCmd.PersistentFlags().StringVar(&flags.helmbucket, "helmbucket", flags.helmbucket,
-		"The gcs bucket to publish helm to. Example: istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.s3helmbucket, "s3helmbucket", flags.s3helmbucket,
 		"The S3 bucket to publish helm to. Example: istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.s3helmurl, "s3helmurl", flags.s3helmurl,
 		"The public base URL for Helm charts published to S3. Example: https://blob.istio.io/istio-release/charts.")
 	publishCmd.PersistentFlags().StringVar(&flags.helmhub, "helmhub", flags.helmhub,
-		"The oci registry to publish helm to. Example: gcr.io/istio-release/charts.")
-	publishCmd.PersistentFlags().StringSliceVar(&flags.gcsaliases, "gcsaliases", flags.gcsaliases,
-		"Alias to publish to gcs. Example: latest")
+		"The OCI registry to publish Helm charts to. Example: ghcr.io/istio/release/charts.")
 	publishCmd.PersistentFlags().StringSliceVar(&flags.s3aliases, "s3aliases", flags.s3aliases,
 		"Alias to publish to s3. Example: latest")
 	publishCmd.PersistentFlags().StringVar(&flags.github, "github", flags.github,
@@ -123,18 +114,13 @@ func Publish(manifest model.Manifest) error {
 			return fmt.Errorf("failed to publish to docker: %v", err)
 		}
 	}
-	if flags.gcsbucket != "" {
-		if err := GcsArchive(manifest, flags.gcsbucket, flags.gcsaliases); err != nil {
-			return fmt.Errorf("failed to publish to gcs: %v", err)
-		}
-	}
 	if flags.s3bucket != "" {
 		if err := ArchiveS3(manifest, flags.s3bucket, flags.s3aliases); err != nil {
 			return fmt.Errorf("failed to publish to s3 : %v", err)
 		}
 	}
-	if flags.helmbucket != "" || flags.helmhub != "" || flags.s3helmbucket != "" {
-		if err := Helm(manifest, flags.helmbucket, flags.helmhub, flags.s3helmbucket, flags.s3helmurl); err != nil {
+	if flags.helmhub != "" || flags.s3helmbucket != "" {
+		if err := Helm(manifest, flags.helmhub, flags.s3helmbucket, flags.s3helmurl); err != nil {
 			return fmt.Errorf("failed to publish to helm charts: %v", err)
 		}
 	}

@@ -11,7 +11,7 @@ sources:
   - https://github.com/istio/istio
 icon: https://istio.io/latest/favicons/android-192x192.png
 
-# To add a repo alias: helm repo add istio-release https://istio-release.storage.googleapis.com/charts
+# To add a repo alias: helm repo add istio-release https://blob.istio.io/istio-release/charts
 dependencies:
   - name: base
     version: 1.0.0
