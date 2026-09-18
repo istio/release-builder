@@ -6,7 +6,7 @@ This repository defines the release process for Istio. AI agents working on this
 
 The Istio release process is split into two phases:
 1. **Build**: Pull sources, build artifacts, create manifest.yaml
-2. **Publish**: Push to GCS, docker registries, tag repositories, create GitHub releases
+2. **Publish**: Push to Cloudflare R2, container registries, tag repositories, create GitHub releases
 
 ## Development Environment
 
@@ -15,13 +15,13 @@ The Istio release process is split into two phases:
 - Build locally: `make shell` (runs in Docker container with build tools)
 - Test build: `go run main.go build --manifest example/manifest.yaml`
 - Validate build: `go run main.go validate --release /tmp/istio-release/out`
-- Docker container: Uses `gcr.io/istio-testing/build-tools` images
+- Docker container: Uses `registry.istio.io/testing/build-tools` images
 
 ### Required Credentials
 
 - `GITHUB_TOKEN` or `GH_TOKEN`: GitHub API access
 - Docker credentials: For image publishing
-- GCP credentials: For GCS publishing
+- Cloudflare R2 credentials: For R2 publishing
 - `GRAFANA_TOKEN`: For Grafana publishing
 
 ## Code Style & Patterns
@@ -137,7 +137,7 @@ For branch creation (manual process with automation steps 1-5):
 - **AI AGENTS**: Must never access, read, or use any credentials or tokens
 - All credentials should be provided via environment variables (human operators only)
 - Docker builds use verified base images from istio-testing
-- GCS and container registry access requires proper GCP setup
+- R2 and container registry access requires appropriate credentials
 - GitHub tokens need appropriate repository permissions
 - Release operations are restricted to authorized human release managers
 

@@ -22,7 +22,6 @@ set +x
 
 SOURCE_R2_BUCKET=${SOURCE_R2_BUCKET:-istio-prerelease/prerelease}
 R2_BUCKET=${R2_BUCKET:-istio-release/releases}
-GCS_BUCKET=${GCS_BUCKET:-istio-release/releases}
 DOCKER_HUB=${DOCKER_HUB:-docker.io/istio}
 GITHUB_ORG=${GITHUB_ORG:-istio}
 
@@ -49,13 +48,12 @@ Build information
 =================
 Version: ${VERSION}
 
-GCS Bucket: ${GCS_BUCKET}
 R2 Bucket: ${R2_BUCKET}
 Docker Hub: ${DOCKER_HUB}
 Github Org: ${GITHUB_ORG}
 Source: ${SOURCE_R2_BUCKET}/${VERSION}
 
-R2 Contents (will publish to GCS and R2 from this):
+R2 Contents (will publish to R2 from this):
 $(aws --endpoint-url "${ENDPOINT}" s3 cp "s3://${SOURCE_R2_BUCKET}/${VERSION}/manifest.yaml" -)
 $(aws --endpoint-url "${ENDPOINT}" s3 ls "s3://${SOURCE_R2_BUCKET}/${VERSION}/" --recursive)
 EOF
