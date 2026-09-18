@@ -16,6 +16,7 @@ package publish
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -29,6 +30,8 @@ import (
 	"istio.io/istio/pkg/log"
 	"istio.io/release-builder/pkg/model"
 )
+
+var ErrIndexOutOfDate = errors.New("index is out-of-date")
 
 func NewS3Client() (*s3.Client, error) {
 	options := []func(*config.LoadOptions) error{}
