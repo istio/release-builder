@@ -37,7 +37,6 @@ If this is expected, this message can be ignored.
 Build information
 =================
 Version: ${VERSION}
-Staging GCS Bucket: ${GCS_BUCKET}
 Staging R2 Bucket: ${R2_BUCKET}
 Staging Docker Hub: ${PRERELEASE_DOCKER_HUB}
 EOF
