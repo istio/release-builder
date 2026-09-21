@@ -41,7 +41,7 @@ import (
 //
 //	Image{
 //		 OriginalTag: "localhost/proxyv2:original", // Hub from manifest
-//		 NewTag:      "gcr.io/istio-release/proxyv2:new", // Hub from --dockerhubs and --dockertags
+//		 NewTag:      "registry.istio.io/release/proxyv2:new", // Hub from --dockerhubs and --dockertags
 //		 Variant      "",
 //		 Image        "proxyv2",
 //	}
@@ -158,7 +158,7 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 					return fmt.Errorf("failed to get digest for %v: %v", imgRef, err)
 				}
 				// We need to return the digest of the manifest, not the image. This is because the manifest is what is signed.
-				// This should return something like `gcr.io/istio-testing/pilot@sha256:1234`
+				// This should return something like `registry.istio.io/testing/pilot@sha256:1234`
 				if err := util.VerboseCommand("cosign", "sign", "--key", cosignkey, imgRef.Context().String()+"@"+digest.String(), "-y", "--recursive").Run(); err != nil {
 					return fmt.Errorf("failed to sign image %v with key %v: %v", img.NewReference(arch), cosignkey, err)
 				}
@@ -271,7 +271,7 @@ func publishManifest(img Image, architectures []string) (string, error) {
 		return "", fmt.Errorf("failed to get digest for %v: %v", manifestRef, err)
 	}
 	// We need to return the digest of the manifest, not the image. This is because the manifest is what is signed.
-	// This should return something like `gcr.io/istio-testing/pilot@sha256:1234`
+	// This should return something like `registry.istio.io/testing/pilot@sha256:1234`
 	return manifestRef.Context().String() + "@" + digest.String(), nil
 }
 

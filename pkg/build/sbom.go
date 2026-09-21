@@ -31,10 +31,10 @@ func GenerateBillOfMaterials(manifest model.Manifest) error {
 	// Retrieve istio repository path to run the sbom generator
 	istioRepoDir := manifest.RepoDir("istio")
 	sourceSbomFile := path.Join(manifest.OutDir(), "istio-source.spdx")
-	sourceSbomNamespace := fmt.Sprintf("https://storage.googleapis.com/istio-release/releases/%s/istio-source.spdx",
+	sourceSbomNamespace := fmt.Sprintf("https://blob.istio.io/istio-release/releases/%s/istio-source.spdx",
 		manifest.Version)
 	releaseSbomFile := path.Join(manifest.OutDir(), "istio-release.spdx")
-	releaseSbomNamespace := fmt.Sprintf("https://storage.googleapis.com/istio-release/releases/%s/istio-release.spdx",
+	releaseSbomNamespace := fmt.Sprintf("https://blob.istio.io/istio-release/releases/%s/istio-release.spdx",
 		manifest.Version)
 
 	// construct all the docker image tarball names as bom currently cannot accept directory as input
