@@ -39,7 +39,9 @@ var pushCommitFn = PushCommit
 
 // PushCommit will look for changes. If changes exist, it will create a branch and push a commit with the specified commit text
 // to the upstream repo. Set force to true to force-push when updating an existing remote branch.
-func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryrun bool, githubToken string, user github.User, force bool) (changes bool, err error) {
+func PushCommit(manifest model.Manifest, repo, branch, commitString string,
+	dryrun bool, githubToken string, user github.User, force bool,
+) (changes bool, err error) {
 	// Use go-git since it will take an already cloned and changed file-system and use that as a
 	// working tree to create the commit instead of using `git` commands. This allows the use of
 	// the passed in github token without it leaking in the logs.
