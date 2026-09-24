@@ -36,7 +36,7 @@ docker run -d  --rm  \
   -e MINIO_ROOT_USER=minioadmin \
   -e MINIO_ROOT_PASSWORD=minioadmin \
   -e MINIO_DOMAIN=localhost \
-  quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z \
+  alpine/minio:RELEASE.2025-10-15T17-29-55Z \
   server /data --address ":9000"
 
 # Setup the local S3 bucket. Add retries while MinIO starts.
