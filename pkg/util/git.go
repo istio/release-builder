@@ -33,9 +33,15 @@ import (
 	"istio.io/release-builder/pkg/model"
 )
 
+// pushCommitFn is the function used by CreatePR and CreateOrUpdatePR to push commits.
+// It is a variable so tests can substitute a stub without a real git repo.
+var pushCommitFn = PushCommit
+
 // PushCommit will look for changes. If changes exist, it will create a branch and push a commit with the specified commit text
-// to the upstremam repo.
-func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryrun bool, githubToken string, user github.User) (changes bool, err error) {
+// to the upstream repo. Set force to true to force-push when updating an existing remote branch.
+func PushCommit(manifest model.Manifest, repo, branch, commitString string,
+	dryrun bool, githubToken string, user github.User, force bool,
+) (changes bool, err error) {
 	// Use go-git since it will take an already cloned and changed file-system and use that as a
 	// working tree to create the commit instead of using `git` commands. This allows the use of
 	// the passed in github token without it leaking in the logs.
@@ -111,6 +117,7 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 				Username: *user.Name, // yes, this can be anything except an empty string
 				Password: githubToken,
 			},
+			Force: force,
 		})
 		if err != nil {
 			return true, fmt.Errorf("failed to push branch '%s' to repository '%s': %v", branch, repo, err)
@@ -119,42 +126,83 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string, dryr
 	return true, nil
 }
 
+// parseOrgRepo extracts the GitHub org and repo name from a git URL.
+func parseOrgRepo(gitURL string) (org, repo string) {
+	parts := strings.Split(gitURL, "/")
+	l := len(parts)
+	return parts[l-2], parts[l-1]
+}
+
+// setupGithubClientFn is the function used by CreatePR and CreateOrUpdatePR to build the GitHub
+// client. It is a variable so tests can substitute a stub that points at a mock HTTP server.
+var setupGithubClientFn = setupGithubClient
+
+// setupGithubClient creates a GitHub API client and fetches the authenticated user.
+func setupGithubClient(githubToken string) (*github.Client, context.Context, *github.User, error) {
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: githubToken})
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
+	user, _, err := client.Users.Get(ctx, "")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return client, ctx, user, nil
+}
+
+// openNewPR creates a pull request and applies the supplied labels.
+// In non-envoy istio repos it also appends "release-notes-none".
+func openNewPR(ctx context.Context, client *github.Client, org, repo, head, base, commitString, description string, labels []string) error {
+	newPR := &github.NewPullRequest{
+		Title:               &commitString,
+		Head:                &head,
+		Base:                &base,
+		Body:                &description,
+		MaintainerCanModify: github.Bool(true),
+	}
+	log.Infof("Creating PR, org: %s repo: %s base: %s head: %s", org, repo, base, head)
+	pr, _, err := client.PullRequests.Create(ctx, org, repo, newPR)
+	if err != nil {
+		return err
+	}
+	log.Infof("PR created: %s\n", pr.GetHTMLURL())
+
+	if org == "istio" && repo != "envoy" {
+		labels = append(labels, "release-notes-none")
+	}
+	if len(labels) > 0 {
+		label, _, err := client.Issues.AddLabelsToIssue(ctx, org, repo, *pr.Number, labels)
+		if err != nil {
+			return err
+		}
+		log.Infof("Labels:\n%v", label)
+	}
+	return nil
+}
+
 // CreatePR will look for changes. If changes exist, it will create a branch and push a commit with
 // the specified commit text, and then create a PR in the upstream repo.
 func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, description string, dryrun bool, githubToken, git, branch string,
 	labels []string, prRepoOrg string,
 ) error {
-	// Set git and branch from manifest if not passed in
 	if git == "" {
 		git = manifest.Dependencies.Get()[repo].Git
 	}
-
 	if branch == "" {
 		branch = manifest.Dependencies.Get()[repo].Branch
 	}
-	// Get client to access GH and then get user for GH token. Only needed if not a dryrun.
+
 	var client *github.Client
 	var ctx context.Context
-	user := &github.User{} // default to empty user for PushCommit call
+	user := &github.User{}
 	if !dryrun {
-		ctx = context.Background()
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: githubToken},
-		)
-		tc := oauth2.NewClient(ctx, ts)
-		client = github.NewClient(tc)
 		var err error
-		user, _, err = client.Users.Get(ctx, "")
+		client, ctx, user, err = setupGithubClientFn(githubToken)
 		if err != nil {
 			return err
 		}
 
-		// Check if the branch already exists remotely before attempting to push
-		repoStrings := strings.Split(git, "/")
-		l := len(repoStrings)
-		orgString := repoStrings[l-2]
-		repoString := repoStrings[l-1]
-
+		orgString, repoString := parseOrgRepo(git)
 		log.Infof("Checking if branch '%s' already exists in %s/%s", newBranchName, orgString, repoString)
 		existingBranch, _, err := client.Repositories.GetBranch(ctx, orgString, repoString, newBranchName)
 		if err == nil && existingBranch != nil {
@@ -171,65 +219,104 @@ func CreatePR(manifest model.Manifest, repo, newBranchName, commitString, descri
 		}
 	}
 
-	changes, err := PushCommit(manifest, repo, newBranchName, commitString, dryrun, githubToken, *user)
+	changes, err := pushCommitFn(manifest, repo, newBranchName, commitString, dryrun, githubToken, *user, false)
 	if err != nil {
 		return err
 	}
 
 	if changes {
-		newPR := &github.NewPullRequest{
-			Title:               &commitString,
-			Head:                &newBranchName,
-			Base:                &branch,
-			Body:                &description,
-			MaintainerCanModify: github.Bool(true),
-		}
-
-		repoStrings := strings.Split(git, "/")
-		l := len(repoStrings)
-		orgString := repoStrings[l-2]
-		repoString := repoStrings[l-1]
-
+		orgString, repoString := parseOrgRepo(git)
+		head := newBranchName
 		if prRepoOrg != "" && prRepoOrg != orgString {
 			log.Infof("create PR from a fork %s -> %s", orgString, prRepoOrg)
-			// The name of the branch where your changes are implemented.
-			// For cross-repository pull requests in the same network,
-			// namespace head with a user like this: username:branch.
-			head := fmt.Sprintf("%s:%s", orgString, newBranchName)
-			newPR.Head = &head
+			// For cross-repository pull requests, namespace head as username:branch.
+			head = fmt.Sprintf("%s:%s", orgString, newBranchName)
 			orgString = prRepoOrg
 		}
 
-		log.Infof("Creating PR, org: %s repo: %s base: %s head: %s",
-			orgString, repoString, *newPR.Base, *newPR.Head)
 		if dryrun {
 			log.Infof("Skipping, DRY_RUN=true")
 			return nil
 		}
 
-		pr, _, err := client.PullRequests.Create(ctx, orgString, repoString, newPR)
+		return openNewPR(ctx, client, orgString, repoString, head, branch, commitString, description, labels)
+	}
+
+	return nil
+}
+
+// CreateOrUpdatePR looks for an existing open PR on stableBranchName. If one is found it
+// force-pushes the new commit and edits the PR title/body; otherwise it creates a new PR.
+// This prevents duplicate PRs when a periodic job runs while a previous PR is still open.
+func CreateOrUpdatePR(manifest model.Manifest, repo, stableBranchName, commitString, description string, dryrun bool, githubToken, git, branch string,
+	labels []string, prRepoOrg string,
+) error {
+	if git == "" {
+		git = manifest.Dependencies.Get()[repo].Git
+	}
+	if branch == "" {
+		branch = manifest.Dependencies.Get()[repo].Branch
+	}
+
+	orgString, repoString := parseOrgRepo(git)
+
+	var client *github.Client
+	var ctx context.Context
+	user := &github.User{}
+	existingPRNumber := 0
+	if !dryrun {
+		var err error
+		client, ctx, user, err = setupGithubClientFn(githubToken)
 		if err != nil {
 			return err
 		}
 
-		log.Infof("PR created: %s\n", pr.GetHTMLURL())
-
-		// Add additional supplied labels plus release-notes-note in non-envoy repos
-		if orgString == "istio" && repoString != "envoy" {
-			labels = append(labels, []string{"release-notes-none"}...)
+		// Search for an existing open PR on the stable branch.
+		searchQuery := fmt.Sprintf("repo:%s/%s is:pr is:open head:%s", orgString, repoString, stableBranchName)
+		results, _, err := client.Search.Issues(ctx, searchQuery, &github.SearchOptions{})
+		if err != nil {
+			log.Warnf("Could not search for existing PRs on branch '%s' (proceeding as new PR): %v", stableBranchName, err)
+		} else if len(results.Issues) > 0 {
+			existingPRNumber = results.Issues[0].GetNumber()
+			log.Infof("Found existing open PR #%d on branch '%s', will update it", existingPRNumber, stableBranchName)
 		}
-
-		var label []*github.Label
-		if len(labels) > 0 {
-			label, _, err = client.Issues.AddLabelsToIssue(ctx, orgString, repoString, *pr.Number, labels)
-			if err != nil {
-				return err
-			}
-		}
-		log.Infof("Labels:\n%v", label)
 	}
 
-	return nil
+	// Always force-push: this automation exclusively owns the stable branch, so there is no
+	// history worth preserving. A non-forced push would fail if the branch exists from a prior
+	// run whose PR was merged but whose branch was not auto-deleted.
+	changes, err := pushCommitFn(manifest, repo, stableBranchName, commitString, dryrun, githubToken, *user, true)
+	if err != nil {
+		return err
+	}
+	if !changes {
+		return nil
+	}
+
+	if dryrun {
+		log.Infof("Skipping PR create/update, DRY_RUN=true")
+		return nil
+	}
+
+	targetOrg := orgString
+	prHead := stableBranchName
+	if prRepoOrg != "" && prRepoOrg != orgString {
+		log.Infof("create PR from a fork %s -> %s", orgString, prRepoOrg)
+		prHead = fmt.Sprintf("%s:%s", orgString, stableBranchName)
+		targetOrg = prRepoOrg
+	}
+
+	if existingPRNumber != 0 {
+		_, _, err = client.PullRequests.Edit(ctx, targetOrg, repoString, existingPRNumber,
+			&github.PullRequest{Title: &commitString, Body: &description})
+		if err != nil {
+			return fmt.Errorf("failed to update PR #%d: %v", existingPRNumber, err)
+		}
+		log.Infof("Updated existing PR #%d: https://github.com/%s/%s/pull/%d\n", existingPRNumber, targetOrg, repoString, existingPRNumber)
+		return nil
+	}
+
+	return openNewPR(ctx, client, targetOrg, repoString, prHead, branch, commitString, description, labels)
 }
 
 // GetGithubToken returns the GitHub token from the specified file. If the filename
