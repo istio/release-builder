@@ -25,11 +25,18 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+# Repository prefix for the MinIO image. May include a pull-through cache path
+# to avoid pulling from Docker Hub.
+MINIO_REGISTRY=${MINIO_REGISTRY:-docker.io/alpine}
+
 # Setup local registry and S3-compatible storage.
 docker run -d  --rm  \
   -p "7480:5000" --label istio-release-builder \
   --name "release-builder-registry" \
   registry.istio.io/testing/registry:2
+
+# The image runs as uid 100 by default, which cannot write to the root-owned /data,
+# so run it as root.
 docker run -d  --rm  \
   -p "7481:9000" --label istio-release-builder \
   --name "release-builder-s3" \
@@ -37,7 +44,7 @@ docker run -d  --rm  \
   -e MINIO_ROOT_USER=minioadmin \
   -e MINIO_ROOT_PASSWORD=minioadmin \
   -e MINIO_DOMAIN=localhost \
-  alpine/minio:RELEASE.2025-10-15T17-29-55Z \
+  "${MINIO_REGISTRY}/minio:RELEASE.2025-10-15T17-29-55Z" \
   server /data --address ":9000"
 
 # Setup the local S3 bucket. Add retries while MinIO starts.
