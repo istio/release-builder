@@ -33,6 +33,7 @@ docker run -d  --rm  \
 docker run -d  --rm  \
   -p "7481:9000" --label istio-release-builder \
   --name "release-builder-s3" \
+  --user root \
   -e MINIO_ROOT_USER=minioadmin \
   -e MINIO_ROOT_PASSWORD=minioadmin \
   -e MINIO_DOMAIN=localhost \
