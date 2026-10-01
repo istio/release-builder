@@ -111,13 +111,20 @@ func PushCommit(manifest model.Manifest, repo, branch, commitString string,
 		}
 		log.Infof("commit created:\n%v", commit)
 
-		// Push to the upstream repo.
+		// Push to the upstream repo. Only push the PR branch itself, not every
+		// local branch (go-git falls back to refs/heads/*:refs/heads/* otherwise,
+		// and Force would then force-push every local branch, e.g. master/release-1.x).
+		refSpec := config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch))
+		if force {
+			refSpec = config.RefSpec("+" + string(refSpec))
+		}
 		err = r.Push(&git.PushOptions{
 			Auth: &http.BasicAuth{
 				Username: *user.Name, // yes, this can be anything except an empty string
 				Password: githubToken,
 			},
-			Force: force,
+			RefSpecs: []config.RefSpec{refSpec},
+			Force:    force,
 		})
 		if err != nil {
 			return true, fmt.Errorf("failed to push branch '%s' to repository '%s': %v", branch, repo, err)
