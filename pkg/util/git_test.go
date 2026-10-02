@@ -20,9 +20,16 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/google/go-github/v35/github"
 
 	"istio.io/release-builder/pkg/model"
@@ -455,5 +462,110 @@ func TestCreateOrUpdatePR_ReleaseBranchVersion(t *testing.T) {
 	}
 	if !tracker.createPRCalled {
 		t.Error("expected PR to be created for release branch")
+	}
+}
+
+// writeTestFile writes content to a file in dir, creating/overwriting it, for use in git fixture setup.
+func writeTestFile(t *testing.T, dir, name, content string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644); err != nil {
+		t.Fatalf("failed to write %s: %v", name, err)
+	}
+}
+
+// TestPushCommit_DoesNotForcePushOtherBranches guards against the bug where PushCommit, by
+// not setting explicit RefSpecs, fell back to go-git's default refs/heads/*:refs/heads/*
+// refspec. Combined with Force: true, that force-pushed *every* local branch (e.g. the
+// "master"/"release-1.x" branch that util.Clone always checks out), which could rewind
+// upstream history if it had moved on while the release builder was busy. PushCommit must
+// only ever push the single branch it was asked to push, regardless of the force flag.
+func TestPushCommit_DoesNotForcePushOtherBranches(t *testing.T) {
+	root := t.TempDir()
+	sig := &object.Signature{Name: "Test", Email: "test@example.com", When: time.Now()}
+
+	// Bare "remote" repo simulating istio/istio.
+	remoteDir := filepath.Join(root, "remote.git")
+	if _, err := git.PlainInit(remoteDir, true); err != nil {
+		t.Fatalf("failed to init bare remote: %v", err)
+	}
+
+	// Seed the remote with an initial commit on "master" via a throwaway local repo.
+	seedDir := filepath.Join(root, "seed")
+	seedRepo, err := git.PlainInit(seedDir, false)
+	if err != nil {
+		t.Fatalf("failed to init seed repo: %v", err)
+	}
+	if _, err := seedRepo.CreateRemote(&config.RemoteConfig{Name: "origin", URLs: []string{remoteDir}}); err != nil {
+		t.Fatalf("failed to add remote to seed repo: %v", err)
+	}
+	seedWt, err := seedRepo.Worktree()
+	if err != nil {
+		t.Fatalf("failed to get seed worktree: %v", err)
+	}
+	writeTestFile(t, seedDir, "README.md", "initial")
+	if _, err := seedWt.Add("README.md"); err != nil {
+		t.Fatalf("failed to stage initial file: %v", err)
+	}
+	if _, err := seedWt.Commit("initial commit", &git.CommitOptions{Author: sig}); err != nil {
+		t.Fatalf("failed to create initial commit: %v", err)
+	}
+	if err := seedRepo.Push(&git.PushOptions{RemoteName: "origin"}); err != nil {
+		t.Fatalf("failed to push initial commit: %v", err)
+	}
+
+	// Clone like the release tooling does (util.Clone does `git clone -b <branch>`), giving
+	// workDir a local "master" ref pinned at the initial commit.
+	manifest := model.Manifest{Directory: root}
+	workDir := manifest.RepoDir("test-repo")
+	if _, err := git.PlainClone(workDir, false, &git.CloneOptions{
+		URL:           remoteDir,
+		ReferenceName: plumbing.NewBranchReferenceName("master"),
+		SingleBranch:  true,
+	}); err != nil {
+		t.Fatalf("failed to clone work repo: %v", err)
+	}
+
+	// Simulate "upstream moved on while building images": advance the remote's "master"
+	// with a second commit, independently of workDir.
+	writeTestFile(t, seedDir, "README.md", "advanced upstream")
+	if _, err := seedWt.Add("README.md"); err != nil {
+		t.Fatalf("failed to stage advancing file: %v", err)
+	}
+	advancedCommit, err := seedWt.Commit("advance upstream master", &git.CommitOptions{Author: sig})
+	if err != nil {
+		t.Fatalf("failed to create advancing commit: %v", err)
+	}
+	if err := seedRepo.Push(&git.PushOptions{RemoteName: "origin"}); err != nil {
+		t.Fatalf("failed to push advancing commit: %v", err)
+	}
+
+	// workDir's local "master" is now stale relative to the remote. Make an unrelated
+	// change and push it, force=true, to a *different* branch.
+	writeTestFile(t, workDir, "VERSION", "1.0.0")
+	user := github.User{Name: github.String("Test Bot"), Email: github.String("bot@example.com")}
+	changed, err := PushCommit(manifest, "test-repo", "release-branch", "bump version", false, "unused-token", user, true)
+	if err != nil {
+		t.Fatalf("PushCommit failed: %v", err)
+	}
+	if !changed {
+		t.Fatalf("expected PushCommit to report changes")
+	}
+
+	remoteRepo, err := git.PlainOpen(remoteDir)
+	if err != nil {
+		t.Fatalf("failed to open remote repo: %v", err)
+	}
+
+	masterRef, err := remoteRepo.Reference(plumbing.NewBranchReferenceName("master"), true)
+	if err != nil {
+		t.Fatalf("failed to resolve remote master: %v", err)
+	}
+	if masterRef.Hash() != advancedCommit {
+		t.Fatalf("remote master was force-pushed/rewound: got %s, want %s (the upstream-advanced commit)",
+			masterRef.Hash(), advancedCommit)
+	}
+
+	if _, err := remoteRepo.Reference(plumbing.NewBranchReferenceName("release-branch"), true); err != nil {
+		t.Fatalf("expected release-branch to have been pushed to remote: %v", err)
 	}
 }
