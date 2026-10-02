@@ -38,6 +38,13 @@ type Results struct {
 	Status string
 }
 
+// stableBranchName returns the fixed branch name used for base-image update PRs.
+// Using a stable name (no timestamp) allows repeated job runs to update an existing PR
+// rather than opening a new one each time.
+func stableBranchName(version string) string {
+	return "update-base-version-" + strings.ReplaceAll(version, ".", "-")
+}
+
 var alwaysGenerateBaseImage = func() bool {
 	b, err := strconv.ParseBool(os.Getenv("ALWAYS_GENERATE_BASE_IMAGE"))
 	if err != nil {
@@ -149,10 +156,13 @@ func Scanner(manifest model.Manifest, githubToken, git, branch string) error {
 		return fmt.Errorf("failed to run sed command: %v", err)
 	}
 
-	if err := util.CreatePR(
+	// Use a stable branch name so repeated runs update the existing PR instead of
+	// opening a new one each time the job fires while a previous PR is still open.
+	stableBranch := stableBranchName(manifest.Version)
+	if err := util.CreateOrUpdatePR(
 		manifest,
 		"istio",
-		"newBaseVersion"+tag,
+		stableBranch,
 		"Update BASE_VERSION to "+tag,
 		fmt.Sprintf("```\n%s\n```", trivyScanOutput),
 		false,
