@@ -87,15 +87,13 @@ func Docker(manifest model.Manifest, hub string, tags []string, cosignkey string
 		return fmt.Errorf("failed to read docker output of release: %v", err)
 	}
 
-	// Only attempt to sign images if a valid cosign key is provided and we are
-	// able to run 'cosign public-key <key>'.
+	// Only attempt to sign images if a cosign key is provided.
 	cosignEnabled := false
 	if cosignkey != "" {
 		if err := util.VerboseCommand("cosign", "public-key", "--key", cosignkey).Run(); err != nil {
-			log.Errorf("Argument '--cosignkey' nonempty but unable to access key %v, disabling signing.", err)
-		} else {
-			cosignEnabled = true
+			return fmt.Errorf("argument '--cosignkey' nonempty but unable to access key %v: %v", cosignkey, err)
 		}
+		cosignEnabled = true
 	}
 
 	// As inputs, we have a variety of tar.gz files emitted from `docker save`.
