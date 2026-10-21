@@ -48,18 +48,21 @@ AWS_ACCESS_KEY_ID="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.access_key' |
     AWS_SESSION_TOKEN="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.session_token' | tr -d '\n')" \
     aws s3 cp --recursive "s3://${SOURCE_R2_BUCKET}/${VERSION}/" "${WORK_DIR}/" --endpoint-url "${ENDPOINT}"
 
+# This requires us to grab the cosign key, and we want to use our workload identity credentials, rather than the r2 AWS_* credentials.
+go run main.go publish --release "${WORK_DIR}" \
+    --cosignkey "${COSIGN_KEY:-}" \
+    --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}"
+
 ENDPOINT="$(echo "${CF_CREDENTIALS}" | jq -r '.endpoint' | tr -d '\n')"
 AWS_ACCESS_KEY_ID="$(echo "${CF_CREDENTIALS}" | jq -r '.access_key' | tr -d '\n')" \
     AWS_SECRET_ACCESS_KEY="$(echo "${CF_CREDENTIALS}" | jq -r '.secret_key' | tr -d '\n')" \
     AWS_REGION="$(echo "${CF_CREDENTIALS}" | jq -r '.region' | tr -d '\n')" \
     AWS_SESSION_TOKEN="$(echo "${CF_CREDENTIALS}" | jq -r '.session_token' | tr -d '\n')" \
     go run main.go publish --release "${WORK_DIR}" \
-    --cosignkey "${COSIGN_KEY:-}" \
     --s3bucket "${R2_BUCKET}" \
     --s3helmbucket "${R2_HELM_BUCKET}" \
     --s3helmurl "${R2_HELM_URL}" \
     --helmhub "${HELM_HUB_RELEASE}" \
-    --dockerhub "${DOCKER_HUB}" --dockertags "${VERSION}" \
     --github "${GITHUB_ORG}" --githubtoken "${GITHUB_TOKEN_FILE}" \
     --grafanatoken "${GRAFANA_TOKEN_FILE}" \
     --s3-base-endpoint "${ENDPOINT}"
