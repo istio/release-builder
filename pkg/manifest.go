@@ -43,6 +43,8 @@ func InputManifestToManifest(in model.InputManifest) (model.Manifest, error) {
 			outputs[model.Helm] = struct{}{}
 		case "debian":
 			outputs[model.Debian] = struct{}{}
+		case "rpm":
+			outputs[model.Rpm] = struct{}{}
 		case "archive":
 			outputs[model.Archive] = struct{}{}
 		case "grafana":
