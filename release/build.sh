@@ -105,19 +105,20 @@ go run main.go build --manifest <(echo "${MANIFEST}")
 
 go run main.go validate --release "${WORK_DIR}/out"
 
-ENDPOINT="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.endpoint' | tr -d '\n')"
-AWS_ACCESS_KEY_ID="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.access_key' | tr -d '\n')" \
-AWS_SECRET_ACCESS_KEY="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.secret_key' | tr -d '\n')" \
-AWS_REGION="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.region' | tr -d '\n')" \
-AWS_SESSION_TOKEN="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.session_token' | tr -d '\n')" \
-export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION AWS_SESSION_TOKEN
-
+# This requires us to grab the cosign key, and we want to use our workload identity credentials, rather than the r2 AWS_* credentials.
 go run main.go publish --release "${WORK_DIR}/out" \
   --cosignkey "${COSIGN_KEY:-}" \
+  --dockerhub "${PRERELEASE_DOCKER_HUB}" \
+  --dockertags "${VERSION}"
+
+ENDPOINT="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.endpoint' | tr -d '\n')"
+AWS_ACCESS_KEY_ID="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.access_key' | tr -d '\n')" \
+  AWS_SECRET_ACCESS_KEY="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.secret_key' | tr -d '\n')" \
+  AWS_REGION="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.region' | tr -d '\n')" \
+  AWS_SESSION_TOKEN="$(echo "${CF_PRERELEASE_CREDENTIALS}" | jq -r '.session_token' | tr -d '\n')" \
+  go run main.go publish --release "${WORK_DIR}/out" \
   --s3bucket "${R2_BUCKET}" \
   --s3helmbucket "${R2_HELM_BUCKET}" \
   --s3helmurl "${R2_HELM_URL}" \
   --helmhub "${PRERELEASE_DOCKER_HUB}/charts" \
-  --dockerhub "${PRERELEASE_DOCKER_HUB}" \
-  --dockertags "${VERSION}" \
   --s3-base-endpoint "${ENDPOINT}"
